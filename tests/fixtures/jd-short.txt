@@ -1,0 +1,3 @@
+Senior Frontend Engineer
+Build modern React and TypeScript interfaces.
+Lead testing quality and collaborate with product and design.

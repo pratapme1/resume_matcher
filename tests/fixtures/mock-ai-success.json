@@ -1,0 +1,34 @@
+{
+  "contactInfo": {
+    "name": "VISHNU PRATAP KUMAR",
+    "email": "vishnupratapkumar@gmail.com",
+    "phone": "+91 91489 69183",
+    "linkedin": "",
+    "location": "Bengaluru, India"
+  },
+  "summary": "IoT Product Manager with experience in technology leadership, enterprise software, automation, and AI platforms.",
+  "summarySourceProvenanceIds": ["section-1-p0", "section-1-p1"],
+  "experience": [
+    {
+      "id": "exp-0",
+      "company": "Dell Technologies (via UST Global)",
+      "title": "Product Manager — Enterprise Software, Automation & AI Platforms",
+      "dates": "May 2022 – Present",
+      "location": "Bengaluru, India",
+      "bullets": [
+        {
+          "text": "Led product strategy for AI-powered Software Management Center launched to 100K+ Dell employees (20K MAU), directly supporting a CIO initiative to reduce software titles from 12K to 2K with projected $300–400M in savings. Delivered AI-first self-service platform using open-source LLM with RAG architecture over 365K assets via REST API integrations across multiple internal enterprise systems.",
+          "sourceProvenanceIds": ["section-2-p2"]
+        }
+      ],
+      "sourceProvenanceIds": ["section-2-p0", "section-2-p1", "section-2-p2"]
+    }
+  ],
+  "education": [],
+  "skills": [],
+  "skillSourceProvenanceIds": [],
+  "projects": [],
+  "certifications": [],
+  "certificationSourceProvenanceIds": [],
+  "sectionOrder": ["summary", "experience", "skills"]
+}

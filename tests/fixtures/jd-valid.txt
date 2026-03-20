@@ -1,0 +1,14 @@
+Senior Frontend Engineer
+
+We are hiring a Senior Frontend Engineer to build React and TypeScript user interfaces for enterprise products.
+
+Required qualifications:
+- Strong React experience
+- TypeScript proficiency
+- Testing and quality ownership
+- Leadership and collaboration
+
+Preferred:
+- GraphQL
+- Design systems
+- Product thinking
