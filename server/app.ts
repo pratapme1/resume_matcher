@@ -4,6 +4,7 @@ import multer from 'multer';
 import cors from 'cors';
 import { z } from 'zod';
 import { buildAnalysis, buildTailoringPlan } from './analysis.ts';
+import { buildGapAnalysis } from './gap-analysis.ts';
 import { generateTailoredDocx } from './docx-render.ts';
 import {
   badRequest,
@@ -26,12 +27,29 @@ import {
 } from './schemas.ts';
 import { tailorResumeWithAI } from './tailor.ts';
 import { validateTailoredResume } from './validate.ts';
+import { startAutoApply, submitAutoApply } from './auto-apply.ts';
+import { searchJobs, buildCandidateProfile } from './job-search.ts';
 import type {
+  JobSearchPreferences,
   ResumeTemplateProfile,
   TailorResumeResponse,
   TailoredResumeDocument,
   ValidationReport,
 } from '../src/shared/types.ts';
+
+function buildTailoredCorpus(tailored: TailoredResumeDocument): string {
+  return [
+    tailored.headline,
+    tailored.summary,
+    ...(tailored.skills ?? []),
+    ...(tailored.certifications ?? []),
+    ...tailored.experience.flatMap((e) => [e.title, e.company, e.dates, ...e.bullets.map((b) => b.text)]),
+    ...tailored.projects.flatMap((p) => [p.name, p.description, ...p.bullets.map((b) => b.text)]),
+    ...tailored.education.flatMap((e) => [e.institution, e.degree]),
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
 import { normalizeWhitespace } from './utils.ts';
 
 export interface AIClient {
@@ -43,6 +61,7 @@ export interface AIClient {
 export interface AppDependencies {
   getAI: (req?: Request) => AIClient;
   fetchImpl?: typeof fetch;
+  disablePlaywrightJdFallback?: boolean;
 }
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -168,7 +187,12 @@ export function createApp(deps: AppDependencies): Express {
   app.post('/api/extract-jd-url', async (req, res) => {
     try {
       const { url } = extractJdUrlRequestSchema.parse(req.body);
-      const rawText = await fetchJobDescriptionText(url, deps.fetchImpl ?? fetch);
+      const rawText = await fetchJobDescriptionText(
+        url,
+        deps.fetchImpl ?? fetch,
+        undefined,
+        deps.disablePlaywrightJdFallback ? null : undefined,
+      );
       const normalized = buildNormalizedJobDescription(rawText, 'url');
       res.json(normalized);
     } catch (error) {
@@ -189,6 +213,16 @@ export function createApp(deps: AppDependencies): Express {
       res.json(normalized);
     } catch (error) {
       sendErrorResponse(res, error, 'extract-jd-file');
+    }
+  });
+
+  app.post('/api/extract-jd-text', async (req, res) => {
+    try {
+      const { text } = z.object({ text: z.string().min(1) }).parse(req.body);
+      const normalized = buildNormalizedJobDescription(text, 'paste');
+      res.json(normalized);
+    } catch (error) {
+      sendErrorResponse(res, error, 'extract-jd-text');
     }
   });
 
@@ -222,17 +256,27 @@ export function createApp(deps: AppDependencies): Express {
       }
 
       const { resume, templateProfile } = parsedResume;
-      const jdRequirements = buildJDRequirementModel(normalizedJobDescription);
+      const ai = deps.getAI(req);
+
+      const jdRequirements = await buildJDRequirementModel(normalizedJobDescription, ai);
       const tailoringPlan = buildTailoringPlan(resume, jdRequirements);
-      const analysis = buildAnalysis(resume, jdRequirements, normalizedJobDescription.cleanText);
+      const gapAnalysis = await buildGapAnalysis(ai, resume, jdRequirements, normalizedJobDescription.cleanText);
+      tailoringPlan.gapAnalysis = gapAnalysis;
 
       const tailoredResume = await tailorResumeWithAI(
-        deps.getAI(req),
+        ai,
         resume,
         normalizedJobDescription.cleanText,
         jdRequirements,
         tailoringPlan,
         preferences,
+      );
+
+      const analysis = buildAnalysis(
+        resume,
+        jdRequirements,
+        normalizedJobDescription.cleanText,
+        buildTailoredCorpus(tailoredResume),
       );
 
       const validation = validateTailoredResume(resume, tailoredResume, templateProfile);
@@ -247,6 +291,7 @@ export function createApp(deps: AppDependencies): Express {
             renderReadiness: 'ready',
             normalizedJobDescription,
             parseWarnings: [...normalizedJobDescription.extractionWarnings, ...resume.parseWarnings],
+            jdCompanyName: jdRequirements.companyName,
           }
         : {
             blocked: true,
@@ -257,6 +302,7 @@ export function createApp(deps: AppDependencies): Express {
             renderReadiness: 'blocked',
             normalizedJobDescription,
             parseWarnings: [...normalizedJobDescription.extractionWarnings, ...resume.parseWarnings],
+            jdCompanyName: jdRequirements.companyName,
           };
 
       res.json(response);
@@ -291,6 +337,167 @@ export function createApp(deps: AppDependencies): Express {
       res.send(buffer);
     } catch (error) {
       sendErrorResponse(res, error, 'generate-docx');
+    }
+  });
+
+  // Job search: build candidate profile from resume + search via Gemini grounding
+  // Lightweight: parse resume → return candidate profile (no AI search)
+  app.post('/api/build-profile', async (req, res) => {
+    try {
+      await runSingleUpload(upload, req, res, 'resume');
+      if (!req.file) {
+        throw badRequest('Resume file is required.', 'INVALID_REQUEST', { logMessage: 'Missing resume for build-profile.' });
+      }
+      if (!isDocxUpload(req.file.mimetype, req.file.originalname, req.file.buffer)) {
+        throw badRequest('Resume must be a DOCX file.', 'UNSUPPORTED_FILE_TYPE', { logMessage: `Rejected non-DOCX for build-profile: ${req.file.originalname}` });
+      }
+      let parsedResume: Awaited<ReturnType<typeof parseResumeDocx>>;
+      try {
+        parsedResume = await parseResumeDocx(req.file.buffer);
+      } catch (error) {
+        throw unprocessable('The uploaded resume could not be parsed.', 'RESUME_PARSE_FAILED', { cause: error, logMessage: `Failed to parse resume for build-profile.` });
+      }
+      const profile = buildCandidateProfile(parsedResume.resume);
+      res.json(profile);
+    } catch (error) {
+      sendErrorResponse(res, error, 'build-profile');
+    }
+  });
+
+  // Job search: build candidate profile from resume + search via Gemini grounding
+  app.post('/api/search-jobs', async (req, res) => {
+    try {
+      await runSingleUpload(upload, req, res, 'resume');
+      if (!req.file) {
+        throw badRequest('Resume file is required.', 'INVALID_REQUEST', {
+          logMessage: 'Missing resume upload for job search.',
+        });
+      }
+      if (!isDocxUpload(req.file.mimetype, req.file.originalname, req.file.buffer)) {
+        throw badRequest('Resume must be a DOCX file.', 'UNSUPPORTED_FILE_TYPE', {
+          logMessage: `Rejected non-DOCX resume for job search: ${req.file.originalname}`,
+        });
+      }
+
+      let preferences: JobSearchPreferences = {};
+      if (req.body.preferences) {
+        try {
+          preferences = JSON.parse(req.body.preferences);
+        } catch {
+          // ignore malformed prefs
+        }
+      }
+
+      let parsedResume: Awaited<ReturnType<typeof parseResumeDocx>>;
+      try {
+        parsedResume = await parseResumeDocx(req.file.buffer);
+      } catch (error) {
+        throw unprocessable('The uploaded resume could not be parsed.', 'RESUME_PARSE_FAILED', {
+          cause: error,
+          logMessage: `Failed to parse resume for job search: ${req.file.originalname}`,
+        });
+      }
+
+      const ai = deps.getAI(req);
+      const response = await searchJobs(parsedResume.resume, preferences, ai);
+      res.json(response);
+    } catch (error) {
+      sendErrorResponse(res, error, 'search-jobs');
+    }
+  });
+
+  // AI-powered form filler — called by the Chrome extension content script
+  app.post('/api/smart-fill', async (req, res) => {
+    try {
+      const { fields, prefill } = z.object({
+        fields: z.array(z.object({
+          name: z.string(),
+          label: z.string(),
+          placeholder: z.string(),
+          type: z.string(),
+        })),
+        prefill: z.object({
+          name: z.string().optional(),
+          email: z.string().optional(),
+          phone: z.string().optional(),
+          linkedin: z.string().optional(),
+          location: z.string().optional(),
+        }),
+      }).parse(req.body);
+
+      const ai = deps.getAI(req);
+
+      const prompt = `You are filling out a job application form on behalf of the user.
+
+User profile:
+- Full name: ${prefill.name ?? 'unknown'}
+- Email: ${prefill.email ?? 'unknown'}
+- Phone: ${prefill.phone ?? 'unknown'}
+- LinkedIn: ${prefill.linkedin ?? 'not provided'}
+- Location: ${prefill.location ?? 'unknown'}
+
+Form fields (field name, label, placeholder, input type):
+${fields.map(f => `  name="${f.name}" | label="${f.label}" | placeholder="${f.placeholder}" | type="${f.type}"`).join('\n')}
+
+Instructions:
+- Return ONLY a JSON object mapping field "name" to the value to fill in.
+- Only include fields you have confident data for.
+- For phone numbers: strip country code prefix and spaces, use only digits (e.g. "+91 91489 69183" → "9148969183").
+- For LinkedIn: if the user's linkedin value looks like a URL, strip the "https://www.linkedin.com/in/" prefix and return just the path.
+- For fields like CTC, experience, notice period, portfolio — return null (do not guess).
+- Return null for any field you are unsure about.
+- Return ONLY valid JSON. No explanation, no markdown.`;
+
+      const result = await ai.models.generateContent({
+        model: 'gemini-2.0-flash',
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      });
+
+      const raw = (result.text ?? '').replace(/```json\n?|```\n?/g, '').trim();
+      const mapping = JSON.parse(raw);
+      res.json({ mapping });
+    } catch (error) {
+      sendErrorResponse(res, error, 'smart-fill');
+    }
+  });
+
+  // Server-side Playwright auto-apply agent
+  app.post('/api/auto-apply', async (req, res) => {
+    try {
+      const body = z.object({
+        applyUrl: z.string().url(),
+        contactInfo: z.object({
+          name: z.string().optional(),
+          email: z.string().optional(),
+          phone: z.string().optional(),
+          linkedin: z.string().optional(),
+          location: z.string().optional(),
+        }),
+        tailoredResume: z.any(),
+        templateProfile: z.any(),
+        validation: z.any(),
+      }).parse(req.body);
+      const result = await startAutoApply(
+        body.applyUrl,
+        body.contactInfo,
+        body.tailoredResume,
+        body.templateProfile,
+        body.validation,
+        deps.getAI(req),
+      );
+      res.json(result);
+    } catch (error) {
+      sendErrorResponse(res, error, 'auto-apply');
+    }
+  });
+
+  app.post('/api/auto-apply/submit', async (req, res) => {
+    try {
+      const { sessionId } = z.object({ sessionId: z.string() }).parse(req.body);
+      const result = await submitAutoApply(sessionId);
+      res.json(result);
+    } catch (error) {
+      sendErrorResponse(res, error, 'auto-apply-submit');
     }
   });
 

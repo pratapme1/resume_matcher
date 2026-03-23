@@ -9,7 +9,39 @@ import type { AIClient } from './app.ts';
 import { badGateway } from './errors.ts';
 import { tailoredResumeSchema } from './schemas.ts';
 
-const DEFAULT_TAILOR_MODEL = 'gemini-2.5-flash';
+const DEFAULT_TAILOR_MODEL = 'gemini-3-flash-preview';
+
+function buildCandidateAnalysisSection(plan: TailoringPlan): string {
+  const gap = plan.gapAnalysis;
+  if (
+    !gap ||
+    (!gap.repositioningAngle &&
+      gap.topStrengths.length === 0 &&
+      gap.keyGaps.length === 0 &&
+      gap.bulletPriorities.length === 0 &&
+      !gap.summaryOpeningHint)
+  ) {
+    return '';
+  }
+
+  const gapLine =
+    gap.keyGaps.length > 0
+      ? `Genuine gaps (do NOT overreach): ${gap.keyGaps.join(' | ')}`
+      : 'No significant gaps identified.';
+
+  const priorityLines = gap.bulletPriorities
+    .map((p) => `- Experience ${p.experienceId}: lead with themes [${p.leadThemes.join(', ')}]`)
+    .join('\n');
+
+  return `CANDIDATE_ANALYSIS:
+Repositioning angle: ${gap.repositioningAngle}
+Top strengths: ${gap.topStrengths.join(' | ')}
+${gapLine}
+Summary opening hint: ${gap.summaryOpeningHint}
+
+Per-role bullet priorities:
+${priorityLines}`;
+}
 
 function buildSourceFacts(resume: SourceResumeDocument) {
   return {
@@ -57,10 +89,11 @@ Follow this process internally before writing JSON:
 4. Select the 4 most relevant existing highlight metrics from SOURCE_FACTS.
 5. Reorder skills so the most role-relevant categories lead.
 
-Non-negotiable rules:
+Non-negotiable rules (CRITICAL — never violate):
 - Use only facts already present in SOURCE_FACTS.
 - Never invent experience, tools, metrics, employers, titles, dates, institutions, clients, or certifications.
 - Never change employers, job titles, dates, locations, education entries, or certification names.
+- Copy job titles VERBATIM from SOURCE_FACTS — never shorten, abbreviate, or paraphrase them (e.g. "Senior Product Manager" must stay "Senior Product Manager", not "Product Manager").
 - Never create new metrics. Prefer SOURCE_FACTS.highlightMetrics, but you may also elevate strong numeric proof points from sourced experience or project bullets when they are directly backed by provenance.
 - Do not add a tool or skill unless it already appears in SOURCE_FACTS.skills or SOURCE_FACTS.skillCategories.
 - You may translate verified skills into closer JD terminology only when the mapping is legitimate. Example: "n8n" can become "n8n (workflow automation)".
@@ -70,8 +103,8 @@ Non-negotiable rules:
 Content objectives:
 - Headline: crisp, premium, ATS-aligned, and matched to the JD's product/domain language.
 - Highlight metrics: 4 metrics only, ordered for maximum relevance to the JD.
-- Summary: executive-quality and keyword-rich without sounding stuffed. Prefer 2 concise paragraphs separated by a blank line.
-- Experience bullets: keep the same facts and numbers, but sharpen framing around the JD's priorities when useful.
+- Summary: open with CANDIDATE_ANALYSIS.summaryOpeningHint if provided, then cover topStrengths in 1-2 sentences, then address role scope. Prefer 2 concise paragraphs. If gapAnalysis is empty, use best judgment from JD and source facts.
+- Experience bullets: for each experience id listed in CANDIDATE_ANALYSIS bullet priorities, front-load the first 1-2 bullets addressing the specified leadThemes using verified source facts. Remaining bullets may follow original ordering with sharpened JD framing.
 - Skills: make the skills section scan well for ATS and human reviewers by reordering categories and surfacing the strongest relevant keywords early.
 
 Write like a high-caliber product or technical resume, not generic career-coach prose:
@@ -80,6 +113,13 @@ Write like a high-caliber product or technical resume, not generic career-coach 
 - Avoid buzzword spam, filler adjectives, and empty leadership clichés.
 - Favor readable ATS phrases over clever wording.
 - Make the candidate look exceptional through framing, prioritization, and specificity, not invention.
+
+${buildCandidateAnalysisSection(plan)}
+
+Gap handling:
+- When CANDIDATE_ANALYSIS lists genuine gaps, do NOT invent experience to fill them.
+- Instead, reframe existing experience to demonstrate adjacent competency.
+- When gaps are material and unavoidable, write bullets that honestly show related scope rather than claiming the missing skill.
 
 JOB_DESCRIPTION:
 ${jdText}

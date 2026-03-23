@@ -130,6 +130,30 @@ export interface JDRequirementModel {
   niceToHaveKeywords: string[];
   responsibilities: string[];
   senioritySignals: string[];
+  aiExtracted: boolean;
+  companyName?: string;
+}
+
+export interface BulletPriorityHint {
+  experienceId: string;
+  leadThemes: string[];
+}
+
+export interface GapAnalysis {
+  fitScore?: number;
+  repositioningAngle: string;
+  topStrengths: string[];
+  keyGaps: string[];
+  bulletPriorities: BulletPriorityHint[];
+  summaryOpeningHint: string;
+}
+
+export interface ScoreBreakdown {
+  keywordCoverage: number;
+  niceCoverage: number;
+  titleMatch: boolean;
+  seniorityMatch: boolean;
+  structureScore: number;
 }
 
 export interface TailoringPlan {
@@ -139,6 +163,7 @@ export interface TailoringPlan {
   keywordTargets: string[];
   sectionsLocked: string[];
   sectionsOptional: string[];
+  gapAnalysis?: GapAnalysis;
 }
 
 export interface TailoredBullet {
@@ -224,6 +249,8 @@ export interface ResumeAnalysis {
   missingMustHaveKeywords: string[];
   missingNiceToHaveKeywords: string[];
   alignmentScore: number;
+  preAlignmentScore: number;
+  scoreBreakdown: ScoreBreakdown;
   strongestAlignedExperiences: string[];
   weakSections: string[];
   recommendations: string[];
@@ -239,6 +266,7 @@ export interface TailorResumeSuccessResponse {
   renderReadiness: 'ready';
   normalizedJobDescription: NormalizedJobDescription;
   parseWarnings: ExtractionWarning[];
+  jdCompanyName?: string;
 }
 
 export interface TailorResumeBlockedResponse {
@@ -250,8 +278,64 @@ export interface TailorResumeBlockedResponse {
   renderReadiness: 'blocked';
   normalizedJobDescription: NormalizedJobDescription;
   parseWarnings: ExtractionWarning[];
+  jdCompanyName?: string;
 }
 
 export type TailorResumeResponse =
   | TailorResumeSuccessResponse
   | TailorResumeBlockedResponse;
+
+/* ─────────────────────────────────────────
+   Job Search
+───────────────────────────────────────── */
+
+export interface CandidateProfile {
+  primaryTitles: string[];
+  topSkills: string[];
+  technologiesAndTools: string[];
+  industries: string[];
+  seniorityLevel: 'junior' | 'mid' | 'senior' | 'staff' | 'principal';
+  yearsOfExperience: number;
+  location: string;
+  educationLevel: string;
+  domainExpertise: string[];
+}
+
+export interface JobMatchBreakdown {
+  skillsOverlap: number;
+  titleSimilarity: number;
+  seniorityFit: 'under' | 'match' | 'over';
+  domainMatch: number;
+  topMatchingSkills: string[];
+  keyGaps: string[];
+  overallFit: 'strong' | 'good' | 'moderate' | 'stretch';
+}
+
+export interface JobSearchResult {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  remoteType: 'remote' | 'hybrid' | 'onsite' | 'unknown';
+  url?: string;
+  description: string;
+  requiredSkills: string[];
+  niceToHaveSkills: string[];
+  estimatedSalary?: string;
+  matchScore: number;
+  matchBreakdown: JobMatchBreakdown;
+  postedDate?: string;
+  companyStage?: string;
+}
+
+export interface JobSearchPreferences {
+  location?: string;
+  remotePreference?: 'remote' | 'hybrid' | 'onsite' | 'any';
+  roleType?: string;
+}
+
+export interface JobSearchResponse {
+  results: JobSearchResult[];
+  candidateProfile: CandidateProfile;
+  totalFound: number;
+}

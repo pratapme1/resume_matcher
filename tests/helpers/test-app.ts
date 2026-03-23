@@ -10,10 +10,14 @@ type TestAppOverrides = {
 
 function defaultGetAI(req?: Request) {
   const body = req?.body as { jdText?: string } | undefined;
-  const fixture = body?.jdText?.includes('[blocked]')
+  const tailorFixture = body?.jdText?.includes('[blocked]')
     ? 'mock-ai-blocked.json'
     : 'mock-ai-success.json';
-  return new MockAIClient(fixture);
+  return new MockAIClient([
+    'mock-ai-jd.json',
+    'mock-ai-gap.json',
+    tailorFixture,
+  ]);
 }
 
 export function createTestApp(overrides: TestAppOverrides = {}) {
@@ -24,5 +28,6 @@ export function createTestApp(overrides: TestAppOverrides = {}) {
         status: 200,
         headers: { 'Content-Type': 'text/html' },
       })),
+    disablePlaywrightJdFallback: true,
   });
 }

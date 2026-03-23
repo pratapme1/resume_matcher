@@ -1,6 +1,7 @@
 import type {
   JDRequirementModel,
   ResumeAnalysis,
+  ScoreBreakdown,
   SourceResumeDocument,
   TailoringPlan,
 } from '../src/shared/types.ts';
@@ -8,6 +9,7 @@ import { clamp, sanitizeKeyword, tokenizeText, unique } from './utils.ts';
 
 function collectResumeCorpus(resume: SourceResumeDocument): string {
   return [
+    resume.headline,
     resume.summary,
     ...resume.skills,
     ...resume.certifications,
@@ -17,6 +19,55 @@ function collectResumeCorpus(resume: SourceResumeDocument): string {
   ]
     .filter(Boolean)
     .join(' ');
+}
+
+function tokenInCorpus(token: string, corpus: string): boolean {
+  if (corpus.includes(token)) return true;
+  // Singular fallback: strip trailing 's' (e.g. "processes"→"process", "integrations"→"integration")
+  if (token.endsWith('s') && token.length > 4) {
+    return corpus.includes(token.slice(0, -1));
+  }
+  return false;
+}
+
+function keywordMatches(sanitizedCorpus: string, keyword: string): boolean {
+  if (sanitizedCorpus.includes(keyword)) return true;
+  // Multi-word fallback: ≥50% of tokens (>1 char) must appear in corpus
+  const tokens = keyword.split(/\s+/).filter((t) => t.length > 1);
+  if (tokens.length < 2) return false;
+  const matched = tokens.filter((t) => tokenInCorpus(t, sanitizedCorpus)).length;
+  return matched / tokens.length >= 0.5;
+}
+
+function computeScore(
+  sanitizedCorpus: string,
+  jd: JDRequirementModel,
+  shared: { titleMatch: boolean; seniorityMatch: boolean; structureScore: number },
+): { score: number; breakdown: ScoreBreakdown } {
+  const matchedMustHave = jd.mustHaveKeywords.filter((k) => keywordMatches(sanitizedCorpus, k));
+  const matchedNice = jd.niceToHaveKeywords.filter((k) => keywordMatches(sanitizedCorpus, k));
+
+  const keywordCoverage = jd.mustHaveKeywords.length ? matchedMustHave.length / jd.mustHaveKeywords.length : 0.5;
+  const niceCoverage = jd.niceToHaveKeywords.length ? matchedNice.length / jd.niceToHaveKeywords.length : 0.5;
+
+  const { titleMatch, seniorityMatch, structureScore } = shared;
+
+  const score = Math.round(
+    clamp(
+      keywordCoverage * 50 +
+        niceCoverage * 15 +
+        (titleMatch ? 1 : 0.4) * 15 +
+        (seniorityMatch ? 1 : 0.5) * 10 +
+        structureScore * 10,
+      0,
+      100,
+    ),
+  );
+
+  return {
+    score,
+    breakdown: { keywordCoverage, niceCoverage, titleMatch, seniorityMatch, structureScore },
+  };
 }
 
 export function buildTailoringPlan(resume: SourceResumeDocument, jd: JDRequirementModel): TailoringPlan {
@@ -50,23 +101,17 @@ export function buildAnalysis(
   resume: SourceResumeDocument,
   jd: JDRequirementModel,
   normalizedJdText: string,
+  tailoredCorpus?: string,
 ): ResumeAnalysis {
-  const corpus = sanitizeKeyword(collectResumeCorpus(resume));
-  const matchedKeywords = jd.mustHaveKeywords.filter((keyword) => corpus.includes(keyword));
-  const missingMustHaveKeywords = jd.mustHaveKeywords.filter((keyword) => !corpus.includes(keyword));
-  const missingNiceToHaveKeywords = jd.niceToHaveKeywords.filter((keyword) => !corpus.includes(keyword));
+  const sourceCorpus = sanitizeKeyword(collectResumeCorpus(resume));
+  const matchedKeywords = jd.mustHaveKeywords.filter((keyword) => keywordMatches(sourceCorpus, keyword));
+  const missingMustHaveKeywords = jd.mustHaveKeywords.filter((keyword) => !keywordMatches(sourceCorpus, keyword));
+  const missingNiceToHaveKeywords = jd.niceToHaveKeywords.filter((keyword) => !keywordMatches(sourceCorpus, keyword));
 
   const titleMatch = jd.targetTitles.some((title) =>
-    tokenizeText(title).some((token) => corpus.includes(token)),
+    tokenizeText(title).some((token) => sourceCorpus.includes(token)),
   );
-  const seniorityMatch = jd.senioritySignals.some((signal) => corpus.includes(signal));
-
-  const keywordCoverage = jd.mustHaveKeywords.length
-    ? matchedKeywords.length / jd.mustHaveKeywords.length
-    : 0.5;
-  const niceCoverage = jd.niceToHaveKeywords.length
-    ? (jd.niceToHaveKeywords.length - missingNiceToHaveKeywords.length) / jd.niceToHaveKeywords.length
-    : 0.5;
+  const seniorityMatch = jd.senioritySignals.some((signal) => sourceCorpus.includes(signal));
 
   const structureScore = [
     resume.summary ? 1 : 0,
@@ -75,18 +120,22 @@ export function buildAnalysis(
     resume.education.length > 0 ? 1 : 0,
   ].reduce((sum, value) => sum + value, 0) / 4;
 
-  const alignmentScore = Math.round(
-    clamp(
-      keywordCoverage * 35 +
-        keywordCoverage * 30 +
-        (titleMatch ? 1 : 0.4) * 15 +
-        (seniorityMatch ? 1 : 0.5) * 10 +
-        structureScore * 10 +
-        niceCoverage * 5,
-      0,
-      100,
-    ),
-  );
+  const shared = { titleMatch, seniorityMatch, structureScore };
+  const { score: preScore, breakdown: preBreakdown } = computeScore(sourceCorpus, jd, shared);
+  const preAlignmentScore = preScore;
+
+  let alignmentScore: number;
+  let scoreBreakdown: ScoreBreakdown;
+
+  if (tailoredCorpus) {
+    const sanitizedTailored = sanitizeKeyword(tailoredCorpus);
+    const { score: postScore, breakdown: postBreakdown } = computeScore(sanitizedTailored, jd, shared);
+    alignmentScore = postScore;
+    scoreBreakdown = postBreakdown;
+  } else {
+    alignmentScore = preScore;
+    scoreBreakdown = preBreakdown;
+  }
 
   const strongestAlignedExperiences = resume.experience
     .map((item) => {
@@ -120,6 +169,8 @@ export function buildAnalysis(
     missingMustHaveKeywords,
     missingNiceToHaveKeywords,
     alignmentScore,
+    preAlignmentScore,
+    scoreBreakdown,
     strongestAlignedExperiences,
     weakSections,
     recommendations,

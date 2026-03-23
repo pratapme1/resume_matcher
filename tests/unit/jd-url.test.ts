@@ -28,6 +28,8 @@ describe('job description URL fetch helper', () => {
       fetchJobDescriptionText(
         'https://example.com/job',
         async () => new Response('<html><body><script>ignored()</script></body></html>', { status: 200 }),
+        undefined,
+        null, // disable Playwright fallback in tests
       ),
     ).rejects.toMatchObject({
       code: 'EMPTY_EXTRACTED_TEXT',

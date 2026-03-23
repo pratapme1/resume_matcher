@@ -122,10 +122,14 @@ describe('api integration', () => {
   });
 
   it('returns 502 when the AI provider fails', async () => {
+    let callCount = 0;
     const failingApp = createTestApp({
       getAI: (_req?: Request) => ({
         models: {
           generateContent: async () => {
+            callCount++;
+            if (callCount === 1) return { text: JSON.stringify({ mustHaveKeywords: [], niceToHaveKeywords: [], targetTitles: [], seniorityLevel: '' }) };
+            if (callCount === 2) return { text: JSON.stringify({ repositioningAngle: '', topStrengths: [], keyGaps: [], bulletPriorities: [], summaryOpeningHint: '' }) };
             throw new Error('provider down');
           },
         },
@@ -142,10 +146,16 @@ describe('api integration', () => {
   });
 
   it('returns 502 when the AI payload is invalid', async () => {
+    let callCount = 0;
     const invalidPayloadApp = createTestApp({
       getAI: (_req?: Request) => ({
         models: {
-          generateContent: async () => ({ text: '{"summary":"missing most fields"}' }),
+          generateContent: async () => {
+            callCount++;
+            if (callCount === 1) return { text: JSON.stringify({ mustHaveKeywords: [], niceToHaveKeywords: [], targetTitles: [], seniorityLevel: '' }) };
+            if (callCount === 2) return { text: JSON.stringify({ repositioningAngle: '', topStrengths: [], keyGaps: [], bulletPriorities: [], summaryOpeningHint: '' }) };
+            return { text: '{"summary":"missing most fields"}' };
+          },
         },
       }),
     });
