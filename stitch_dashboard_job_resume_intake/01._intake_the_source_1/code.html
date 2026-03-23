@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CINEMATIC INTELLIGENCE - THE SOURCE</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@700;800;900&amp;family=Space+Grotesk:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-container": "#b7b4b4",
+                        "tertiary-container": "#f1daff",
+                        "on-surface": "#e5e2e1",
+                        "error": "#ffb4ab",
+                        "outline": "#8e9379",
+                        "on-primary-fixed-variant": "#3c4d00",
+                        "surface-dim": "#131313",
+                        "secondary": "#c9c6c5",
+                        "on-primary-fixed": "#161e00",
+                        "on-secondary": "#313030",
+                        "on-error-container": "#ffdad6",
+                        "surface-variant": "#353534",
+                        "surface-tint": "#abd600",
+                        "inverse-on-surface": "#313030",
+                        "on-background": "#e5e2e1",
+                        "surface": "#131313",
+                        "surface-container-highest": "#353534",
+                        "outline-variant": "#444933",
+                        "inverse-primary": "#506600",
+                        "inverse-surface": "#e5e2e1",
+                        "background": "#131313",
+                        "surface-bright": "#3a3939",
+                        "primary-container": "#c3f400",
+                        "error-container": "#93000a",
+                        "on-primary": "#283500",
+                        "tertiary": "#ffffff",
+                        "tertiary-fixed": "#f1daff",
+                        "on-tertiary-fixed": "#2d004f",
+                        "surface-container": "#201f1f",
+                        "surface-container-low": "#1c1b1b",
+                        "on-tertiary-fixed-variant": "#6b00b0",
+                        "tertiary-fixed-dim": "#dfb7ff",
+                        "secondary-container": "#474646",
+                        "on-surface-variant": "#c4c9ac",
+                        "on-error": "#690005",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-tertiary": "#4b007e",
+                        "on-tertiary-container": "#9500f2",
+                        "primary-fixed-dim": "#abd600",
+                        "primary": "#ffffff",
+                        "on-primary-container": "#556d00",
+                        "secondary-fixed": "#e5e2e1",
+                        "surface-container-high": "#2a2a2a",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-secondary-fixed-variant": "#474646",
+                        "secondary-fixed-dim": "#c9c6c5",
+                        "primary-fixed": "#c3f400"
+                    },
+                    fontFamily: {
+                        "headline": ["Epilogue"],
+                        "body": ["Space Grotesk"],
+                        "label": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-scanline {
+            background: linear-gradient(to bottom, transparent 50%, rgba(195, 244, 0, 0.05) 50%);
+            background-size: 100% 4px;
+        }
+    </style>
+</head>
+<body class="bg-surface-dim text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed overflow-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-8 h-16 bg-[#131313]/40 backdrop-blur-xl border-b border-[#444933]/20 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black tracking-tighter text-[#c3f400] drop-shadow-[0_0_8px_rgba(195,244,0,0.4)] font-headline">CINEMATIC INTELLIGENCE</span>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="font-['Epilogue'] tracking-tight uppercase font-bold text-xs text-[#c3f400] border-b-2 border-[#c3f400] pb-1" href="#">SOURCE</a>
+<a class="font-['Epilogue'] tracking-tight uppercase font-bold text-xs text-[#e5e2e1]/60 hover:text-[#e5e2e1] transition-colors" href="#">BRIDGE</a>
+<a class="font-['Epilogue'] tracking-tight uppercase font-bold text-xs text-[#e5e2e1]/60 hover:text-[#e5e2e1] transition-colors" href="#">SYNTHESIS</a>
+<a class="font-['Epilogue'] tracking-tight uppercase font-bold text-xs text-[#e5e2e1]/60 hover:text-[#e5e2e1] transition-colors" href="#">PERSONA</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-[#c3f400] hover:bg-[#c3f400]/10 transition-all duration-300 p-2 rounded-full" data-icon="sensors">sensors</button>
+<button class="material-symbols-outlined text-[#c3f400] hover:bg-[#c3f400]/10 transition-all duration-300 p-2 rounded-full" data-icon="settings_input_component">settings_input_component</button>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full z-40 flex flex-col py-8 bg-[#0e0e0e]/80 backdrop-blur-2xl border-r border-[#444933]/15 shadow-[10px_0_30px_rgba(0,0,0,0.5)] w-20 hover:w-64 transition-all duration-500 group">
+<div class="mt-16 px-4 flex flex-col gap-8 h-full">
+<div class="flex items-center gap-4 px-2">
+<div class="w-10 h-10 rounded-full border border-primary-fixed/30 overflow-hidden flex-shrink-0">
+<img alt="User Analyst Profile" class="w-full h-full object-cover grayscale brightness-125" data-alt="Futuristic cyber security analyst avatar portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqfW1HnV0yleHSKBtGJ0RcnwkAeyWvtG5wGMd6uAj9oYawzqkkcGv6oUxCKmKhKugO1uCj_iW78SRBRazLxZMqZHgIQbc5sm4W9fnpve2huhnRjuRVfNfEWRBDFLqVpm6hXmC2s7jRB3pidL0x8tShj30mxDZovYYS_1whPOjydnw4u16TRAa5ljU2zLoQXvjJS2btVEkaoPQ-OxBtFsa1ipzy89Yp40BFoClzeavZTowYt0vYP1hk0_IEzm_Fl7WHZrQlQBKGS9k"/>
+</div>
+<div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+<p class="font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase text-primary-fixed">NEURAL_ID_01</p>
+<p class="font-['Space_Grotesk'] text-[8px] tracking-[0.1em] text-on-surface/40">STATUS: SCANNING</p>
+</div>
+</div>
+<nav class="flex flex-col gap-4 mt-8">
+<!-- INTAKE Active -->
+<a class="flex items-center gap-4 p-3 bg-[#c3f400] text-[#131313] shadow-[0_0_15px_rgba(195,244,0,0.3)] transition-all duration-300 rounded-lg" href="#">
+<span class="material-symbols-outlined shrink-0" data-icon="upload_file">upload_file</span>
+<span class="font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100">INTAKE</span>
+</a>
+<a class="flex items-center gap-4 p-3 text-[#e5e2e1]/40 group-hover:text-[#e5e2e1]/80 hover:bg-[#353534] hover:text-[#c3f400] transition-all duration-300 rounded-lg" href="#">
+<span class="material-symbols-outlined shrink-0" data-icon="hub">hub</span>
+<span class="font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100">NEURAL</span>
+</a>
+<a class="flex items-center gap-4 p-3 text-[#e5e2e1]/40 group-hover:text-[#e5e2e1]/80 hover:bg-[#353534] hover:text-[#c3f400] transition-all duration-300 rounded-lg" href="#">
+<span class="material-symbols-outlined shrink-0" data-icon="Subject">subject</span>
+<span class="font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100">NARRATIVE</span>
+</a>
+<a class="flex items-center gap-4 p-3 text-[#e5e2e1]/40 group-hover:text-[#e5e2e1]/80 hover:bg-[#353534] hover:text-[#c3f400] transition-all duration-300 rounded-lg" href="#">
+<span class="material-symbols-outlined shrink-0" data-icon="account_circle">account_circle</span>
+<span class="font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100">DOSSIER</span>
+</a>
+</nav>
+<div class="mt-auto group-hover:block hidden">
+<button class="w-full py-3 bg-surface-variant/40 border border-outline-variant/20 text-primary-fixed font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase hover:bg-primary-fixed hover:text-surface transition-all duration-300">
+                    INITIATE SYNTHESIS
+                </button>
+</div>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="ml-20 h-screen relative flex items-center justify-center overflow-hidden bg-surface">
+<!-- Backdrop Text Architecture -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+<h1 class="font-headline font-black text-[25vw] leading-none text-surface-container-low opacity-20 tracking-tighter whitespace-nowrap translate-y-12">
+                01 / THE SOURCE
+            </h1>
+</div>
+<!-- Animated Grid/Scan Background -->
+<div class="absolute inset-0 bg-scanline opacity-10 pointer-events-none"></div>
+<div class="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface pointer-events-none"></div>
+<!-- Central Portal (Upload Area) -->
+<div class="relative z-10 w-full max-w-4xl px-8 flex flex-col items-center">
+<!-- Branding Header for Canvas -->
+<div class="text-center mb-12">
+<div class="inline-flex items-center gap-2 mb-2">
+<span class="h-[1px] w-8 bg-primary-fixed/50"></span>
+<span class="font-label text-primary-fixed text-xs tracking-[0.4em] uppercase">Data Acquisition Protocol</span>
+<span class="h-[1px] w-8 bg-primary-fixed/50"></span>
+</div>
+<h2 class="font-headline text-5xl md:text-7xl font-extrabold tracking-tight text-on-surface">THE SOURCE</h2>
+</div>
+<!-- Bento Input Modules -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+<!-- Left: File/Job Intake -->
+<div class="bg-surface-container-low/60 backdrop-blur-2xl p-8 rounded-none border-l-2 border-primary-fixed/30 relative group overflow-hidden">
+<div class="absolute top-0 right-0 p-2 opacity-20 text-[10px] font-label text-primary-fixed">MOD_01_INPUT</div>
+<div class="mb-6">
+<h3 class="font-headline text-xl text-on-surface mb-1">DATA_STREAM_01</h3>
+<p class="font-body text-xs text-on-surface/40 uppercase tracking-widest">Target Job Description / URL</p>
+</div>
+<div class="relative mb-4">
+<textarea class="w-full bg-transparent border-b-2 border-outline-variant focus:border-primary-fixed transition-colors duration-500 py-3 outline-none font-body text-sm text-on-surface resize-none placeholder:text-on-surface/20" placeholder="Paste target requirements or recruitment URL here..." rows="4"></textarea>
+<div class="absolute bottom-0 left-0 h-full w-full bg-gradient-to-t from-primary-fixed/5 to-transparent pointer-events-none opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
+</div>
+<div class="flex justify-between items-center text-[10px] font-label text-on-surface/40">
+<span>LITERAL_MATCHING: ENABLED</span>
+<span>000/5000 CHR</span>
+</div>
+</div>
+<!-- Right: Resume/Identity Intake -->
+<div class="bg-surface-container-low/60 backdrop-blur-2xl p-8 rounded-none border-l-2 border-primary-fixed/30 relative group overflow-hidden">
+<div class="absolute top-0 right-0 p-2 opacity-20 text-[10px] font-label text-primary-fixed">MOD_02_INPUT</div>
+<div class="mb-6">
+<h3 class="font-headline text-xl text-on-surface mb-1">DATA_STREAM_02</h3>
+<p class="font-body text-xs text-on-surface/40 uppercase tracking-widest">Candidate Neural Profile</p>
+</div>
+<!-- Drop Zone Portal -->
+<div class="border-2 border-dashed border-outline-variant/30 h-32 flex flex-col items-center justify-center group/drop hover:border-primary-fixed/40 transition-colors cursor-pointer bg-surface-container-highest/10 relative">
+<span class="material-symbols-outlined text-4xl text-on-surface/20 group-hover/drop:text-primary-fixed transition-colors mb-2" data-icon="cloud_upload">cloud_upload</span>
+<p class="font-label text-[10px] tracking-widest text-on-surface/40 uppercase group-hover/drop:text-on-surface transition-colors">Inject Resume .PDF / .DOCX</p>
+<!-- Decorative corners -->
+<div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-primary-fixed/30"></div>
+<div class="absolute top-0 right-0 w-2 h-2 border-t border-r border-primary-fixed/30"></div>
+<div class="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-primary-fixed/30"></div>
+<div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-primary-fixed/30"></div>
+</div>
+<div class="mt-4 flex items-center gap-3">
+<div class="h-[1px] flex-grow bg-outline-variant/30"></div>
+<span class="font-label text-[9px] text-on-surface/20 uppercase tracking-[0.3em]">OR MANUAL ENTRY</span>
+<div class="h-[1px] flex-grow bg-outline-variant/30"></div>
+</div>
+</div>
+</div>
+<!-- CTA: Initiate Synthesis -->
+<div class="mt-16 w-full flex flex-col items-center gap-4">
+<button class="group relative px-12 py-5 bg-primary-fixed text-on-primary-fixed font-headline font-black text-lg tracking-[0.15em] uppercase overflow-hidden transition-all active:scale-95 shadow-[0_0_40px_rgba(195,244,0,0.2)]">
+<div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+<span class="relative flex items-center gap-3">
+                        INITIATE NEURAL SCAN
+                        <span class="material-symbols-outlined text-xl" data-icon="bolt" data-weight="fill" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</span>
+</button>
+<div class="flex items-center gap-6 font-label text-[10px] tracking-[0.2em] text-on-surface/30">
+<div class="flex items-center gap-2">
+<span class="w-1 h-1 rounded-full bg-primary-fixed"></span>
+                        SECURE_ENCRYPTION_v4
+                    </div>
+<div class="flex items-center gap-2">
+<span class="w-1 h-1 rounded-full bg-primary-fixed"></span>
+                        AI_MODELS: SYNCHRONIZED
+                    </div>
+<div class="flex items-center gap-2">
+<span class="w-1 h-1 rounded-full bg-primary-fixed"></span>
+                        LATENCY: 12ms
+                    </div>
+</div>
+</div>
+</div>
+<!-- Ambient Data Glimmers -->
+<div class="absolute bottom-12 right-12 text-right font-label text-[9px] text-on-surface/20 tracking-widest hidden lg:block">
+            SYSTEM_ARCH: NEURAL_CORE_v2.0<br/>
+            NODE_CLUSTER: NORTH_ATLANTIC_SEA<br/>
+            UPTIME: 99.9997%
+        </div>
+<div class="absolute top-24 left-32 w-64 h-64 bg-primary-fixed/5 blur-[120px] rounded-full pointer-events-none"></div>
+<div class="absolute bottom-24 right-32 w-96 h-96 bg-tertiary-fixed-dim/5 blur-[150px] rounded-full pointer-events-none"></div>
+</main>
+<!-- Scanning Overlay Animation (CSS Simulation) -->
+<div class="fixed inset-0 pointer-events-none overflow-hidden z-[60]">
+<div class="w-full h-[2px] bg-primary-fixed/20 shadow-[0_0_15px_rgba(195,244,0,0.5)] absolute top-0 animate-[scan_8s_linear_infinite]"></div>
+</div>
+<style>
+        @keyframes scan {
+            from { top: -10%; }
+            to { top: 110%; }
+        }
+        .animate-\[scan_8s_linear_infinite\] {
+            animation: scan 8s linear infinite;
+        }
+    </style>
+</body></html>

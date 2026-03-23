@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Modern Strategist | Evaluation Phase</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@1,6..72,200..800&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-bright": "#faf9f8",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "outline": "#747878",
+                        "on-secondary-container": "#54675e",
+                        "surface-container-highest": "#e3e2e1",
+                        "inverse-on-surface": "#f1f0f0",
+                        "tertiary": "#000000",
+                        "on-secondary-fixed": "#0d1f18",
+                        "on-tertiary-fixed": "#261900",
+                        "surface-tint": "#5f5e5e",
+                        "secondary-fixed": "#d3e7dc",
+                        "primary-fixed": "#e5e2e1",
+                        "inverse-surface": "#2f3130",
+                        "background": "#faf9f8",
+                        "on-secondary-fixed-variant": "#384b42",
+                        "tertiary-fixed": "#ffdea5",
+                        "tertiary-container": "#261900",
+                        "secondary-fixed-dim": "#b7cbc0",
+                        "on-secondary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface": "#faf9f8",
+                        "primary": "#000000",
+                        "on-primary-fixed-variant": "#474646",
+                        "surface-container-high": "#e9e8e7",
+                        "inverse-primary": "#c8c6c5",
+                        "on-primary-container": "#858383",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "surface-variant": "#e3e2e1",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#e9c176",
+                        "error-container": "#ffdad6",
+                        "secondary": "#50635a",
+                        "on-surface": "#1a1c1c",
+                        "surface-container": "#eeeeed",
+                        "on-surface-variant": "#444748",
+                        "primary-container": "#1c1b1b",
+                        "on-background": "#1a1c1c",
+                        "secondary-container": "#d0e5d9",
+                        "on-tertiary-fixed-variant": "#5d4201",
+                        "outline-variant": "#c4c7c7",
+                        "surface-dim": "#dadad9",
+                        "on-tertiary-container": "#a17f3b",
+                        "surface-container-low": "#f4f3f2",
+                        "on-primary-fixed": "#1c1b1b",
+                        "surface-container-lowest": "#ffffff"
+                    },
+                    fontFamily: {
+                        "headline": ["Newsreader"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #faf9f8;
+            color: #1a1c1c;
+        }
+        .serif-italic { font-family: 'Newsreader', serif; font-style: italic; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-surface selection:bg-secondary-container">
+<!-- Top Navigation Anchor -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-[#faf9f8] dark:bg-[#121212]">
+<div class="flex justify-between items-center px-8 py-6 w-full max-w-screen-2xl mx-auto">
+<div class="font-serif italic text-2xl text-[#000000] dark:text-[#f4f3f2]">The Modern Strategist</div>
+<nav class="hidden md:flex items-center gap-12">
+<a class="text-[#50635a]/60 dark:text-[#f4f3f2]/40 font-medium hover:text-[#50635a] transition-colors duration-200" href="#">Portfolio</a>
+<a class="text-[#000000] dark:text-[#ffffff] border-b-2 border-[#50635a] pb-1 hover:text-[#50635a] transition-colors duration-200" href="#">Insights</a>
+<a class="text-[#50635a]/60 dark:text-[#f4f3f2]/40 font-medium hover:text-[#50635a] transition-colors duration-200" href="#">Archive</a>
+</nav>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface" data-icon="account_circle">account_circle</span>
+</div>
+</div>
+<div class="bg-[#f4f3f2] dark:bg-[#1c1b1b] h-[1px] w-full"></div>
+</header>
+<!-- Side Navigation Shell (Evaluation Active) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-[#f4f3f2] dark:bg-[#1c1b1b] hidden lg:block">
+<div class="flex flex-col gap-10 pt-32 px-6 h-full">
+<div class="mb-4">
+<p class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] Inter text-[#50635a] mb-1">Phase IV Progress</p>
+<h3 class="font-serif italic text-xl">The Chronicle</h3>
+</div>
+<nav class="flex flex-col gap-6">
+<a class="flex items-center gap-4 text-[#50635a]/50 dark:text-[#f4f3f2]/30 pl-4 hover:bg-[#eeeeed] dark:hover:bg-[#2a2a2a] scale-100 active:scale-[0.99] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] Inter">Intake</span>
+</a>
+<a class="flex items-center gap-4 text-[#000000] dark:text-[#ffffff] font-bold border-l-2 border-[#50635a] pl-4 hover:bg-[#eeeeed] dark:hover:bg-[#2a2a2a] scale-100 active:scale-[0.99] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="analytics" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] Inter">Evaluation</span>
+</a>
+<a class="flex items-center gap-4 text-[#50635a]/50 dark:text-[#f4f3f2]/30 pl-4 hover:bg-[#eeeeed] dark:hover:bg-[#2a2a2a] scale-100 active:scale-[0.99] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] Inter">Diagnosis</span>
+</a>
+<a class="flex items-center gap-4 text-[#50635a]/50 dark:text-[#f4f3f2]/30 pl-4 hover:bg-[#eeeeed] dark:hover:bg-[#2a2a2a] scale-100 active:scale-[0.99] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="download_done">download_done</span>
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] Inter">Refinement</span>
+</a>
+</nav>
+<div class="mt-auto pb-10 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-outline-variant flex items-center justify-center overflow-hidden">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="Executive User Profile portrait photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhySqMUN7dA3BZMdQe4bDghx-OsLCJ8qvBH3-752VMHJkBjcEiKtVQmvz-Pd19JucfjbMisLAZsjReSg5aEorMjkvHGMKNgWxAlbFs5xuFVosisPscqbWg5FtVxMio4SXuLxI_g21RtBl3zPdv3fwfkUmub96urISRn0v95q3n5fpGOVuCGnAOio3kDcGXL5QYWQsdVePfJfWOiabD_RnpMgD7u6XwrKNDHT6jsMWKvy0m4O0F_uEpWVVxg8ZmajZMSr4idLtoVaw"/>
+</div>
+<div class="flex flex-col">
+<span class="text-[0.6875rem] font-bold tracking-tight">E. STRATFORD</span>
+<span class="text-[0.6rem] text-on-surface-variant uppercase tracking-widest">Director</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:pl-64 pt-32 pb-24 min-h-screen">
+<div class="max-w-6xl mx-auto px-8 lg:px-16">
+<!-- Phase Indicator / Chronicle Track -->
+<div class="mb-16">
+<div class="flex justify-between items-end mb-4">
+<div class="flex flex-col">
+<span class="font-sans uppercase tracking-[0.1em] text-[0.6875rem] text-secondary font-bold">Step 02</span>
+<h1 class="font-headline italic text-4xl lg:text-6xl tracking-tight mt-2">Evaluation</h1>
+</div>
+<div class="text-right hidden md:block">
+<span class="text-on-surface-variant font-label text-[0.6875rem] uppercase tracking-widest">Compatibility Audit</span>
+<div class="text-sm font-body mt-1">Audit ID: TMS-2024-0042</div>
+</div>
+</div>
+<!-- Chronicle Track -->
+<div class="relative h-[2px] w-full bg-outline-variant/30 mt-6">
+<div class="absolute h-[2px] bg-secondary left-0 w-1/2"></div>
+<div class="absolute -top-[3px] left-1/2 w-2 h-2 bg-secondary transform rotate-45"></div>
+</div>
+</div>
+<!-- Hero: Match Score Asymmetry -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center mb-24">
+<div class="lg:col-span-5">
+<div class="relative inline-block">
+<span class="font-headline italic text-[12rem] leading-none tracking-tighter text-primary">78<span class="text-4xl align-top mt-12 inline-block">%</span></span>
+<div class="absolute -bottom-4 right-0 bg-secondary text-white px-4 py-2 text-[0.6875rem] tracking-widest uppercase font-bold">High Match</div>
+</div>
+</div>
+<div class="lg:col-span-7 flex flex-col gap-6">
+<h2 class="font-headline text-3xl italic">The audit indicates a significant alignment with the strategic vision of Phase IV.</h2>
+<p class="font-body text-on-surface-variant max-w-xl leading-relaxed">
+                        While technical depth remains the primary strength, there are nuanced opportunities for refinement in strategic foresight. The candidate demonstrates an exceptional capacity for synthesis, though executive-level exposure remains a critical area for professional seasoning.
+                    </p>
+<div class="flex gap-4 mt-4">
+<div class="px-3 py-1 bg-surface-container text-on-surface-variant text-[0.6875rem] font-bold uppercase tracking-tighter">Verified Integrity</div>
+<div class="px-3 py-1 bg-surface-container text-on-surface-variant text-[0.6875rem] font-bold uppercase tracking-tighter">Peer Review Pending</div>
+</div>
+</div>
+</div>
+<!-- Metric Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24">
+<!-- Strategic Alignment -->
+<div class="bg-surface-container-low p-8 flex flex-col justify-between h-64 border-l-2 border-secondary">
+<div>
+<span class="text-[0.6875rem] font-bold uppercase tracking-[0.05em] text-secondary">Metric 01</span>
+<h3 class="font-headline italic text-2xl mt-2">Strategic Alignment</h3>
+</div>
+<div class="flex items-end justify-between">
+<div class="flex flex-col">
+<span class="text-4xl font-headline italic">84</span>
+<span class="text-[0.6875rem] uppercase font-body text-on-surface-variant tracking-tighter">Percentile Index</span>
+</div>
+<span class="material-symbols-outlined text-secondary opacity-40 text-4xl" data-icon="trending_up">trending_up</span>
+</div>
+</div>
+<!-- Technical Depth -->
+<div class="bg-surface-container-low p-8 flex flex-col justify-between h-64">
+<div>
+<span class="text-[0.6875rem] font-bold uppercase tracking-[0.05em] text-on-surface-variant">Metric 02</span>
+<h3 class="font-headline italic text-2xl mt-2">Technical Depth</h3>
+</div>
+<div class="flex items-end justify-between">
+<div class="flex flex-col">
+<span class="text-4xl font-headline italic">92</span>
+<span class="text-[0.6875rem] uppercase font-body text-on-surface-variant tracking-tighter">Mastery Score</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant opacity-30 text-4xl" data-icon="terminal">terminal</span>
+</div>
+</div>
+<!-- Experience Seniority -->
+<div class="bg-surface-container-low p-8 flex flex-col justify-between h-64">
+<div>
+<span class="text-[0.6875rem] font-bold uppercase tracking-[0.05em] text-on-surface-variant">Metric 03</span>
+<h3 class="font-headline italic text-2xl mt-2">Experience Seniority</h3>
+</div>
+<div class="flex items-end justify-between">
+<div class="flex flex-col">
+<span class="text-4xl font-headline italic">65</span>
+<span class="text-[0.6875rem] uppercase font-body text-on-surface-variant tracking-tighter">Years of Magnitude</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant opacity-30 text-4xl" data-icon="history_edu">history_edu</span>
+</div>
+</div>
+</div>
+<!-- Primary Action -->
+<div class="flex flex-col md:flex-row items-center justify-between border-t border-outline-variant/15 pt-12">
+<div class="mb-8 md:mb-0">
+<h4 class="font-headline italic text-xl">Ready for the diagnostic breakdown?</h4>
+<p class="text-sm text-on-surface-variant mt-1">Next: Phase 03 - Core Diagnosis &amp; Recommendations</p>
+</div>
+<button class="bg-primary text-on-primary px-10 py-5 rounded-sm font-label uppercase tracking-widest text-[0.6875rem] font-bold flex items-center gap-4 hover:bg-primary-container transition-colors duration-300">
+                    03. View Diagnosis
+                    <span class="material-symbols-outlined text-lg" data-icon="arrow_right_alt">arrow_right_alt</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Footer Anchor -->
+<footer class="bg-[#faf9f8] dark:bg-[#121212] w-full py-12 px-8 mt-auto border-t border-[#outline-variant]/15">
+<div class="flex flex-col md:flex-row justify-between items-center max-w-screen-2xl mx-auto gap-8">
+<div class="font-serif italic text-lg text-black dark:text-white">The Modern Strategist</div>
+<div class="flex gap-10">
+<a class="text-[#50635a]/60 dark:text-[#f4f3f2]/40 font-sans text-[0.6875rem] tracking-tight hover:text-black dark:hover:text-white transition-colors" href="#">Terms of Service</a>
+<a class="text-[#50635a]/60 dark:text-[#f4f3f2]/40 font-sans text-[0.6875rem] tracking-tight hover:text-black dark:hover:text-white transition-colors" href="#">Privacy Policy</a>
+<a class="text-[#50635a]/60 dark:text-[#f4f3f2]/40 font-sans text-[0.6875rem] tracking-tight hover:text-black dark:hover:text-white transition-colors" href="#">Methodology</a>
+</div>
+<div class="text-[#50635a] dark:text-[#f4f3f2]/60 font-sans text-[0.6875rem] tracking-tight">
+                © 2024 The Modern Strategist. All rights reserved.
+            </div>
+</div>
+</footer>
+</body></html>

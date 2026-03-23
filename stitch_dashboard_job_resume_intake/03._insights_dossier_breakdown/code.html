@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dossier Breakdown | Cinematic Intelligence</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@700;800;900&amp;family=Space+Grotesk:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-container": "#b7b4b4",
+                        "tertiary-container": "#f1daff",
+                        "on-surface": "#e5e2e1",
+                        "error": "#ffb4ab",
+                        "outline": "#8e9379",
+                        "on-primary-fixed-variant": "#3c4d00",
+                        "surface-dim": "#131313",
+                        "secondary": "#c9c6c5",
+                        "on-primary-fixed": "#161e00",
+                        "on-secondary": "#313030",
+                        "on-error-container": "#ffdad6",
+                        "surface-variant": "#353534",
+                        "surface-tint": "#abd600",
+                        "inverse-on-surface": "#313030",
+                        "on-background": "#e5e2e1",
+                        "surface": "#131313",
+                        "surface-container-highest": "#353534",
+                        "outline-variant": "#444933",
+                        "inverse-primary": "#506600",
+                        "inverse-surface": "#e5e2e1",
+                        "background": "#131313",
+                        "surface-bright": "#3a3939",
+                        "primary-container": "#c3f400",
+                        "error-container": "#93000a",
+                        "on-primary": "#283500",
+                        "tertiary": "#ffffff",
+                        "tertiary-fixed": "#f1daff",
+                        "on-tertiary-fixed": "#2d004f",
+                        "surface-container": "#201f1f",
+                        "surface-container-low": "#1c1b1b",
+                        "on-tertiary-fixed-variant": "#6b00b0",
+                        "tertiary-fixed-dim": "#dfb7ff",
+                        "secondary-container": "#474646",
+                        "on-surface-variant": "#c4c9ac",
+                        "on-error": "#690005",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-tertiary": "#4b007e",
+                        "on-tertiary-container": "#9500f2",
+                        "primary-fixed-dim": "#abd600",
+                        "primary": "#ffffff",
+                        "on-primary-container": "#556d00",
+                        "secondary-fixed": "#e5e2e1",
+                        "surface-container-high": "#2a2a2a",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-secondary-fixed-variant": "#474646",
+                        "secondary-fixed-dim": "#c9c6c5",
+                        "primary-fixed": "#c3f400"
+                    },
+                    fontFamily: {
+                        "headline": ["Epilogue"],
+                        "body": ["Space Grotesk"],
+                        "label": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .glow-border {
+            box-shadow: inset 0 0 0 1px rgba(68, 73, 51, 0.2);
+        }
+        .text-glow {
+            text-shadow: 0 0 8px rgba(195, 244, 0, 0.4);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed overflow-x-hidden">
+<!-- TopAppBar Shell -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-8 h-16 bg-[#131313]/40 backdrop-blur-xl border-b border-[#444933]/20 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+<div class="text-xl font-black tracking-tighter text-[#c3f400] drop-shadow-[0_0_8px_rgba(195,244,0,0.4)] font-headline uppercase">
+            CINEMATIC INTELLIGENCE
+        </div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="font-['Epilogue'] tracking-tight uppercase font-bold text-xs text-[#e5e2e1]/60 hover:text-[#e5e2e1] transition-colors" href="#">SOURCE</a>
+<a class="font-['Epilogue'] tracking-tight uppercase font-bold text-xs text-[#e5e2e1]/60 hover:text-[#e5e2e1] transition-colors" href="#">BRIDGE</a>
+<a class="font-['Epilogue'] tracking-tight uppercase font-bold text-xs text-[#e5e2e1]/60 hover:text-[#e5e2e1] transition-colors" href="#">SYNTHESIS</a>
+<a class="font-['Epilogue'] tracking-tight uppercase font-bold text-xs text-[#c3f400] border-b-2 border-[#c3f400] pb-1" href="#">PERSONA</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-[#c3f400] p-2 hover:bg-[#c3f400]/10 transition-all duration-300 rounded-lg">sensors</button>
+<button class="material-symbols-outlined text-[#c3f400] p-2 hover:bg-[#c3f400]/10 transition-all duration-300 rounded-lg">settings_input_component</button>
+</div>
+</header>
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full z-40 flex flex-col py-8 bg-[#0e0e0e]/80 backdrop-blur-2xl border-r border-[#444933]/15 shadow-[10px_0_30px_rgba(0,0,0,0.5)] w-20 hover:w-64 transition-all duration-500 group overflow-hidden">
+<div class="px-6 mb-12 flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant">
+<img alt="User Analyst Profile" data-alt="User Analyst Profile Portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBcJ-bf-FaUZoLdeqWE-Sk736loICou7ZB824s1mRC3vPoY5d0krTLKbA8u78LZ7zNLNxp54aAb4wLzDe0Sn9EK36JWWfwgKGE7TVGOfqVpeYmEnfM1kE7eSXdYEN3VcYD3dBu_PsiVBmAg-jgY_L6ZjHYBfzAL0WBWfPCTMEyuqRooZTy4Kyw6ngqqxCz3gFLOdkl53rEWCrwtkF3py-2ybdzXCAHKmE9Dy-ajD4qy5aiCLuChnXJJuQDYs09omE1DTj76MpRXdQ"/>
+</div>
+<div>
+<p class="font-headline text-[10px] tracking-widest text-primary-fixed">NEURAL_ID_01</p>
+<p class="font-body text-[8px] text-on-surface-variant/60">STATUS: SCANNING</p>
+</div>
+</div>
+<div class="flex flex-col gap-2 flex-grow">
+<!-- INTAKE -->
+<div class="flex items-center px-6 py-4 cursor-pointer text-[#e5e2e1]/40 group-hover:text-[#e5e2e1]/80 hover:bg-[#353534] hover:text-[#c3f400] transition-all">
+<span class="material-symbols-outlined min-w-[32px]">upload_file</span>
+<span class="ml-4 font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">INTAKE</span>
+</div>
+<!-- NEURAL -->
+<div class="flex items-center px-6 py-4 cursor-pointer text-[#e5e2e1]/40 group-hover:text-[#e5e2e1]/80 hover:bg-[#353534] hover:text-[#c3f400] transition-all">
+<span class="material-symbols-outlined min-w-[32px]">hub</span>
+<span class="ml-4 font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">NEURAL</span>
+</div>
+<!-- NARRATIVE -->
+<div class="flex items-center px-6 py-4 cursor-pointer text-[#e5e2e1]/40 group-hover:text-[#e5e2e1]/80 hover:bg-[#353534] hover:text-[#c3f400] transition-all">
+<span class="material-symbols-outlined min-w-[32px]">subject</span>
+<span class="ml-4 font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">NARRATIVE</span>
+</div>
+<!-- DOSSIER (ACTIVE) -->
+<div class="flex items-center px-6 py-4 cursor-pointer bg-[#c3f400] text-[#131313] shadow-[0_0_15px_rgba(195,244,0,0.3)] transition-all">
+<span class="material-symbols-outlined min-w-[32px]">account_circle</span>
+<span class="ml-4 font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">DOSSIER</span>
+</div>
+</div>
+<div class="px-4 mt-auto opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<button class="w-full bg-primary-fixed text-on-primary-fixed font-headline text-[10px] py-3 rounded-none tracking-tighter hover:brightness-110 transition-all uppercase">
+                INITIATE SYNTHESIS
+            </button>
+</div>
+</aside>
+<main class="ml-20 pt-24 px-12 pb-20 min-h-screen">
+<!-- Header Section -->
+<header class="max-w-7xl mx-auto mb-16 flex flex-col md:flex-row justify-between items-end gap-8">
+<div class="max-w-2xl">
+<div class="flex items-center gap-3 mb-4">
+<span class="h-px w-12 bg-primary-fixed"></span>
+<span class="font-label text-xs tracking-[0.3em] text-primary-fixed uppercase">Insight Protocol 7.4</span>
+</div>
+<h1 class="font-headline text-6xl md:text-8xl font-black uppercase tracking-tighter leading-[0.9] text-on-surface">
+                    Dossier <br/> <span class="text-primary-fixed drop-shadow-[0_0_15px_rgba(195,244,0,0.2)]">Breakdown</span>
+</h1>
+</div>
+<div class="w-full md:w-80 flex flex-col gap-2 p-6 bg-surface-container-low border border-outline-variant/20">
+<div class="flex justify-between items-center mb-1">
+<span class="font-label text-[10px] tracking-widest opacity-60">SYNTHESIS PROGRESS</span>
+<span class="font-label text-[10px] text-primary-fixed">88.4%</span>
+</div>
+<div class="w-full h-1 bg-surface-variant overflow-hidden">
+<div class="h-full bg-primary-fixed w-[88.4%] shadow-[0_0_10px_rgba(195,244,0,0.5)]"></div>
+</div>
+<div class="mt-2 font-label text-[9px] text-on-surface-variant uppercase tracking-widest leading-relaxed">
+                    Analyzing neural weights... <br/>
+                    Keywords isolated: 1,242 <br/>
+                    Contextual overlap: verified
+                </div>
+</div>
+</header>
+<!-- Asymmetric Editorial Grid -->
+<section class="max-w-7xl mx-auto grid grid-cols-12 gap-y-16 md:gap-x-12">
+<!-- Insight Node 1: Large Feature -->
+<div class="col-span-12 lg:col-span-7 group cursor-crosshair">
+<div class="relative p-1 bg-gradient-to-br from-outline-variant/20 to-transparent">
+<div class="absolute -top-4 -left-4 w-12 h-12 border-t-2 border-l-2 border-primary-fixed opacity-40 group-hover:opacity-100 transition-opacity"></div>
+<div class="bg-surface-container-low p-10 glow-border relative overflow-hidden">
+<!-- Background Glow Texture -->
+<div class="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(circle_at_50%_0%,_#c3f400_0%,_transparent_70%)]"></div>
+<div class="flex justify-between items-start mb-8 relative z-10">
+<div>
+<span class="font-label text-xs tracking-tighter text-on-surface-variant mb-2 block">FRAGMENT_001</span>
+<h2 class="font-headline text-3xl font-bold uppercase tracking-tight">The Neural Singularity</h2>
+</div>
+<span class="material-symbols-outlined text-primary-fixed text-4xl">psychology</span>
+</div>
+<div class="font-label text-on-surface-variant leading-relaxed text-sm max-w-lg mb-12 relative z-10">
+                            Subject exhibits high levels of <span class="text-on-surface font-bold">cognitive adaptability</span> in high-stress data environments. The synthesis engine has identified a rare pattern of narrative-first logic processing that bypasses traditional heuristic blocks.
+                        </div>
+<div class="flex flex-wrap gap-4 relative z-10">
+<div class="px-4 py-2 bg-surface-container-high border border-primary-fixed/30 hover:border-primary-fixed transition-colors flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-primary-fixed animate-pulse"></span>
+<span class="font-label text-[11px] tracking-widest uppercase">Adaptive Flow</span>
+</div>
+<div class="px-4 py-2 bg-surface-container-high border border-outline-variant/30 hover:border-primary-fixed transition-colors flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-on-surface-variant"></span>
+<span class="font-label text-[11px] tracking-widest uppercase">Contextual Awareness</span>
+</div>
+</div>
+<!-- Data Scrubber Decoration -->
+<div class="mt-16 relative w-full h-px bg-outline-variant/30">
+<div class="absolute top-1/2 left-1/3 -translate-y-1/2 w-1 h-4 bg-primary-fixed shadow-[0_0_10px_rgba(195,244,0,1)]"></div>
+<div class="absolute -top-6 left-1/3 -translate-x-1/2 font-label text-[9px] text-primary-fixed tracking-widest">PEAK_VALUE: 94.2</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Insight Node 2: Secondary Data Fragment -->
+<div class="col-span-12 lg:col-span-5 flex flex-col justify-center">
+<div class="p-8 border-l-2 border-outline-variant/20 hover:border-primary-fixed transition-all group">
+<div class="font-label text-[10px] text-tertiary-fixed-dim tracking-[0.4em] mb-4 uppercase">Neural Gap Analysis</div>
+<h3 class="font-headline text-2xl mb-6 uppercase tracking-tight">Missing Synthesis <br/> Connectors</h3>
+<ul class="space-y-6">
+<li class="flex items-center gap-4 group/item">
+<div class="w-2 h-2 bg-error shadow-[0_0_8px_rgba(255,180,171,0.5)]"></div>
+<div class="flex-grow">
+<p class="font-label text-xs uppercase tracking-widest text-on-surface">Vector Quantization</p>
+<div class="w-full h-[1px] bg-outline-variant/20 mt-1 overflow-hidden">
+<div class="h-full bg-error w-1/4 group-hover/item:w-1/2 transition-all duration-700"></div>
+</div>
+</div>
+<span class="font-label text-[10px] text-error">CRITICAL</span>
+</li>
+<li class="flex items-center gap-4 group/item">
+<div class="w-2 h-2 bg-outline"></div>
+<div class="flex-grow">
+<p class="font-label text-xs uppercase tracking-widest text-on-surface">Temporal Logic Gates</p>
+<div class="w-full h-[1px] bg-outline-variant/20 mt-1"></div>
+</div>
+<span class="font-label text-[10px] opacity-40">ABSENT</span>
+</li>
+<li class="flex items-center gap-4 group/item">
+<div class="w-2 h-2 bg-primary-fixed"></div>
+<div class="flex-grow">
+<p class="font-label text-xs uppercase tracking-widest text-on-surface">Semantic Weighting</p>
+<div class="w-full h-[1px] bg-outline-variant/20 mt-1 overflow-hidden">
+<div class="h-full bg-primary-fixed w-[85%]"></div>
+</div>
+</div>
+<span class="font-label text-[10px] text-primary-fixed">STABLE</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- Insight Node 3: Bento Grid Fragment -->
+<div class="col-span-12 md:col-span-4 h-full">
+<div class="bg-surface-container-high h-full p-8 glow-border flex flex-col justify-between group hover:bg-[#1c1b1b] transition-all">
+<div>
+<span class="material-symbols-outlined text-tertiary-fixed-dim mb-6 text-3xl">visibility</span>
+<h4 class="font-headline text-xl uppercase tracking-tight mb-4">Implicit Biases</h4>
+<p class="font-label text-xs text-on-surface-variant leading-relaxed opacity-80 group-hover:opacity-100">
+                            Neural patterns suggest a preference for <span class="text-tertiary-fixed-dim">high-entropy environments</span> over structured data streams.
+                        </p>
+</div>
+<div class="mt-8 pt-8 border-t border-outline-variant/10">
+<p class="font-label text-[9px] tracking-widest uppercase opacity-40">Verification Key</p>
+<p class="font-label text-[10px] text-on-surface break-all">X-9942-BETA-PRIME-7781</p>
+</div>
+</div>
+</div>
+<!-- Insight Node 4: Decrypted Message Visual -->
+<div class="col-span-12 md:col-span-8">
+<div class="bg-[#131313] border border-outline-variant/10 relative overflow-hidden h-[350px] group">
+<img class="absolute inset-0 w-full h-full object-cover opacity-30 grayscale group-hover:grayscale-0 transition-all duration-1000 scale-110 group-hover:scale-100" data-alt="Abstract Neon Neural Network Lines" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_EIHAyhScd9MyNrvyvtp-qzqQtGZ5jb-HceRNJF4goAbB-e8y3CG1vKUaTaSQ5LPZgSBhExtOuaMgyJRnlWXLhGFxekMixkiWGmEZNBHYaj8zKUrGnBnyGLwQjbNZDQBPnVAiP7-L8bJGXrXbw04pIq94j_OGWq9uGMEifA5xTLtmpffH8d_soQdOA88F43O_8UtuhAm2uo69XSMPgMCle1Uc8vLQ27sZpErTWEr12hzIbylNr0m-wcROzHJ8lPdNY5OBhMOW2uw"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface to-transparent"></div>
+<div class="absolute bottom-8 left-8 right-8">
+<div class="inline-block px-3 py-1 bg-primary-fixed text-on-primary-fixed font-label text-[9px] tracking-[0.3em] uppercase mb-4">Decrypted Result</div>
+<p class="font-headline text-4xl uppercase tracking-tighter text-on-surface leading-none max-w-xl">
+                            Synthesis complete. <br/> Target Persona exhibits <br/> <span class="text-primary-fixed">Extreme Analytical Potential.</span>
+</p>
+</div>
+<!-- Neural Nodes Overlay -->
+<div class="absolute top-12 left-1/4 w-3 h-3 bg-primary-fixed rounded-full shadow-[0_0_15px_#c3f400]"></div>
+<div class="absolute top-24 left-1/2 w-2 h-2 bg-tertiary-fixed-dim rounded-full shadow-[0_0_15px_#dfb7ff]"></div>
+<div class="absolute top-48 left-2/3 w-3 h-3 bg-primary-fixed rounded-full shadow-[0_0_15px_#c3f400]"></div>
+<svg class="absolute inset-0 w-full h-full pointer-events-none opacity-20">
+<line stroke="#c3f400" stroke-width="1" x1="25%" x2="50%" y1="12%" y2="24%"></line>
+<line stroke="#c3f400" stroke-width="1" x1="50%" x2="66%" y1="24%" y2="48%"></line>
+</svg>
+</div>
+</div>
+</section>
+<!-- Footer / Call to Action -->
+<footer class="max-w-7xl mx-auto mt-24 flex flex-col md:flex-row justify-between items-center gap-12 border-t border-outline-variant/10 pt-16">
+<div class="text-center md:text-left">
+<p class="font-label text-xs tracking-[0.5em] text-on-surface-variant uppercase mb-2">Final Summary</p>
+<h5 class="font-headline text-2xl uppercase tracking-tight text-on-surface">Neural Dossier 01 is ready for <span class="text-primary-fixed italic">Initiation.</span></h5>
+</div>
+<div class="flex gap-4">
+<button class="bg-surface-variant/40 backdrop-blur-md border border-outline-variant/20 px-8 py-4 font-headline text-xs tracking-widest text-primary-fixed uppercase hover:bg-surface-variant transition-all">
+                    Archive Data
+                </button>
+<button class="bg-primary-fixed px-10 py-4 font-headline text-xs tracking-widest text-on-primary-fixed uppercase hover:brightness-110 shadow-[0_0_20px_rgba(195,244,0,0.3)] transition-all">
+                    Commit To Persona
+                </button>
+</div>
+</footer>
+</main>
+<!-- Background Noise / Grid Decoration -->
+<div class="fixed inset-0 pointer-events-none opacity-[0.03] z-[-1] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
+<div class="fixed inset-0 pointer-events-none z-[-2] overflow-hidden">
+<div class="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-primary-fixed/5 blur-[120px] rounded-full"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[30%] h-[30%] bg-tertiary-fixed-dim/5 blur-[100px] rounded-full"></div>
+</div>
+</body></html>

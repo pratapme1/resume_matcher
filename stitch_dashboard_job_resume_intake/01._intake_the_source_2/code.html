@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@1,6..72,200..800&amp;family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container": "#171f33",
+              "on-error-container": "#ffdad6",
+              "on-background": "#dae2fd",
+              "on-secondary-fixed": "#131b2e",
+              "outline": "#8d90a0",
+              "on-tertiary-fixed": "#191c1e",
+              "primary": "#b4c5ff",
+              "secondary": "#bec6e0",
+              "on-secondary": "#283044",
+              "on-primary": "#002a78",
+              "outline-variant": "#434655",
+              "surface": "#0b1326",
+              "surface-container-highest": "#2d3449",
+              "on-primary-container": "#eeefff",
+              "on-tertiary": "#2d3133",
+              "inverse-surface": "#dae2fd",
+              "primary-fixed-dim": "#b4c5ff",
+              "surface-container-high": "#222a3d",
+              "tertiary": "#c4c7c9",
+              "inverse-on-surface": "#283044",
+              "secondary-container": "#3f465c",
+              "on-error": "#690005",
+              "tertiary-container": "#6b6e70",
+              "error-container": "#93000a",
+              "on-primary-fixed": "#00174b",
+              "surface-container-lowest": "#060e20",
+              "secondary-fixed-dim": "#bec6e0",
+              "tertiary-fixed-dim": "#c4c7c9",
+              "on-surface": "#dae2fd",
+              "surface-bright": "#31394d",
+              "on-secondary-fixed-variant": "#3f465c",
+              "error": "#ffb4ab",
+              "secondary-fixed": "#dae2fd",
+              "inverse-primary": "#0053db",
+              "surface-variant": "#2d3449",
+              "primary-fixed": "#dbe1ff",
+              "surface-container-low": "#131b2e",
+              "primary-container": "#2563eb",
+              "on-tertiary-container": "#eff1f3",
+              "on-surface-variant": "#c3c6d7",
+              "on-secondary-container": "#adb4ce",
+              "surface-dim": "#0b1326",
+              "on-tertiary-fixed-variant": "#444749",
+              "tertiary-fixed": "#e0e3e5",
+              "background": "#0b1326",
+              "surface-tint": "#b4c5ff",
+              "on-primary-fixed-variant": "#003ea8"
+            },
+            fontFamily: {
+              "headline": ["Newsreader"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-nav {
+            background: rgba(11, 19, 38, 0.6);
+            backdrop-filter: blur(20px);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation Bar -->
+<nav class="fixed top-0 w-full z-50 glass-nav border-b border-[#b4c5ff]/10 flex justify-between items-center px-8 h-16">
+<div class="text-2xl font-black tracking-tighter text-white uppercase font-headline italic">ASCEND</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-[#2563eb] border-b-2 border-[#2563eb] font-label text-xs tracking-widest uppercase py-5" href="#">Intake</a>
+<a class="text-[#b4c5ff]/60 hover:text-white transition-colors font-label text-xs tracking-widest uppercase" href="#">Analysis</a>
+<a class="text-[#b4c5ff]/60 hover:text-white transition-colors font-label text-xs tracking-widest uppercase" href="#">Diagnosis</a>
+<a class="text-[#b4c5ff]/60 hover:text-white transition-colors font-label text-xs tracking-widest uppercase" href="#">Refinement</a>
+</div>
+<div class="flex items-center gap-4 text-[#b4c5ff]/60">
+<button class="hover:text-white transition-all duration-200 active:opacity-80 active:scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="hover:text-white transition-all duration-200 active:opacity-80 active:scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</nav>
+<!-- Side Navigation -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 border-r border-[#b4c5ff]/10 bg-[#0b1326] flex flex-col py-8 z-40">
+<div class="px-6 mb-12">
+<div class="text-xl font-black text-white font-body">ASCEND</div>
+<div class="text-[10px] uppercase tracking-widest text-[#b4c5ff]/40 font-body font-bold mt-1">Executive Intelligence</div>
+</div>
+<nav class="space-y-2">
+<div class="bg-[#2563eb] text-white flex items-center gap-4 px-6 py-4 w-full border-l-4 border-[#b4c5ff]">
+<span class="material-symbols-outlined" data-icon="input">input</span>
+<span class="font-label font-bold uppercase tracking-widest text-[10px]">Intake</span>
+</div>
+<div class="text-[#b4c5ff]/40 flex items-center gap-4 px-6 py-4 w-full hover:bg-[#171f33] hover:text-white transition-all">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label font-bold uppercase tracking-widest text-[10px]">Analysis</span>
+</div>
+<div class="text-[#b4c5ff]/40 flex items-center gap-4 px-6 py-4 w-full hover:bg-[#171f33] hover:text-white transition-all">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+<span class="font-label font-bold uppercase tracking-widest text-[10px]">Diagnosis</span>
+</div>
+<div class="text-[#b4c5ff]/40 flex items-center gap-4 px-6 py-4 w-full hover:bg-[#171f33] hover:text-white transition-all">
+<span class="material-symbols-outlined" data-icon="auto_fix_high">auto_fix_high</span>
+<span class="font-label font-bold uppercase tracking-widest text-[10px]">Refinement</span>
+</div>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-32 pb-24 px-12 min-h-screen flex flex-col items-center">
+<!-- Header Section -->
+<header class="max-w-4xl w-full mb-20 text-center">
+<div class="flex items-center justify-center gap-4 mb-4">
+<div class="h-[1px] w-12 bg-primary-container"></div>
+<span class="font-body text-[10px] uppercase tracking-[0.3em] text-primary">Deployment Sequence</span>
+<div class="h-[1px] w-12 bg-primary-container"></div>
+</div>
+<h1 class="font-headline italic text-6xl md:text-7xl text-white tracking-tight mb-6">Phase 01: Intake</h1>
+<p class="font-headline text-on-surface-variant text-xl italic max-w-2xl mx-auto opacity-80">
+                Establish the foundation of your intelligence profile. Feed the engine with raw data to begin the distillation process.
+            </p>
+</header>
+<!-- Centered Intake Portal -->
+<section class="max-w-6xl w-full grid grid-cols-1 md:grid-cols-2 gap-12 relative">
+<!-- Receptor 01: Job Context -->
+<div class="group relative bg-surface-container-low p-10 border-l-4 border-primary-container hover:bg-surface-container transition-all duration-500">
+<div class="flex justify-between items-start mb-12">
+<div>
+<span class="font-body text-[10px] font-bold text-primary tracking-widest uppercase block mb-2">Requirement A</span>
+<h2 class="font-headline text-3xl text-white italic">Job Context</h2>
+</div>
+<span class="material-symbols-outlined text-primary-container text-4xl" data-icon="description">description</span>
+</div>
+<p class="font-body text-sm text-on-surface-variant mb-12 leading-relaxed">
+                    Upload the target opportunity documentation. Our engine parses requirements, cultural nuances, and hidden objectives.
+                </p>
+<div class="relative group/upload">
+<input class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" type="file"/>
+<div class="border border-outline-variant border-dashed p-8 text-center group-hover/upload:border-primary transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant mb-4" data-icon="upload_file">upload_file</span>
+<div class="font-body text-xs uppercase tracking-widest text-on-surface">Drop file or <span class="text-primary underline">browse</span></div>
+<div class="text-[10px] text-outline mt-2">PDF, DOCX, TXT (MAX 10MB)</div>
+</div>
+</div>
+<div class="mt-8 flex items-center gap-3">
+<div class="h-1 w-1 bg-primary-container"></div>
+<span class="font-body text-[10px] uppercase tracking-widest text-outline">Waiting for signal...</span>
+</div>
+</div>
+<!-- Receptor 02: Your Profile -->
+<div class="group relative bg-surface-container-low p-10 border-l-4 border-primary-container hover:bg-surface-container transition-all duration-500">
+<div class="flex justify-between items-start mb-12">
+<div>
+<span class="font-body text-[10px] font-bold text-primary tracking-widest uppercase block mb-2">Requirement B</span>
+<h2 class="font-headline text-3xl text-white italic">Your Profile</h2>
+</div>
+<span class="material-symbols-outlined text-primary-container text-4xl" data-icon="fingerprint">fingerprint</span>
+</div>
+<p class="font-body text-sm text-on-surface-variant mb-12 leading-relaxed">
+                    Provide your professional history and achievement metrics. We map your trajectory against the target context.
+                </p>
+<div class="space-y-4">
+<div class="relative">
+<label class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Direct Link (LinkedIn/Portfolio)</label>
+<input class="w-full bg-transparent border-b border-outline-variant focus:border-primary focus:ring-0 px-0 py-3 text-sm font-body text-on-surface placeholder:text-outline/30 transition-all" placeholder="https://" type="text"/>
+</div>
+<div class="relative group/upload pt-4">
+<input class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" type="file"/>
+<div class="flex items-center justify-between border-b border-outline-variant py-4 group-hover/upload:border-primary transition-all">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline" data-icon="attach_file">attach_file</span>
+<span class="font-body text-xs uppercase tracking-widest text-on-surface">Upload Resume</span>
+</div>
+<span class="material-symbols-outlined text-outline text-sm" data-icon="add">add</span>
+</div>
+</div>
+</div>
+<div class="mt-8 flex items-center gap-3">
+<div class="h-1 w-1 bg-primary-container"></div>
+<span class="font-body text-[10px] uppercase tracking-widest text-outline">Awaiting authentication...</span>
+</div>
+</div>
+<!-- Absolute Decorative Elements -->
+<div class="absolute -top-12 -left-12 w-24 h-24 bg-primary-container/5 blur-3xl rounded-full"></div>
+<div class="absolute -bottom-12 -right-12 w-32 h-32 bg-primary/5 blur-3xl rounded-full"></div>
+</section>
+<!-- Executive Insight Module -->
+<div class="max-w-4xl w-full mt-24">
+<div class="bg-surface-container-low p-8 border-l-4 border-primary-container relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-5">
+<span class="material-symbols-outlined text-9xl" data-icon="psychology">psychology</span>
+</div>
+<div class="relative z-10">
+<span class="font-body text-[10px] font-bold text-primary tracking-[0.2em] uppercase block mb-4">Executive Insight</span>
+<blockquote class="font-headline text-2xl md:text-3xl text-white italic leading-snug">
+                        "The quality of the output is a direct derivative of the integrity of the intake. Precision at the source ensures velocity in the diagnosis."
+                    </blockquote>
+<div class="mt-6 flex items-center gap-4">
+<div class="h-[1px] w-8 bg-outline-variant"></div>
+<span class="font-body text-[10px] uppercase tracking-widest text-outline">Ascend Intelligence Core</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Section -->
+<div class="mt-20 flex flex-col items-center">
+<button class="bg-primary-container text-on-primary-container font-body font-bold uppercase tracking-[0.2em] text-xs px-12 py-5 hover:bg-[#b4c5ff] hover:text-[#00174b] transition-all duration-300 active:scale-95">
+                Initialize Analysis
+            </button>
+<p class="font-body text-[10px] text-outline mt-6 uppercase tracking-widest">System ready for deployment</p>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 px-8 mt-auto border-t border-[#b4c5ff]/5 bg-[#0b1326] flex flex-col items-center gap-6 text-center z-30">
+<div class="font-headline text-white italic text-xl">ASCEND</div>
+<div class="flex gap-8">
+<a class="text-[#b4c5ff]/30 font-label text-[10px] uppercase tracking-[0.2em] hover:text-[#2563eb] transition-colors" href="#">Privacy Policy</a>
+<a class="text-[#b4c5ff]/30 font-label text-[10px] uppercase tracking-[0.2em] hover:text-[#2563eb] transition-colors" href="#">Terms of Service</a>
+<a class="text-[#b4c5ff]/30 font-label text-[10px] uppercase tracking-[0.2em] hover:text-[#2563eb] transition-colors" href="#">Contact Support</a>
+</div>
+<div class="font-label text-[10px] uppercase tracking-[0.2em] font-light text-[#b4c5ff]/30">
+            © 2024 ASCEND EXECUTIVE INTELLIGENCE. ALL RIGHTS RESERVED.
+        </div>
+</footer>
+</body></html>

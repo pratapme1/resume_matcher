@@ -4,7 +4,7 @@ import path from 'path';
 import { GoogleGenAI } from '@google/genai';
 import { createApp } from './server/app.ts';
 
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT ?? '3000', 10);
 
 // Load `.env.local` first so local development matches the README and Vite behavior.
 dotenv.config({ path: '.env.local' });
@@ -39,9 +39,20 @@ export async function startServer() {
     });
   }
 
-  return app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
+
+  const shutdown = () => {
+    server.close(() => {
+      console.log('Server shut down gracefully.');
+      process.exit(0);
+    });
+  };
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
+
+  return server;
 }
 
 startServer();

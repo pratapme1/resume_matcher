@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resume Tailor Pro | Discovery Option C</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b1020;
+        --bg2: #0f162b;
+        --panel: rgba(16, 22, 37, 0.84);
+        --panel-strong: rgba(20, 28, 46, 0.96);
+        --line: rgba(255, 255, 255, 0.08);
+        --line-strong: rgba(255, 255, 255, 0.14);
+        --text: #f3f6ff;
+        --muted: #99a6c2;
+        --muted-soft: #7080a0;
+        --accent: #9dc1ff;
+        --accent-strong: #74a6ff;
+        --accent-soft: rgba(157, 193, 255, 0.12);
+        --success: #7fd3b0;
+        --warn: #dfc07d;
+        --shadow: 0 28px 90px -44px rgba(0, 0, 0, 0.72);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        font-family: Inter, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 12% 10%, rgba(157, 193, 255, 0.14), transparent 24%),
+          radial-gradient(circle at 82% 8%, rgba(127, 211, 176, 0.10), transparent 18%),
+          linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+      }
+
+      .font-headline {
+        font-family: Newsreader, serif;
+      }
+
+      .shell {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 0 28px 48px;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        backdrop-filter: blur(18px);
+        background: rgba(11, 16, 32, 0.76);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .topbar-inner {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 20px 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .brand {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .brand-kicker {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .brand-name {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+      }
+
+      .rail {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .step {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        border-radius: 999px;
+        color: var(--muted-soft);
+        border: 1px solid transparent;
+        font-size: 13px;
+      }
+
+      .step span {
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .step.active {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: var(--line);
+        color: var(--text);
+      }
+
+      .step.active span {
+        color: #0b1020;
+        background: var(--accent);
+      }
+
+      .hero {
+        padding: 52px 0 28px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+        gap: 36px;
+        align-items: end;
+      }
+
+      .eyebrow {
+        margin: 0 0 14px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      .hero h1 {
+        margin: 0;
+        max-width: 900px;
+        font-size: clamp(54px, 7.5vw, 86px);
+        line-height: 0.95;
+        font-style: italic;
+        letter-spacing: -0.05em;
+      }
+
+      .hero-copy {
+        margin-left: auto;
+        max-width: 430px;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.75;
+      }
+
+      .metrics {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 22px;
+      }
+
+      .metric {
+        padding: 12px 14px;
+        min-width: 132px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 18px;
+        letter-spacing: -0.02em;
+      }
+
+      .metric span {
+        display: block;
+        margin-top: 3px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted-soft);
+      }
+
+      .board {
+        display: grid;
+        grid-template-columns: 320px minmax(0, 1fr);
+        gap: 22px;
+        align-items: start;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(16px);
+      }
+
+      .sidebar {
+        padding: 22px;
+        position: sticky;
+        top: 104px;
+      }
+
+      .block + .block {
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .label {
+        margin: 0 0 8px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--muted-soft);
+      }
+
+      .title {
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.08;
+        letter-spacing: -0.03em;
+      }
+
+      .file {
+        margin-top: 16px;
+        padding: 15px 16px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .file strong {
+        display: block;
+        font-size: 15px;
+      }
+
+      .file p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 14px;
+      }
+
+      .cell {
+        padding: 14px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .cell label {
+        display: block;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--muted-soft);
+      }
+
+      .cell p {
+        margin: 8px 0 0;
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      .tag.active {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .search {
+        width: 100%;
+        margin-top: 18px;
+        padding: 15px 18px;
+        border: 0;
+        border-radius: 16px;
+        color: #09101e;
+        font-size: 14px;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+      }
+
+      .content {
+        display: grid;
+        gap: 18px;
+      }
+
+      .featured {
+        padding: 26px;
+        background: linear-gradient(180deg, rgba(19, 26, 42, 0.98), rgba(16, 21, 35, 0.94));
+      }
+
+      .featured-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .featured-kicker {
+        margin: 0 0 10px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--accent);
+      }
+
+      .featured-title {
+        margin: 0;
+        font-size: clamp(30px, 4vw, 44px);
+        line-height: 1.02;
+        letter-spacing: -0.04em;
+      }
+
+      .featured-meta {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      .score {
+        min-width: 148px;
+        padding: 16px 18px;
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .score strong {
+        display: block;
+        font-size: 54px;
+        line-height: 0.95;
+        letter-spacing: -0.05em;
+      }
+
+      .score span {
+        display: block;
+        margin-top: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--success);
+      }
+
+      .summary {
+        margin: 20px 0 0;
+        max-width: 900px;
+        font-size: 16px;
+        line-height: 1.75;
+        color: var(--muted);
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-top: 22px;
+      }
+
+      .card {
+        padding: 18px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .card h3 {
+        margin: 0 0 12px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--muted-soft);
+      }
+
+      .bullets {
+        display: grid;
+        gap: 10px;
+      }
+
+      .bullet {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        color: var(--text);
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .bullet::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        margin-top: 8px;
+        border-radius: 999px;
+        background: var(--success);
+        flex: 0 0 auto;
+      }
+
+      .bullet.warn::before {
+        background: var(--warn);
+      }
+
+      .cta-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 22px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .cta-copy {
+        margin: 0;
+        max-width: 520px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .button {
+        appearance: none;
+        border: 0;
+        padding: 13px 16px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .button.primary {
+        color: #09101e;
+        background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+      }
+
+      .button.ghost {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .list {
+        padding: 12px;
+      }
+
+      .list-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 14px 14px 18px;
+      }
+
+      .list-head h2 {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+      }
+
+      .list-head p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .role {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr) auto;
+        gap: 16px;
+        align-items: center;
+        padding: 18px;
+        border-radius: 20px;
+      }
+
+      .role + .role {
+        margin-top: 8px;
+      }
+
+      .role:hover {
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .role h3 {
+        margin: 0;
+        font-size: 18px;
+        letter-spacing: -0.02em;
+      }
+
+      .role p {
+        margin: 8px 0 0;
+        font-size: 14px;
+        line-height: 1.55;
+        color: var(--muted);
+      }
+
+      .highlights {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .mini {
+        padding: 8px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .mini.warn {
+        color: var(--warn);
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 96px;
+        padding: 11px 13px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .pill strong {
+        color: var(--text);
+      }
+
+      .pill span {
+        color: var(--muted);
+        margin-left: 6px;
+      }
+
+      @media (max-width: 1080px) {
+        .hero,
+        .board,
+        .featured-top,
+        .cta-row,
+        .list-head,
+        .role {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-copy {
+          margin-left: 0;
+          max-width: 720px;
+        }
+
+        .board {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          position: static;
+        }
+
+        .featured-top,
+        .cta-row,
+        .list-head {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .shell,
+        .topbar-inner {
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+
+        .topbar-inner {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .hero {
+          padding-top: 34px;
+        }
+
+        .metric {
+          min-width: calc(50% - 6px);
+        }
+
+        .panel,
+        .featured,
+        .sidebar {
+          border-radius: 22px;
+        }
+
+        .grid-2,
+        .split {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-kicker">Resume Tailor Pro</div>
+          <div class="brand-name">Discovery</div>
+        </div>
+        <nav class="rail" aria-label="Workflow phases">
+          <div class="step active"><span>01</span>Discovery</div>
+          <div class="step"><span>02</span>Intake</div>
+          <div class="step"><span>03</span>Match</div>
+          <div class="step"><span>04</span>Diagnosis</div>
+          <div class="step"><span>05</span>Output</div>
+        </nav>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Step 01 / Discovery</p>
+          <h1 class="font-headline">Find the role worth tailoring for.</h1>
+          <div class="metrics">
+            <div class="metric">
+              <strong>12</strong>
+              <span>Roles surfaced</span>
+            </div>
+            <div class="metric">
+              <strong>3</strong>
+              <span>Strong matches</span>
+            </div>
+            <div class="metric">
+              <strong>85</strong>
+              <span>Best fit score</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-copy">
+          Discovery stays separate from intake so the user chooses one credible role first.
+          The selected role can then prefill the JD step without extra browsing or duplicate uploads.
+        </div>
+      </section>
+
+      <section class="board">
+        <aside class="panel sidebar">
+          <div class="block">
+            <p class="label">Candidate Context</p>
+            <h2 class="title">One profile, reused across the workflow</h2>
+            <div class="file">
+              <strong>alex-stratton-resume.docx</strong>
+              <p>Parsed once. Shared by Discovery, Match, Diagnosis, and Output.</p>
+            </div>
+            <div class="grid-2">
+              <div class="cell">
+                <label>Primary role</label>
+                <p>Senior Product Manager</p>
+              </div>
+              <div class="cell">
+                <label>Experience</label>
+                <p>9 years</p>
+              </div>
+              <div class="cell">
+                <label>Strength</label>
+                <p>Platform strategy</p>
+              </div>
+              <div class="cell">
+                <label>Sector</label>
+                <p>B2B SaaS + AI</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="block">
+            <p class="label">Search Tuning</p>
+            <h2 class="title">Light controls, not a job board clone</h2>
+            <div class="tags">
+              <span class="tag">San Francisco</span>
+              <span class="tag active">Remote</span>
+              <span class="tag">Hybrid</span>
+            </div>
+            <div class="tags">
+              <span class="tag active">Product Management</span>
+              <span class="tag">Platform</span>
+              <span class="tag">AI Tooling</span>
+            </div>
+            <button class="search">Refresh best-fit roles</button>
+          </div>
+        </aside>
+
+        <div class="content">
+          <article class="panel featured">
+            <div class="featured-top">
+              <div>
+                <p class="featured-kicker">Best next role</p>
+                <h2 class="featured-title">Senior Product Manager, AI Platform</h2>
+                <div class="featured-meta">Series C infrastructure company · Remote · $188k-$215k</div>
+              </div>
+              <div class="score">
+                <strong>85</strong>
+                <span>Strong match</span>
+              </div>
+            </div>
+
+            <p class="summary">
+              This role is the cleanest handoff into Intake. The overlap is credible, the gaps are specific,
+              and the final tailoring story remains anchored to the candidate's current platform narrative.
+            </p>
+
+            <div class="split">
+              <section class="card">
+                <h3>Why it rises to the top</h3>
+                <div class="bullets">
+                  <div class="bullet">Strong overlap on platform strategy and cross-functional delivery.</div>
+                  <div class="bullet">AI workflow experience already exists in the source resume.</div>
+                  <div class="bullet">Seniority lines up without forcing a stretch narrative.</div>
+                </div>
+              </section>
+
+              <section class="card">
+                <h3>Watchouts before intake</h3>
+                <div class="bullets">
+                  <div class="bullet warn">Developer tooling depth should be positioned carefully.</div>
+                  <div class="bullet warn">Pricing ownership is a real gap and should not be overstated.</div>
+                  <div class="bullet warn">The JD should be checked for platform-specific language.</div>
+                </div>
+              </section>
+            </div>
+
+            <div class="cta-row">
+              <p class="cta-copy">
+                Selecting this role pre-fills Intake. The user can still replace the JD source, but the default path stays clear and decisive.
+              </p>
+              <div class="actions">
+                <button class="button primary">Continue with this role</button>
+                <button class="button ghost">Compare next best match</button>
+              </div>
+            </div>
+          </article>
+
+          <section class="panel list">
+            <div class="list-head">
+              <div>
+                <p class="label">Shortlist</p>
+                <h2>Other strong options</h2>
+              </div>
+              <p>Compact by design. One featured choice, a few real alternatives, no card wall.</p>
+            </div>
+
+            <article class="role">
+              <div>
+                <h3>Principal Product Manager, Workflow Automation</h3>
+                <p>Public enterprise software · Hybrid · Better title upside, but weaker evidence on governance-heavy environments.</p>
+              </div>
+              <div class="highlights">
+                <span class="mini">Automation</span>
+                <span class="mini">Enterprise</span>
+                <span class="mini warn">Governance gap</span>
+              </div>
+              <div class="pill"><strong>78</strong><span>Good</span></div>
+            </article>
+
+            <article class="role">
+              <div>
+                <h3>Group Product Manager, Customer Intelligence</h3>
+                <p>Late-stage SaaS · Remote · Strong on analytics, but less aligned with the current platform-led story.</p>
+              </div>
+              <div class="highlights">
+                <span class="mini">Analytics</span>
+                <span class="mini">Growth</span>
+                <span class="mini warn">Narrative drift</span>
+              </div>
+              <div class="pill"><strong>72</strong><span>Moderate</span></div>
+            </article>
+
+            <article class="role">
+              <div>
+                <h3>Lead Product Manager, Applied AI Ops</h3>
+                <p>Growth-stage infrastructure company · Remote · High relevance, but the resume needs stronger ops language before it becomes a top choice.</p>
+              </div>
+              <div class="highlights">
+                <span class="mini">AI Ops</span>
+                <span class="mini">Infrastructure</span>
+                <span class="mini warn">Ops framing</span>
+              </div>
+              <div class="pill"><strong>69</strong><span>Fair</span></div>
+            </article>
+          </section>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

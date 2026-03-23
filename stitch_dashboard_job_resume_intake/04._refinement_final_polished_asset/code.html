@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Modern Strategist | Phase IV: Refinement</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,700;1,400;1,700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "surface-bright": "#faf9f8",
+                "on-primary": "#ffffff",
+                "on-error": "#ffffff",
+                "on-error-container": "#93000a",
+                "outline": "#747878",
+                "on-secondary-container": "#54675e",
+                "surface-container-highest": "#e3e2e1",
+                "inverse-on-surface": "#f1f0f0",
+                "tertiary": "#000000",
+                "on-secondary-fixed": "#0d1f18",
+                "on-tertiary-fixed": "#261900",
+                "surface-tint": "#5f5e5e",
+                "secondary-fixed": "#d3e7dc",
+                "primary-fixed": "#e5e2e1",
+                "inverse-surface": "#2f3130",
+                "background": "#faf9f8",
+                "on-secondary-fixed-variant": "#384b42",
+                "tertiary-fixed": "#ffdea5",
+                "tertiary-container": "#261900",
+                "secondary-fixed-dim": "#b7cbc0",
+                "on-secondary": "#ffffff",
+                "error": "#ba1a1a",
+                "surface": "#faf9f8",
+                "primary": "#000000",
+                "on-primary-fixed-variant": "#474646",
+                "surface-container-high": "#e9e8e7",
+                "inverse-primary": "#c8c6c5",
+                "on-primary-container": "#858383",
+                "primary-fixed-dim": "#c8c6c5",
+                "surface-variant": "#e3e2e1",
+                "on-tertiary": "#ffffff",
+                "tertiary-fixed-dim": "#e9c176",
+                "error-container": "#ffdad6",
+                "secondary": "#50635a",
+                "on-surface": "#1a1c1c",
+                "surface-container": "#eeeeed",
+                "on-surface-variant": "#444748",
+                "primary-container": "#1c1b1b",
+                "on-background": "#1a1c1c",
+                "secondary-container": "#d0e5d9",
+                "on-tertiary-fixed-variant": "#5d4201",
+                "outline-variant": "#c4c7c7",
+                "surface-dim": "#dadad9",
+                "on-tertiary-container": "#a17f3b",
+                "surface-container-low": "#f4f3f2",
+                "on-primary-fixed": "#1c1b1b",
+                "surface-container-lowest": "#ffffff"
+              },
+              fontFamily: {
+                "headline": ["Newsreader", "serif"],
+                "body": ["Inter", "sans-serif"],
+                "label": ["Inter", "sans-serif"]
+              },
+              borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            font-size: 20px;
+        }
+        .resume-paper {
+            aspect-ratio: 1 / 1.414;
+            box-shadow: 0 10px 30px -15px rgba(0,0,0,0.05);
+        }
+        .highlight-pulse {
+            position: relative;
+        }
+        .highlight-pulse::after {
+            content: '';
+            position: absolute;
+            inset: -2px -4px;
+            background: rgba(233, 193, 118, 0.2);
+            border-left: 2px solid #e9c176;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TopAppBar Navigation -->
+<header class="bg-[#faf9f8] fixed top-0 left-0 right-0 z-50">
+<div class="flex justify-between items-center px-8 py-6 w-full max-w-screen-2xl mx-auto">
+<div class="font-serif italic text-2xl text-[#000000]">The Modern Strategist</div>
+<nav class="hidden md:flex gap-8 items-center">
+<a class="text-[#50635a]/60 font-medium hover:text-[#50635a] transition-colors duration-200" href="#">Portfolio</a>
+<a class="text-[#50635a]/60 font-medium hover:text-[#50635a] transition-colors duration-200" href="#">Insights</a>
+<a class="text-[#50635a]/60 font-medium hover:text-[#50635a] transition-colors duration-200" href="#">Archive</a>
+<button class="material-symbols-outlined text-[#000000] ml-4">account_circle</button>
+</nav>
+</div>
+<div class="bg-[#f4f3f2] h-[1px] w-full"></div>
+</header>
+<!-- SideNavBar (Phase Tracking) -->
+<aside class="bg-[#f4f3f2] h-screen w-64 fixed left-0 top-0 hidden lg:flex flex-col gap-10 pt-32 px-6 z-40">
+<div class="mb-4">
+<p class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] text-[#50635a]/60 mb-1">Executive User Profile</p>
+<h2 class="font-serif italic text-xl text-[#000000]">The Chronicle</h2>
+<p class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] text-[#50635a]">Phase IV Progress</p>
+</div>
+<nav class="flex flex-col gap-6">
+<div class="flex items-center gap-4 text-[#50635a]/50 pl-4 opacity-60">
+<span class="material-symbols-outlined">description</span>
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem]">Intake</span>
+</div>
+<div class="flex items-center gap-4 text-[#50635a]/50 pl-4 opacity-60">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem]">Evaluation</span>
+</div>
+<div class="flex items-center gap-4 text-[#50635a]/50 pl-4 opacity-60">
+<span class="material-symbols-outlined">biotech</span>
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem]">Diagnosis</span>
+</div>
+<div class="flex items-center gap-4 text-[#000000] font-bold border-l-2 border-[#50635a] pl-4">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">download_done</span>
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem]">Refinement</span>
+</div>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:ml-64 pt-32 px-8 pb-20 min-h-screen">
+<div class="max-w-6xl mx-auto">
+<!-- Header Section -->
+<header class="mb-16 grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+<div>
+<span class="font-sans uppercase tracking-[0.1em] text-[0.6875rem] text-secondary mb-4 block">Final Generation</span>
+<h1 class="font-headline text-5xl md:text-6xl italic tracking-tight text-on-surface">The Refined Output.</h1>
+</div>
+<div class="flex gap-4 md:justify-end">
+<button class="bg-primary text-on-primary px-6 py-4 font-label uppercase tracking-widest text-[0.75rem] font-bold hover:bg-primary-container transition-all flex items-center gap-3">
+<span class="material-symbols-outlined">download</span>
+                        Download PDF (Optimized)
+                    </button>
+<button class="border border-outline-variant/30 text-on-surface px-6 py-4 font-label uppercase tracking-widest text-[0.75rem] font-bold hover:bg-surface-container transition-all flex items-center gap-3">
+<span class="material-symbols-outlined">content_copy</span>
+                        Copy Markdown
+                    </button>
+</div>
+</header>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+<!-- Resume Preview Column -->
+<div class="lg:col-span-8">
+<div class="bg-surface-container-low p-12 lg:p-16">
+<div class="resume-paper bg-surface-container-lowest p-12 lg:p-16 relative overflow-hidden text-sm leading-relaxed text-[#2a2a2a] shadow-sm">
+<!-- Resume Content -->
+<div class="border-b border-outline-variant/20 pb-8 mb-8 text-center">
+<h2 class="font-headline text-3xl mb-2 text-primary tracking-tight">ALEXANDER STRATTON</h2>
+<p class="font-label uppercase tracking-[0.2em] text-[0.6rem] text-secondary">Senior Operations Director | Executive Strategy</p>
+</div>
+<section class="mb-8">
+<h3 class="font-label uppercase tracking-widest text-[0.65rem] font-bold border-b border-outline-variant/10 pb-1 mb-4">Professional Summary</h3>
+<p>Forward-thinking executive with 12+ years of experience steering global operations. Proven track record in <span class="highlight-pulse">optimizing high-frequency logistical pipelines</span> and driving enterprise-level <span class="highlight-pulse">digital transformation</span> for Fortune 500 partners. Specialized in architectural efficiency and cross-functional leadership.</p>
+</section>
+<section class="mb-8">
+<h3 class="font-label uppercase tracking-widest text-[0.65rem] font-bold border-b border-outline-variant/10 pb-1 mb-4">Core Competencies</h3>
+<div class="grid grid-cols-2 gap-y-2">
+<div class="flex items-center gap-2">• <span class="highlight-pulse">Strategic Resource Allocation</span></div>
+<div class="flex items-center gap-2">• Crisis Management Architecture</div>
+<div class="flex items-center gap-2">• <span class="highlight-pulse">Revenue Stream Diversification</span></div>
+<div class="flex items-center gap-2">• Predictive Market Analytics</div>
+</div>
+</section>
+<section class="mb-8">
+<h3 class="font-label uppercase tracking-widest text-[0.65rem] font-bold border-b border-outline-variant/10 pb-1 mb-4">Executive Experience</h3>
+<div class="mb-6">
+<div class="flex justify-between items-baseline mb-1">
+<h4 class="font-bold">Global Operations Lead | Vanguard Systems</h4>
+<span class="text-[0.65rem] italic">2019 – Present</span>
+</div>
+<ul class="list-disc pl-4 space-y-2">
+<li>Architected a proprietary workflow engine resulting in a <span class="highlight-pulse">22% reduction in operational overhead</span> within first 12 months.</li>
+<li>Spearheaded the integration of <span class="highlight-pulse">AI-driven predictive modeling</span> to anticipate supply chain volatility.</li>
+<li>Managed a distributed team of 85+ across four continents, maintaining a <span class="highlight-pulse">98.4% project delivery rate</span>.</li>
+</ul>
+</div>
+<div>
+<div class="flex justify-between items-baseline mb-1">
+<h4 class="font-bold">Senior Strategy Consultant | Meridian Group</h4>
+<span class="text-[0.65rem] italic">2015 – 2019</span>
+</div>
+<p>Guided capital restructuring for boutique firms, achieving an average <span class="highlight-pulse">EBITDA increase of 14%</span> across client portfolios.</p>
+</div>
+</section>
+<!-- Watermark for Premium feel -->
+<div class="absolute bottom-10 right-10 opacity-5 font-headline italic text-4xl select-none">MS</div>
+</div>
+</div>
+</div>
+<!-- Sidebar: Refinement Analytics -->
+<div class="lg:col-span-4 flex flex-col gap-8">
+<!-- Score Card -->
+<div class="bg-surface-container p-8">
+<h3 class="font-label uppercase tracking-widest text-[0.65rem] font-bold text-secondary mb-8">Refinement Analytics</h3>
+<div class="flex items-baseline gap-4 mb-2">
+<span class="font-headline text-7xl italic">94</span>
+<div class="flex flex-col">
+<span class="text-secondary font-bold text-sm">+18 PTS</span>
+<span class="font-label text-[0.6rem] uppercase opacity-50">Impact Score</span>
+</div>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed mb-10">Your resume now ranks in the top 2% for "Senior Executive" roles within the Fintech &amp; Logistics sectors.</p>
+<!-- Chronicle Track / Phase Indicator -->
+<div class="space-y-6">
+<div>
+<div class="flex justify-between text-[0.65rem] uppercase tracking-tighter font-bold mb-2">
+<span>ATS Keywords</span>
+<span>98%</span>
+</div>
+<div class="h-[2px] w-full bg-outline-variant/20">
+<div class="h-full bg-secondary w-[98%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-[0.65rem] uppercase tracking-tighter font-bold mb-2">
+<span>Impact Quantifiers</span>
+<span>89%</span>
+</div>
+<div class="h-[2px] w-full bg-outline-variant/20">
+<div class="h-full bg-secondary w-[89%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-[0.65rem] uppercase tracking-tighter font-bold mb-2">
+<span>Narrative Cohesion</span>
+<span>95%</span>
+</div>
+<div class="h-[2px] w-full bg-outline-variant/20">
+<div class="h-full bg-secondary w-[95%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Highlight Key -->
+<div class="bg-surface-container-low p-8">
+<h4 class="font-label uppercase tracking-widest text-[0.65rem] font-bold mb-4">Refinement Key</h4>
+<div class="space-y-4">
+<div class="flex gap-4">
+<div class="w-1 bg-tertiary-fixed-dim shrink-0"></div>
+<p class="text-[0.7rem] leading-snug"><span class="font-bold uppercase text-[0.6rem] block mb-1">Strategic Keywords</span>Inserted critical industry terminology detected from targeted job descriptors.</p>
+</div>
+<div class="flex gap-4">
+<div class="w-1 bg-secondary shrink-0"></div>
+<p class="text-[0.7rem] leading-snug"><span class="font-bold uppercase text-[0.6rem] block mb-1">Impact Metrics</span>Quantified achievements using executive-grade performance indicators.</p>
+</div>
+</div>
+</div>
+<!-- Final Action -->
+<div class="mt-auto border-t border-outline-variant/20 pt-8">
+<p class="font-serif italic text-lg mb-4">"The strategy is now visible. The execution is inevitable."</p>
+<button class="w-full py-4 text-[0.6875rem] uppercase tracking-[0.2em] font-bold text-secondary border border-secondary/20 hover:bg-secondary/5 transition-colors">
+                            Request Manual Revision
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-[#faf9f8] w-full py-12 px-8 mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center max-w-screen-2xl mx-auto gap-8">
+<div class="font-serif italic text-lg text-black">The Modern Strategist</div>
+<div class="flex gap-8">
+<a class="text-[#50635a]/60 font-sans text-[0.6875rem] tracking-tight hover:text-black transition-colors" href="#">Terms of Service</a>
+<a class="text-[#50635a]/60 font-sans text-[0.6875rem] tracking-tight hover:text-black transition-colors" href="#">Privacy Policy</a>
+<a class="text-[#50635a]/60 font-sans text-[0.6875rem] tracking-tight hover:text-black transition-colors" href="#">Methodology</a>
+</div>
+<p class="text-[#50635a]/40 font-sans text-[0.6875rem] tracking-tight">© 2024 The Modern Strategist. All rights reserved.</p>
+</div>
+</footer>
+</body></html>

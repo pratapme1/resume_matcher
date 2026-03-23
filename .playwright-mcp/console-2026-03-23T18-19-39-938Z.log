@@ -1,0 +1,11 @@
+[    1492ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/favicon.ico:0
+[   30534ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/build-profile:0
+[   48715ms] [ERROR] WebSocket connection to 'ws://localhost:24678/?token=GHJBeGgt7hHs' failed:  @ http://localhost:3000/@vite/client:801
+[   48782ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[   49784ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[   50786ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[   51791ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[   52794ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[   53800ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[   54813ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[   55831ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034

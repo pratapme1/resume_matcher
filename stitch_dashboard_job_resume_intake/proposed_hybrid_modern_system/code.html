@@ -1,0 +1,1888 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resume Tailor Pro | Hybrid Modern Prototype</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%234f7cff'/%3E%3Ctext x='50%25' y='55%25' font-size='26' font-family='Arial, sans-serif' font-weight='700' text-anchor='middle' fill='white'%3ERT%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --radius-xl: 30px;
+        --radius-lg: 22px;
+        --radius-md: 16px;
+        --radius-sm: 12px;
+        --radius-pill: 999px;
+        --shadow-shell: 0 40px 120px -64px rgba(5, 12, 21, 0.72);
+        --shadow-panel: 0 24px 56px -40px rgba(5, 12, 21, 0.52);
+        --font-ui: "Plus Jakarta Sans", sans-serif;
+      }
+
+      body[data-theme="dark"] {
+        --bg: #09111b;
+        --bg-alt: #0d1621;
+        --shell: rgba(12, 18, 28, 0.72);
+        --panel: rgba(15, 23, 35, 0.82);
+        --panel-strong: rgba(19, 28, 42, 0.98);
+        --panel-muted: rgba(255, 255, 255, 0.04);
+        --panel-subtle: rgba(255, 255, 255, 0.025);
+        --line: rgba(158, 176, 203, 0.14);
+        --line-strong: rgba(177, 197, 224, 0.22);
+        --text: #f5f7fb;
+        --text-soft: #9dacbf;
+        --text-dim: #6e7c8f;
+        --surface-glow: rgba(255, 255, 255, 0.04);
+        --elevated: rgba(255, 255, 255, 0.06);
+      }
+
+      body[data-theme="light"] {
+        --bg: #dce5f0;
+        --bg-alt: #e4ebf4;
+        --shell: rgba(239, 245, 252, 0.74);
+        --panel: rgba(241, 247, 253, 0.9);
+        --panel-strong: rgba(235, 242, 249, 0.98);
+        --panel-muted: rgba(25, 47, 77, 0.052);
+        --panel-subtle: rgba(25, 47, 77, 0.04);
+        --line: rgba(31, 52, 79, 0.11);
+        --line-strong: rgba(31, 52, 79, 0.17);
+        --text: #112034;
+        --text-soft: #5a6a7f;
+        --text-dim: #8392a3;
+        --surface-glow: rgba(255, 255, 255, 0.38);
+        --elevated: rgba(245, 249, 253, 0.92);
+        --shadow-shell: 0 36px 90px -58px rgba(31, 52, 80, 0.25);
+        --shadow-panel: 0 22px 56px -42px rgba(31, 52, 80, 0.18);
+      }
+
+      body[data-accent="cobalt"] {
+        --accent: #4f7cff;
+        --accent-strong: #315fef;
+        --accent-soft: rgba(79, 124, 255, 0.16);
+        --accent-ghost: rgba(79, 124, 255, 0.1);
+        --accent-fade: rgba(79, 124, 255, 0.34);
+        --success: #39b98b;
+        --warn: #d59840;
+      }
+
+      body[data-accent="ember"] {
+        --accent: #ff7a59;
+        --accent-strong: #f05e39;
+        --accent-soft: rgba(255, 122, 89, 0.16);
+        --accent-ghost: rgba(255, 122, 89, 0.1);
+        --accent-fade: rgba(255, 122, 89, 0.32);
+        --success: #41b78e;
+        --warn: #d78f42;
+      }
+
+      body[data-accent="jade"] {
+        --accent: #19a37f;
+        --accent-strong: #118768;
+        --accent-soft: rgba(25, 163, 127, 0.16);
+        --accent-ghost: rgba(25, 163, 127, 0.1);
+        --accent-fade: rgba(25, 163, 127, 0.3);
+        --success: #19a37f;
+        --warn: #ca9440;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        font-family: var(--font-ui);
+        color: var(--text);
+        background:
+          radial-gradient(circle at 12% 14%, var(--accent-ghost), transparent 28%),
+          radial-gradient(circle at 88% 8%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 22%),
+          linear-gradient(180deg, var(--bg) 0%, var(--bg-alt) 100%);
+        transition: background 180ms ease, color 180ms ease;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(var(--line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--line) 1px, transparent 1px);
+        background-size: 72px 72px;
+        mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.5), transparent 82%);
+        opacity: 0.2;
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+
+      .app-shell {
+        width: min(1480px, calc(100% - 40px));
+        margin: 24px auto;
+        padding: 18px;
+        border-radius: 38px;
+        border: 1px solid var(--line);
+        background: var(--shell);
+        backdrop-filter: blur(22px);
+        box-shadow: var(--shadow-shell);
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 16px;
+        align-items: center;
+        padding: 10px;
+        border-radius: 28px;
+        background: var(--panel-subtle);
+        border: 1px solid var(--line);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 14px;
+        min-width: 0;
+      }
+
+      .brand-mark {
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        border-radius: 15px;
+        color: white;
+        font-size: 17px;
+        font-weight: 800;
+        background: linear-gradient(145deg, var(--accent), var(--accent-strong));
+        box-shadow: 0 18px 34px -22px var(--accent-fade);
+      }
+
+      .brand-copy {
+        min-width: 0;
+      }
+
+      .brand-copy small,
+      .eyebrow,
+      .meta-label,
+      .section-label,
+      .mini-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .brand-copy small {
+        color: var(--text-soft);
+        margin-bottom: 3px;
+      }
+
+      .brand-copy strong {
+        display: block;
+        font-size: 18px;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -0.04em;
+      }
+
+      .phase-strip {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        min-width: 0;
+      }
+
+      .phase-tab {
+        appearance: none;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--text-soft);
+        border-radius: 16px;
+        padding: 11px 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: 160ms ease;
+      }
+
+      .phase-tab:hover {
+        background: var(--panel-subtle);
+        border-color: var(--line);
+      }
+
+      .phase-tab.active {
+        background: var(--panel);
+        border-color: var(--line-strong);
+        color: var(--text);
+        box-shadow: var(--shadow-panel);
+      }
+
+      .phase-index {
+        width: 28px;
+        height: 28px;
+        display: inline-grid;
+        place-items: center;
+        border-radius: 10px;
+        background: var(--panel-muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .phase-tab.active .phase-index {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .phase-tab span:last-child {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      .controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+
+      .control-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px;
+        border-radius: var(--radius-pill);
+        background: var(--panel);
+        border: 1px solid var(--line);
+      }
+
+      .control-group button {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--text-soft);
+        border-radius: var(--radius-pill);
+        padding: 9px 12px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+      }
+
+      .control-group button.active {
+        background: var(--panel-strong);
+        color: var(--text);
+        box-shadow: inset 0 0 0 1px var(--line);
+      }
+
+      .accent-button {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: 1px solid transparent;
+        background: transparent;
+      }
+
+      .accent-button::before {
+        content: "";
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: var(--swatch, var(--accent));
+      }
+
+      .accent-button.active {
+        border-color: var(--line-strong);
+        background: var(--panel-strong);
+      }
+
+      .pages {
+        margin-top: 18px;
+      }
+
+      .page {
+        display: none;
+      }
+
+      .page.active {
+        display: grid;
+        gap: 18px;
+      }
+
+      .page-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.78fr);
+        gap: 18px;
+      }
+
+      .hero-block,
+      .hero-summary,
+      .panel,
+      .subpanel {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-panel);
+      }
+
+      .hero-block {
+        padding: 26px 28px;
+      }
+
+      .hero-summary {
+        padding: 22px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .eyebrow {
+        color: var(--accent);
+        margin-bottom: 12px;
+      }
+
+      .page-head h1 {
+        margin: 0;
+        font-size: clamp(38px, 5vw, 66px);
+        line-height: 0.94;
+        letter-spacing: -0.06em;
+        max-width: 760px;
+      }
+
+      .page-head p {
+        margin: 16px 0 0;
+        max-width: 680px;
+        color: var(--text-soft);
+        font-size: 15px;
+        line-height: 1.75;
+      }
+
+      .hero-actions,
+      .toolbar-row,
+      .inline-actions,
+      .chip-row,
+      .button-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .hero-actions {
+        margin-top: 22px;
+      }
+
+      .btn {
+        appearance: none;
+        border: 1px solid transparent;
+        border-radius: 15px;
+        padding: 13px 16px;
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        transition: transform 140ms ease, background 140ms ease, border-color 140ms ease, color 140ms ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .btn.primary {
+        color: white;
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        box-shadow: 0 16px 30px -20px var(--accent-fade);
+      }
+
+      .btn.secondary {
+        color: var(--text);
+        background: var(--panel-strong);
+        border-color: var(--line-strong);
+      }
+
+      .btn.ghost {
+        color: var(--text-soft);
+        background: transparent;
+        border-color: var(--line);
+      }
+
+      .meta-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .meta-card {
+        padding: 14px;
+        border-radius: 18px;
+        background: var(--panel-muted);
+        border: 1px solid var(--line);
+      }
+
+      .meta-label {
+        color: var(--text-dim);
+        margin-bottom: 8px;
+      }
+
+      .meta-card strong {
+        display: block;
+        font-size: 16px;
+        line-height: 1.3;
+        letter-spacing: -0.02em;
+      }
+
+      .meta-card p {
+        margin: 6px 0 0;
+        font-size: 13px;
+        line-height: 1.55;
+        color: var(--text-soft);
+      }
+
+      .status-line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding-top: 4px;
+      }
+
+      .status-pill,
+      .chip,
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        border-radius: var(--radius-pill);
+      }
+
+      .status-pill {
+        padding: 10px 12px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .status-metric {
+        text-align: right;
+      }
+
+      .status-metric strong {
+        display: block;
+        font-size: 36px;
+        line-height: 0.95;
+        letter-spacing: -0.06em;
+      }
+
+      .status-metric span {
+        display: block;
+        margin-top: 6px;
+        color: var(--text-soft);
+        font-size: 12px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.38fr) minmax(300px, 0.78fr);
+        gap: 18px;
+      }
+
+      .panel {
+        padding: 22px;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+
+      .section-label,
+      .mini-label {
+        color: var(--text-dim);
+      }
+
+      .section-head h2,
+      .subpanel h3,
+      .feature-card h3,
+      .insight-card h3,
+      .resume-preview h3 {
+        margin: 8px 0 0;
+        font-size: 20px;
+        line-height: 1.2;
+        letter-spacing: -0.04em;
+      }
+
+      .section-head p,
+      .subpanel p,
+      .feature-card p,
+      .insight-card p,
+      .resume-preview p,
+      .detail-copy {
+        margin: 8px 0 0;
+        color: var(--text-soft);
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      .subpanel-stack {
+        display: grid;
+        gap: 12px;
+      }
+
+      .subpanel {
+        padding: 18px;
+      }
+
+      .chip {
+        padding: 9px 12px;
+        background: var(--panel-muted);
+        border: 1px solid var(--line);
+        color: var(--text-soft);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .chip.emphasis {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .search-strip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding: 14px 16px;
+        border-radius: 18px;
+        background: var(--panel-muted);
+        border: 1px solid var(--line);
+        margin-bottom: 16px;
+      }
+
+      .search-strip strong,
+      .filters strong,
+      .range-line strong,
+      .driver strong,
+      .check-item strong,
+      .change-item strong,
+      .alt-role strong {
+        font-size: 14px;
+        line-height: 1.35;
+      }
+
+      .search-strip span,
+      .filters span,
+      .range-line span,
+      .driver span,
+      .check-item span,
+      .change-item span,
+      .alt-role span {
+        display: block;
+        color: var(--text-soft);
+        font-size: 13px;
+        margin-top: 4px;
+        line-height: 1.55;
+      }
+
+      .filters {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+
+      .feature-card {
+        padding: 22px;
+        border-radius: 24px;
+        background:
+          linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, var(--panel-strong)) 0%, var(--panel-strong) 100%);
+        border: 1px solid color-mix(in srgb, var(--accent) 16%, var(--line));
+      }
+
+      .feature-head,
+      .item-row,
+      .driver,
+      .check-item,
+      .change-item {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .feature-head {
+        margin-bottom: 18px;
+      }
+
+      .feature-head h3 {
+        font-size: 30px;
+        margin: 10px 0 0;
+      }
+
+      .score-token {
+        min-width: 98px;
+        text-align: right;
+      }
+
+      .score-token strong {
+        display: block;
+        font-size: 42px;
+        line-height: 0.92;
+        letter-spacing: -0.06em;
+      }
+
+      .score-token span {
+        display: block;
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--text-soft);
+      }
+
+      .stat-grid,
+      .split-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .stat-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: 18px;
+      }
+
+      .stat-card {
+        padding: 14px;
+        border-radius: 18px;
+        background: var(--panel-muted);
+        border: 1px solid var(--line);
+      }
+
+      .stat-card strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 18px;
+        letter-spacing: -0.03em;
+      }
+
+      .stat-card span {
+        display: block;
+        margin-top: 4px;
+        color: var(--text-soft);
+        font-size: 13px;
+      }
+
+      .list-stack {
+        display: grid;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .item-row,
+      .driver,
+      .check-item,
+      .change-item,
+      .alt-role {
+        padding: 14px 16px;
+        border-radius: 18px;
+        background: var(--panel-muted);
+        border: 1px solid var(--line);
+      }
+
+      .item-score,
+      .driver-score,
+      .tag {
+        font-size: 12px;
+        font-weight: 800;
+        color: var(--text-soft);
+      }
+
+      .tag {
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        background: var(--panel-strong);
+      }
+
+      .tag.good {
+        color: var(--success);
+      }
+
+      .tag.warn {
+        color: var(--warn);
+      }
+
+      .tag.accent {
+        color: var(--accent);
+        background: var(--accent-soft);
+        border-color: transparent;
+      }
+
+      .driver-stack,
+      .check-stack,
+      .change-stack,
+      .alt-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .progress-line {
+        margin-top: 10px;
+        height: 8px;
+        border-radius: var(--radius-pill);
+        overflow: hidden;
+        background: var(--panel-strong);
+        border: 1px solid var(--line);
+      }
+
+      .progress-line b {
+        display: block;
+        height: 100%;
+        width: var(--value, 50%);
+        background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+      }
+
+      .range-line {
+        padding: 14px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .range-line:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .range-line:last-child {
+        padding-bottom: 0;
+      }
+
+      .textarea,
+      .input-shell {
+        width: 100%;
+        padding: 16px 18px;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: var(--panel-strong);
+        color: var(--text);
+      }
+
+      .textarea {
+        min-height: 220px;
+        resize: vertical;
+      }
+
+      .split-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 0.84fr);
+      }
+
+      .upload-zone {
+        min-height: 248px;
+        padding: 22px;
+        border-radius: 24px;
+        border: 1.5px dashed color-mix(in srgb, var(--accent) 26%, var(--line));
+        background:
+          linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, transparent) 0%, transparent 100%),
+          var(--panel-subtle);
+        display: grid;
+        place-items: center;
+        text-align: center;
+      }
+
+      .upload-zone .brand-mark {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 14px;
+        border-radius: 18px;
+      }
+
+      .input-tabs {
+        display: inline-flex;
+        gap: 6px;
+        padding: 6px;
+        background: var(--panel-muted);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-pill);
+      }
+
+      .input-tabs button {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--text-soft);
+        padding: 9px 12px;
+        border-radius: var(--radius-pill);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .input-tabs button.active {
+        color: var(--text);
+        background: var(--panel-strong);
+        box-shadow: inset 0 0 0 1px var(--line);
+      }
+
+      .score-stage {
+        padding: 24px;
+        border-radius: 26px;
+        background:
+          radial-gradient(circle at top right, var(--accent-soft), transparent 36%),
+          var(--panel-strong);
+        border: 1px solid var(--line);
+      }
+
+      .score-stage-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .score-stage-top strong {
+        display: block;
+        font-size: clamp(76px, 12vw, 118px);
+        line-height: 0.88;
+        letter-spacing: -0.08em;
+      }
+
+      .score-stage-top span {
+        display: block;
+        margin-top: 8px;
+        color: var(--text-soft);
+        font-size: 14px;
+      }
+
+      .driver-score {
+        min-width: 56px;
+        text-align: right;
+      }
+
+      .priority-board {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .insight-card {
+        padding: 16px;
+        border-radius: 20px;
+        border: 1px solid var(--line);
+        background: var(--panel-muted);
+      }
+
+      .resume-shell {
+        overflow: hidden;
+        border-radius: 26px;
+        border: 1px solid var(--line);
+        background: var(--panel-strong);
+      }
+
+      .resume-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel-subtle);
+      }
+
+      .resume-toolbar strong {
+        font-size: 13px;
+        letter-spacing: -0.01em;
+      }
+
+      .resume-preview {
+        padding: 22px;
+      }
+
+      .resume-grid {
+        display: grid;
+        grid-template-columns: 0.8fr 1.2fr;
+        gap: 20px;
+      }
+
+      .resume-column {
+        display: grid;
+        gap: 16px;
+      }
+
+      .resume-card {
+        padding: 16px;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: var(--panel-muted);
+      }
+
+      .resume-card h4 {
+        margin: 0;
+        font-size: 15px;
+        letter-spacing: -0.02em;
+      }
+
+      .resume-card p {
+        margin: 8px 0 0;
+        color: var(--text-soft);
+        font-size: 13px;
+        line-height: 1.65;
+      }
+
+      .resume-card ul {
+        margin: 10px 0 0;
+        padding-left: 18px;
+        color: var(--text-soft);
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      .resume-card mark {
+        background: var(--accent-soft);
+        color: inherit;
+        padding: 0 4px;
+        border-radius: 6px;
+      }
+
+      .mini-list {
+        margin: 0;
+        padding-left: 18px;
+        display: grid;
+        gap: 8px;
+        color: var(--text-soft);
+        font-size: 13px;
+        line-height: 1.65;
+      }
+
+      .footer-note {
+        color: var(--text-dim);
+        font-size: 12px;
+      }
+
+      @media (max-width: 1160px) {
+        .topbar {
+          grid-template-columns: 1fr;
+        }
+
+        .phase-strip {
+          justify-content: flex-start;
+        }
+
+        .controls {
+          justify-content: flex-start;
+        }
+
+        .page-head,
+        .workspace,
+        .split-grid,
+        .resume-grid,
+        .priority-board,
+        .stat-grid,
+        .meta-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .app-shell {
+          width: min(100% - 20px, 100%);
+          margin: 10px auto;
+          padding: 10px;
+          border-radius: 26px;
+        }
+
+        .brand {
+          padding: 8px 10px;
+        }
+
+        .hero-block,
+        .hero-summary,
+        .panel,
+        .subpanel {
+          padding: 18px;
+          border-radius: 22px;
+        }
+
+        .page-head h1 {
+          font-size: clamp(30px, 12vw, 46px);
+        }
+
+        .phase-tab {
+          width: calc(50% - 4px);
+          justify-content: flex-start;
+        }
+
+        .phase-tab:last-child {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body data-theme="dark" data-accent="cobalt">
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">RT</div>
+          <div class="brand-copy">
+            <small>Resume Tailor Pro</small>
+            <strong>Hybrid Modern Workflow Prototype</strong>
+          </div>
+        </div>
+
+        <nav class="phase-strip" aria-label="Workflow phases">
+          <button class="phase-tab active" data-phase-target="discovery">
+            <span class="phase-index">01</span>
+            <span>Discovery</span>
+          </button>
+          <button class="phase-tab" data-phase-target="intake">
+            <span class="phase-index">02</span>
+            <span>Intake</span>
+          </button>
+          <button class="phase-tab" data-phase-target="match">
+            <span class="phase-index">03</span>
+            <span>Match</span>
+          </button>
+          <button class="phase-tab" data-phase-target="diagnosis">
+            <span class="phase-index">04</span>
+            <span>Diagnosis</span>
+          </button>
+          <button class="phase-tab" data-phase-target="output">
+            <span class="phase-index">05</span>
+            <span>Output</span>
+          </button>
+        </nav>
+
+        <div class="controls">
+          <div class="control-group">
+            <button class="active" data-theme-target="dark">Dark</button>
+            <button data-theme-target="light">Light</button>
+          </div>
+          <div class="control-group">
+            <button
+              class="accent-button active"
+              data-accent-target="cobalt"
+              style="--swatch: linear-gradient(145deg, #4f7cff, #315fef);"
+              aria-label="Use cobalt accent"
+            ></button>
+            <button
+              class="accent-button"
+              data-accent-target="ember"
+              style="--swatch: linear-gradient(145deg, #ff7a59, #f05e39);"
+              aria-label="Use ember accent"
+            ></button>
+            <button
+              class="accent-button"
+              data-accent-target="jade"
+              style="--swatch: linear-gradient(145deg, #19a37f, #118768);"
+              aria-label="Use jade accent"
+            ></button>
+          </div>
+        </div>
+      </header>
+
+      <main class="pages">
+        <section class="page active" data-phase="discovery">
+          <div class="page-head">
+            <div class="hero-block">
+              <span class="eyebrow">Phase 01 · Discovery</span>
+              <h1>Lead with the best role, not the busiest screen.</h1>
+              <p>
+                This version keeps search as a real first phase, but borrows the current app's restraint.
+                One featured opportunity anchors the screen, the shortlist stays compact, and candidate context
+                supports the decision without turning into a side-rail dashboard.
+              </p>
+              <div class="hero-actions">
+                <button class="btn primary">Analyze candidate fit</button>
+                <button class="btn secondary">Refine search scope</button>
+                <button class="btn ghost">Save shortlist</button>
+              </div>
+            </div>
+
+            <aside class="hero-summary">
+              <div class="status-line">
+                <span class="status-pill">Search ready</span>
+                <div class="status-metric">
+                  <strong>12</strong>
+                  <span>live roles ranked</span>
+                </div>
+              </div>
+              <div class="meta-grid">
+                <div class="meta-card">
+                  <span class="meta-label">Candidate</span>
+                  <strong>Senior Product Designer</strong>
+                  <p>8 years in B2B SaaS, design systems, onboarding, and analytics-heavy product work.</p>
+                </div>
+                <div class="meta-card">
+                  <span class="meta-label">Target</span>
+                  <strong>Lead / Staff product design</strong>
+                  <p>Remote-first, platform tooling, growth surfaces, strong hiring-manager fit.</p>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="workspace">
+            <section class="panel">
+              <div class="section-head">
+                <div>
+                  <span class="section-label">Decision Surface</span>
+                  <h2>Featured role</h2>
+                </div>
+                <div class="chip-row">
+                  <span class="chip emphasis">Most aligned</span>
+                  <span class="chip">Remote</span>
+                  <span class="chip">Applied nowhere yet</span>
+                </div>
+              </div>
+
+              <div class="search-strip">
+                <div class="filters">
+                  <div>
+                    <strong>Location bias</strong>
+                    <span>US remote, Austin, New York</span>
+                  </div>
+                  <div>
+                    <strong>Focus</strong>
+                    <span>Product design systems, onboarding, growth</span>
+                  </div>
+                  <div>
+                    <strong>Search mode</strong>
+                    <span>Human-curated shortlist over raw feed</span>
+                  </div>
+                </div>
+                <div class="chip-row">
+                  <span class="chip">Salary 170k+</span>
+                  <span class="chip">Hybrid okay</span>
+                </div>
+              </div>
+
+              <article class="feature-card">
+                <div class="feature-head">
+                  <div>
+                    <span class="section-label">Selected opportunity</span>
+                    <h3>Staff Product Designer, Growth Systems</h3>
+                    <p>Northstar · Remote (US) · Posted 2 days ago</p>
+                  </div>
+                  <div class="score-token">
+                    <strong>91%</strong>
+                    <span>fit estimate</span>
+                  </div>
+                </div>
+
+                <div class="chip-row">
+                  <span class="tag accent">Design systems</span>
+                  <span class="tag accent">Funnel optimization</span>
+                  <span class="tag accent">Cross-functional leadership</span>
+                </div>
+
+                <div class="stat-grid">
+                  <div class="stat-card">
+                    <span class="mini-label">Why it wins</span>
+                    <strong>Strong scope match</strong>
+                    <span>Platform and growth overlap are unusually tight.</span>
+                  </div>
+                  <div class="stat-card">
+                    <span class="mini-label">Risk</span>
+                    <strong>Metrics depth</strong>
+                    <span>Add one more measurable experiment outcome in the resume.</span>
+                  </div>
+                  <div class="stat-card">
+                    <span class="mini-label">Decision</span>
+                    <strong>Worth tailoring</strong>
+                    <span>High signal, low rewrite waste, clear interview narrative.</span>
+                  </div>
+                </div>
+              </article>
+
+              <div class="list-stack">
+                <div class="item-row">
+                  <div>
+                    <strong>Lead Product Designer, Activation</strong>
+                    <span>Mercury Labs · 86% fit · Better pay, slightly weaker systems depth</span>
+                  </div>
+                  <span class="item-score">Hold</span>
+                </div>
+                <div class="item-row">
+                  <div>
+                    <strong>Principal UX Designer, B2B Platform</strong>
+                    <span>Atlas Cloud · 83% fit · Strong systems match, weaker brand signal</span>
+                  </div>
+                  <span class="item-score">Backup</span>
+                </div>
+                <div class="item-row">
+                  <div>
+                    <strong>Senior Product Designer, Monetization</strong>
+                    <span>Foundry OS · 78% fit · Closer to growth, less leadership scope</span>
+                  </div>
+                  <span class="item-score">Optional</span>
+                </div>
+              </div>
+            </section>
+
+            <aside class="subpanel-stack">
+              <section class="subpanel">
+                <span class="section-label">Candidate summary</span>
+                <h3>Why this feels more deliberate</h3>
+                <p>
+                  The screen keeps the current app's calm hierarchy, but it upgrades the type scale, panel rhythm,
+                  and button language so it looks designed rather than assembled.
+                </p>
+              </section>
+
+              <section class="subpanel">
+                <span class="section-label">Search checklist</span>
+                <div class="check-stack">
+                  <div class="check-item">
+                    <div>
+                      <strong>Resume parsed once</strong>
+                      <span>No repeated upload step later in the flow.</span>
+                    </div>
+                    <span class="tag good">Good</span>
+                  </div>
+                  <div class="check-item">
+                    <div>
+                      <strong>Lead job selected</strong>
+                      <span>One role is clearly carrying the decision forward.</span>
+                    </div>
+                    <span class="tag accent">Active</span>
+                  </div>
+                  <div class="check-item">
+                    <div>
+                      <strong>Search pressure reduced</strong>
+                      <span>Shortlist rows are flatter and easier to scan.</span>
+                    </div>
+                    <span class="tag good">Better</span>
+                  </div>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section class="page" data-phase="intake">
+          <div class="page-head">
+            <div class="hero-block">
+              <span class="eyebrow">Phase 02 · Intake</span>
+              <h1>Intake should feel like a workbench, not a stack of forms.</h1>
+              <p>
+                The current app is already cleaner than the earlier mocks. This hybrid keeps that cleanliness,
+                but improves grouping: job context on the left, candidate material on the right, and fewer repeated boxes.
+              </p>
+              <div class="hero-actions">
+                <button class="btn primary">Import role details</button>
+                <button class="btn secondary">Use selected job</button>
+                <button class="btn ghost">Open parsing notes</button>
+              </div>
+            </div>
+
+            <aside class="hero-summary">
+              <div class="status-line">
+                <span class="status-pill">Inputs aligned</span>
+                <div class="status-metric">
+                  <strong>2</strong>
+                  <span>sources confirmed</span>
+                </div>
+              </div>
+              <div class="meta-grid">
+                <div class="meta-card">
+                  <span class="meta-label">Role source</span>
+                  <strong>Northstar job URL</strong>
+                  <p>Imported once, cleaned, and locked to the selected opportunity from Discovery.</p>
+                </div>
+                <div class="meta-card">
+                  <span class="meta-label">Resume source</span>
+                  <strong>senior_product_resume.docx</strong>
+                  <p>Profile snapshot persists so users do not feel like they are starting over.</p>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="workspace">
+            <section class="panel">
+              <div class="section-head">
+                <div>
+                  <span class="section-label">Job and Resume Inputs</span>
+                  <h2>Structured intake surface</h2>
+                </div>
+                <div class="input-tabs" aria-label="Input modes">
+                  <button class="active">Selected job</button>
+                  <button>Paste text</button>
+                  <button>Upload file</button>
+                </div>
+              </div>
+
+              <div class="split-grid">
+                <div class="subpanel-stack">
+                  <div class="subpanel">
+                    <span class="section-label">Job description</span>
+                    <p class="detail-copy">
+                      Northstar needs a staff-level designer who can pair systems thinking with growth experiments,
+                      partner tightly with PM and engineering, and lead quality across onboarding and monetization.
+                    </p>
+                    <textarea class="textarea">Staff Product Designer, Growth Systems
+
+Own the end-to-end experience for growth and activation flows. Lead design systems decisions for a product used by enterprise teams. Partner with PM, data, and engineering to test onboarding improvements, ship scalable patterns, and raise design quality across a fast-moving product organization.</textarea>
+                  </div>
+                </div>
+
+                <div class="subpanel-stack">
+                  <div class="upload-zone">
+                    <div>
+                      <div class="brand-mark">CV</div>
+                      <strong>Resume loaded once</strong>
+                      <p class="detail-copy">
+                        Candidate profile, priorities, and baseline resume now travel together across every next phase.
+                      </p>
+                    </div>
+                  </div>
+                  <div class="subpanel">
+                    <span class="section-label">Processing notes</span>
+                    <div class="range-line">
+                      <strong>Profile focus</strong>
+                      <span>Product design systems, experimentation, B2B onboarding, cross-functional leadership.</span>
+                    </div>
+                    <div class="range-line">
+                      <strong>Readiness gap</strong>
+                      <span>Only one project explicitly quantifies conversion lift.</span>
+                    </div>
+                    <div class="range-line">
+                      <strong>Next action</strong>
+                      <span>Carry extracted candidate context straight into the match stage.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <aside class="subpanel-stack">
+              <section class="subpanel">
+                <span class="section-label">Why this screen works</span>
+                <h3>Same calm structure, better grouping</h3>
+                <p>
+                  This keeps the app's strongest trait, which is simplicity, but gives the inputs more intentional weight,
+                  clearer button hierarchy, and less duplicate visual treatment.
+                </p>
+              </section>
+
+              <section class="subpanel">
+                <span class="section-label">Ready for Match</span>
+                <div class="check-stack">
+                  <div class="check-item">
+                    <div>
+                      <strong>Job imported</strong>
+                      <span>Selected role stays pinned to the flow.</span>
+                    </div>
+                    <span class="tag good">Locked</span>
+                  </div>
+                  <div class="check-item">
+                    <div>
+                      <strong>Resume parsed</strong>
+                      <span>Candidate profile survives across phases.</span>
+                    </div>
+                    <span class="tag good">Ready</span>
+                  </div>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section class="page" data-phase="match">
+          <div class="page-head">
+            <div class="hero-block">
+              <span class="eyebrow">Phase 03 · Match</span>
+              <h1>Show one score, then explain exactly what drives it.</h1>
+              <p>
+                This phase combines the current app's readability with a more credible analysis surface:
+                one dominant score, four drivers, and a tighter evidence stack instead of many equal-weight cards.
+              </p>
+              <div class="hero-actions">
+                <button class="btn primary">Generate first draft</button>
+                <button class="btn secondary">Inspect evidence</button>
+                <button class="btn ghost">Compare alternate role</button>
+              </div>
+            </div>
+
+            <aside class="hero-summary">
+              <div class="status-line">
+                <span class="status-pill">High confidence match</span>
+                <div class="status-metric">
+                  <strong>84</strong>
+                  <span>overall alignment</span>
+                </div>
+              </div>
+              <div class="meta-grid">
+                <div class="meta-card">
+                  <span class="meta-label">Best signal</span>
+                  <strong>Systems leadership</strong>
+                  <p>Experience maps well to platform quality, governance, and reusable patterns.</p>
+                </div>
+                <div class="meta-card">
+                  <span class="meta-label">Main gap</span>
+                  <strong>Measured growth outcomes</strong>
+                  <p>Need sharper metrics on activation lift and experimentation impact.</p>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="workspace">
+            <section class="panel">
+              <div class="section-head">
+                <div>
+                  <span class="section-label">Compatibility Signal</span>
+                  <h2>Match overview</h2>
+                </div>
+                <div class="chip-row">
+                  <span class="chip emphasis">Role selected</span>
+                  <span class="chip">Resume baseline v3</span>
+                </div>
+              </div>
+
+              <div class="score-stage">
+                <div class="score-stage-top">
+                  <div>
+                    <span class="section-label">Fit estimate</span>
+                    <strong>84%</strong>
+                    <span>Strong structural match with a clear path to improve credibility.</span>
+                  </div>
+                  <div class="button-row">
+                    <button class="btn secondary">Score details</button>
+                    <button class="btn ghost">Change role</button>
+                  </div>
+                </div>
+
+                <div class="driver-stack" style="margin-top: 18px;">
+                  <div class="driver">
+                    <div style="flex: 1;">
+                      <strong>Keywords and role language</strong>
+                      <span>Most of the hiring language is present, but experiment framing can be sharper.</span>
+                      <div class="progress-line"><b style="--value: 86%;"></b></div>
+                    </div>
+                    <div class="driver-score">86</div>
+                  </div>
+                  <div class="driver">
+                    <div style="flex: 1;">
+                      <strong>Experience alignment</strong>
+                      <span>Strong seniority fit and platform scope, especially for systems ownership.</span>
+                      <div class="progress-line"><b style="--value: 91%;"></b></div>
+                    </div>
+                    <div class="driver-score">91</div>
+                  </div>
+                  <div class="driver">
+                    <div style="flex: 1;">
+                      <strong>Skills overlap</strong>
+                      <span>Excellent UX systems depth, moderate experimentation and analytics framing.</span>
+                      <div class="progress-line"><b style="--value: 79%;"></b></div>
+                    </div>
+                    <div class="driver-score">79</div>
+                  </div>
+                  <div class="driver">
+                    <div style="flex: 1;">
+                      <strong>Evidence strength</strong>
+                      <span>Claims are believable, but two outcomes need cleaner measurable proof.</span>
+                      <div class="progress-line"><b style="--value: 71%;"></b></div>
+                    </div>
+                    <div class="driver-score">71</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <aside class="subpanel-stack">
+              <section class="subpanel">
+                <span class="section-label">Evidence summary</span>
+                <div class="check-stack">
+                  <div class="check-item">
+                    <div>
+                      <strong>Strongest aligned experience</strong>
+                      <span>Led a design system roll-out across onboarding and billing surfaces.</span>
+                    </div>
+                    <span class="tag good">Strong</span>
+                  </div>
+                  <div class="check-item">
+                    <div>
+                      <strong>Missing from current resume</strong>
+                      <span>Experiment velocity, baseline-to-lift framing, and stakeholder influence detail.</span>
+                    </div>
+                    <span class="tag warn">Gap</span>
+                  </div>
+                </div>
+              </section>
+
+              <section class="subpanel">
+                <span class="section-label">Compare role</span>
+                <div class="alt-list">
+                  <div class="alt-role">
+                    <div>
+                      <strong>Lead Product Designer, Activation</strong>
+                      <span>86% fit but narrower leadership narrative.</span>
+                    </div>
+                    <span class="tag accent">Alt</span>
+                  </div>
+                  <div class="alt-role">
+                    <div>
+                      <strong>Principal UX Designer, Platform</strong>
+                      <span>83% fit with stronger systems overlap, weaker growth lens.</span>
+                    </div>
+                    <span class="tag">View</span>
+                  </div>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section class="page" data-phase="diagnosis">
+          <div class="page-head">
+            <div class="hero-block">
+              <span class="eyebrow">Phase 04 · Diagnosis</span>
+              <h1>Diagnosis should tell the writer what to do next, not just what is missing.</h1>
+              <p>
+                The middle of the flow is where prototypes usually get noisy. This version keeps diagnosis practical:
+                rewrite priorities, unsupported claims, and section-level actions in one compact board.
+              </p>
+              <div class="hero-actions">
+                <button class="btn primary">Apply rewrite plan</button>
+                <button class="btn secondary">Open evidence notes</button>
+                <button class="btn ghost">Return to match</button>
+              </div>
+            </div>
+
+            <aside class="hero-summary">
+              <div class="status-line">
+                <span class="status-pill">Revision plan ready</span>
+                <div class="status-metric">
+                  <strong>3</strong>
+                  <span>high-priority edits</span>
+                </div>
+              </div>
+              <div class="meta-grid">
+                <div class="meta-card">
+                  <span class="meta-label">Focus</span>
+                  <strong>Impact clarity</strong>
+                  <p>Upgrade impact verbs and add baseline-to-result framing where possible.</p>
+                </div>
+                <div class="meta-card">
+                  <span class="meta-label">Constraint</span>
+                  <strong>Keep truthful</strong>
+                  <p>Every improvement must stay grounded in evidence from the source resume.</p>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="workspace">
+            <section class="panel">
+              <div class="section-head">
+                <div>
+                  <span class="section-label">Rewrite Board</span>
+                  <h2>Priority actions</h2>
+                </div>
+                <div class="chip-row">
+                  <span class="chip emphasis">Actionable</span>
+                  <span class="chip">No filler findings</span>
+                </div>
+              </div>
+
+              <div class="priority-board">
+                <article class="insight-card">
+                  <span class="section-label">01</span>
+                  <h3>Strengthen the lead story</h3>
+                  <p>Open with systems leadership and cross-functional scope before listing craft responsibilities.</p>
+                </article>
+                <article class="insight-card">
+                  <span class="section-label">02</span>
+                  <h3>Add growth evidence</h3>
+                  <p>Rewrite one case study bullet to show experiment outcome, not just ownership.</p>
+                </article>
+                <article class="insight-card">
+                  <span class="section-label">03</span>
+                  <h3>Clarify enterprise scale</h3>
+                  <p>State team size, stakeholder surface, or user volume where truthfully supported.</p>
+                </article>
+              </div>
+
+              <div class="list-stack">
+                <div class="change-item">
+                  <div>
+                    <strong>Weak section: Summary</strong>
+                    <span>Too generic today. Replace broad adjectives with a sharper role-specific lead sentence.</span>
+                  </div>
+                  <span class="tag warn">Rewrite</span>
+                </div>
+                <div class="change-item">
+                  <div>
+                    <strong>Unsupported claim: "Drove significant activation gains"</strong>
+                    <span>No visible metric in the source profile. Keep only if a number can be defended.</span>
+                  </div>
+                  <span class="tag">Verify</span>
+                </div>
+                <div class="change-item">
+                  <div>
+                    <strong>Gap: experimentation language</strong>
+                    <span>Candidate likely did this work, but current wording hides it behind general design terms.</span>
+                  </div>
+                  <span class="tag accent">Elevate</span>
+                </div>
+              </div>
+            </section>
+
+            <aside class="subpanel-stack">
+              <section class="subpanel">
+                <span class="section-label">Revision order</span>
+                <div class="range-line">
+                  <strong>Summary and headline</strong>
+                  <span>Make role fit obvious in the first 5 seconds.</span>
+                </div>
+                <div class="range-line">
+                  <strong>Most relevant experience block</strong>
+                  <span>Move the strongest systems-growth project higher.</span>
+                </div>
+                <div class="range-line">
+                  <strong>Metrics and credibility pass</strong>
+                  <span>Upgrade proof without inventing unsupported outcomes.</span>
+                </div>
+              </section>
+
+              <section class="subpanel">
+                <span class="section-label">Expected lift</span>
+                <div class="driver-stack">
+                  <div class="driver">
+                    <div style="flex: 1;">
+                      <strong>Score after rewrite</strong>
+                      <span>Projected from stronger evidence framing and tighter role language.</span>
+                      <div class="progress-line"><b style="--value: 91%;"></b></div>
+                    </div>
+                    <div class="driver-score">91</div>
+                  </div>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section class="page" data-phase="output">
+          <div class="page-head">
+            <div class="hero-block">
+              <span class="eyebrow">Phase 05 · Output</span>
+              <h1>Output should feel finished, validated, and ready to use.</h1>
+              <p>
+                This combines the current app's clarity with a more polished review surface. The resume preview stays central,
+                the change log is tighter, and the action buttons carry real hierarchy instead of blending into the frame.
+              </p>
+              <div class="hero-actions">
+                <button class="btn primary">Download tailored resume</button>
+                <button class="btn secondary">Open apply flow</button>
+                <button class="btn ghost">Show clean view</button>
+              </div>
+            </div>
+
+            <aside class="hero-summary">
+              <div class="status-line">
+                <span class="status-pill">Validated output</span>
+                <div class="status-metric">
+                  <strong>+7</strong>
+                  <span>score delta</span>
+                </div>
+              </div>
+              <div class="meta-grid">
+                <div class="meta-card">
+                  <span class="meta-label">Before</span>
+                  <strong>84%</strong>
+                  <p>Good structure, but evidence and role framing were leaving points on the table.</p>
+                </div>
+                <div class="meta-card">
+                  <span class="meta-label">After</span>
+                  <strong>91%</strong>
+                  <p>Sharper leadership framing, stronger metrics, tighter alignment to the job language.</p>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="workspace">
+            <section class="panel">
+              <div class="section-head">
+                <div>
+                  <span class="section-label">Tailored Resume</span>
+                  <h2>Review surface</h2>
+                </div>
+                <div class="toolbar-row">
+                  <span class="chip emphasis">Show edits</span>
+                  <span class="chip">Export DOCX</span>
+                </div>
+              </div>
+
+              <div class="resume-shell">
+                <div class="resume-toolbar">
+                  <strong>northstar_staff_product_designer_v7.docx</strong>
+                  <div class="button-row">
+                    <button class="btn ghost">Clean view</button>
+                    <button class="btn secondary">Compare source</button>
+                  </div>
+                </div>
+                <div class="resume-preview">
+                  <div class="resume-grid">
+                    <div class="resume-column">
+                      <div class="resume-card">
+                        <span class="section-label">Profile</span>
+                        <h4>Alex Morgan</h4>
+                        <p>Staff-level product designer focused on growth systems, enterprise onboarding, and design quality at scale.</p>
+                      </div>
+                      <div class="resume-card">
+                        <span class="section-label">Core themes</span>
+                        <ul>
+                          <li>Design systems leadership</li>
+                          <li>Cross-functional experimentation</li>
+                          <li>Enterprise workflow simplification</li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div class="resume-column">
+                      <div class="resume-card">
+                        <span class="section-label">Summary</span>
+                        <p>
+                          Product designer with 8+ years building <mark>growth systems</mark>, onboarding improvements,
+                          and scalable UX patterns for B2B SaaS products. Known for pairing system-level thinking with
+                          cross-functional execution across product, engineering, and analytics.
+                        </p>
+                      </div>
+                      <div class="resume-card">
+                        <span class="section-label">Selected experience</span>
+                        <p>
+                          Led redesign of activation flows and reusable UI patterns across onboarding surfaces,
+                          resulting in <mark>clearer adoption paths and faster product iteration</mark> across three teams.
+                        </p>
+                        <p>
+                          Introduced a systems-led review process that improved consistency, reduced duplicated design work,
+                          and gave PM and engineering a shared language for shipping experiments.
+                        </p>
+                      </div>
+                      <div class="resume-card">
+                        <span class="section-label">Why this version scores better</span>
+                        <ul>
+                          <li>Role language mirrors the selected job without sounding copied.</li>
+                          <li>Lead story now centers scope and leadership, not only tasks.</li>
+                          <li>High-value edits are visible and easy to validate before exporting.</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <aside class="subpanel-stack">
+              <section class="subpanel">
+                <span class="section-label">Change log</span>
+                <div class="change-stack">
+                  <div class="change-item">
+                    <div>
+                      <strong>Headline rewritten</strong>
+                      <span>Shifted from generic senior-product wording to role-specific systems leadership.</span>
+                    </div>
+                    <span class="tag good">Done</span>
+                  </div>
+                  <div class="change-item">
+                    <div>
+                      <strong>Growth framing added</strong>
+                      <span>New language connects onboarding work to experiments and adoption.</span>
+                    </div>
+                    <span class="tag good">Done</span>
+                  </div>
+                  <div class="change-item">
+                    <div>
+                      <strong>Unsupported claims removed</strong>
+                      <span>Only edits with plausible evidence remain in the final draft.</span>
+                    </div>
+                    <span class="tag accent">Safe</span>
+                  </div>
+                </div>
+              </section>
+
+              <section class="subpanel">
+                <span class="section-label">Next actions</span>
+                <div class="check-stack">
+                  <div class="check-item">
+                    <div>
+                      <strong>Download and apply</strong>
+                      <span>Primary route when confidence is already high.</span>
+                    </div>
+                    <span class="tag accent">Primary</span>
+                  </div>
+                  <div class="check-item">
+                    <div>
+                      <strong>Open auto-apply</strong>
+                      <span>Optional action, intentionally demoted below the final asset.</span>
+                    </div>
+                    <span class="tag">Secondary</span>
+                  </div>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const body = document.body;
+      const phaseTabs = document.querySelectorAll("[data-phase-target]");
+      const pages = document.querySelectorAll("[data-phase]");
+      const themeButtons = document.querySelectorAll("[data-theme-target]");
+      const accentButtons = document.querySelectorAll("[data-accent-target]");
+
+      function setPhase(phase) {
+        phaseTabs.forEach((button) => {
+          button.classList.toggle("active", button.dataset.phaseTarget === phase);
+        });
+        pages.forEach((page) => {
+          page.classList.toggle("active", page.dataset.phase === phase);
+        });
+      }
+
+      function setTheme(theme) {
+        body.dataset.theme = theme;
+        themeButtons.forEach((button) => {
+          button.classList.toggle("active", button.dataset.themeTarget === theme);
+        });
+      }
+
+      function setAccent(accent) {
+        body.dataset.accent = accent;
+        accentButtons.forEach((button) => {
+          button.classList.toggle("active", button.dataset.accentTarget === accent);
+        });
+      }
+
+      phaseTabs.forEach((button) => {
+        button.addEventListener("click", () => setPhase(button.dataset.phaseTarget));
+      });
+
+      themeButtons.forEach((button) => {
+        button.addEventListener("click", () => setTheme(button.dataset.themeTarget));
+      });
+
+      accentButtons.forEach((button) => {
+        button.addEventListener("click", () => setAccent(button.dataset.accentTarget));
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,8 @@
+[  323727ms] [ERROR] WebSocket connection to 'ws://localhost:24678/?token=Ng-W5r225PUd' failed:  @ http://localhost:3000/@vite/client:801
+[  323828ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[  324831ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[  325832ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[  326833ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[  327842ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[  328849ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[  329856ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034

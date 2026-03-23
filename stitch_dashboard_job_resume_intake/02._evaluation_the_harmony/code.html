@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface": "#e5e1e4",
+              "tertiary-fixed-dim": "#ffb68b",
+              "tertiary-container": "#954500",
+              "on-tertiary": "#522300",
+              "tertiary": "#ffb68b",
+              "surface-container": "#201f21",
+              "on-background": "#e5e1e4",
+              "outline": "#938ea0",
+              "primary": "#cabeff",
+              "on-tertiary-fixed-variant": "#743400",
+              "on-primary-fixed-variant": "#4723be",
+              "on-secondary-fixed-variant": "#45474b",
+              "on-error-container": "#ffdad6",
+              "surface-container-highest": "#353437",
+              "primary-container": "#5d3fd3",
+              "secondary": "#c6c6cc",
+              "outline-variant": "#484554",
+              "on-surface-variant": "#c9c4d7",
+              "surface": "#131315",
+              "secondary-fixed-dim": "#c6c6cc",
+              "secondary-fixed": "#e2e2e8",
+              "on-error": "#690005",
+              "error": "#ffb4ab",
+              "primary-fixed": "#e6deff",
+              "on-secondary-fixed": "#1a1c20",
+              "surface-container-low": "#1c1b1d",
+              "inverse-surface": "#e5e1e4",
+              "on-primary-fixed": "#1c0062",
+              "surface-tint": "#cabeff",
+              "surface-variant": "#353437",
+              "secondary-container": "#47494e",
+              "on-primary-container": "#d8ceff",
+              "on-secondary-container": "#b7b8be",
+              "on-primary": "#30009a",
+              "surface-container-lowest": "#0e0e10",
+              "background": "#131315",
+              "on-tertiary-fixed": "#321300",
+              "on-tertiary-container": "#ffc9ab",
+              "primary-fixed-dim": "#cabeff",
+              "tertiary-fixed": "#ffdbc8",
+              "error-container": "#93000a",
+              "inverse-primary": "#6042d6",
+              "surface-bright": "#39393b",
+              "surface-container-high": "#2a2a2c",
+              "surface-dim": "#131315",
+              "inverse-on-surface": "#313032",
+              "on-secondary": "#2f3035"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Manrope"],
+              "label": ["Space Grotesk"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .pulse-glitch {
+            text-shadow: 0 0 20px rgba(202, 190, 255, 0.4);
+        }
+        .radial-blur-bg {
+            background: radial-gradient(circle at center, rgba(93, 63, 211, 0.15) 0%, rgba(19, 19, 21, 0) 70%);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container overflow-hidden">
+<!-- Top Navigation -->
+<nav class="fixed top-0 w-full z-50 bg-zinc-950/40 backdrop-blur-xl flex justify-between items-center w-full px-8 py-4 no-border tonal-layering shadow-[0_20px_50px_rgba(93,63,211,0.06)]">
+<div class="flex items-center gap-6">
+<span class="text-2xl font-bold tracking-widest text-[#cabeff] uppercase font-headline">The Pulse</span>
+<div class="hidden md:flex gap-6 items-center ml-8">
+<a class="font-['Space_Grotesk'] tracking-tighter uppercase text-sm text-zinc-500 hover:text-zinc-300 transition-colors" href="#">Neural Feed</a>
+<a class="font-['Space_Grotesk'] tracking-tighter uppercase text-sm text-[#cabeff] font-bold border-b-2 border-[#5D3FD3] pb-1" href="#">Sync Hub</a>
+<a class="font-['Space_Grotesk'] tracking-tighter uppercase text-sm text-zinc-500 hover:text-zinc-300 transition-colors" href="#">Growth Path</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-white/5 transition-all duration-300 rounded-full active:scale-95 text-[#cabeff]">
+<span class="material-symbols-outlined" data-icon="sensors">sensors</span>
+</button>
+<button class="p-2 hover:bg-white/5 transition-all duration-300 rounded-full active:scale-95 text-[#cabeff]">
+<span class="material-symbols-outlined" data-icon="data_thresholding">data_thresholding</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant/30 overflow-hidden">
+<img alt="User Pulse Avatar" data-alt="Portrait of a modern digital professional user" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDngQ66Gee0Xj9jByIyaR19LVYM04nJjajIs9eozEMi8XjA2PDEVzGYo1fIu_s6KKCzr_yK6fSANW3rof3LT_rnYyZCUhpBZLQW2bpfkec_pDjpttFTKFbouaCO8ufd08EVDcmIIpgwW5xHdE38KVECQDVtU61FD6RTIshltTQ7op12pHu2POmRzOz33Wy7HJhJz2er5nadhLIM0mMGIq4SlthaqomBM3huZBkfAaJtBt6yROuEkF0qfl0SeGeActm4mSk4zuLuB7I"/>
+</div>
+</div>
+</nav>
+<!-- Side Navigation -->
+<aside class="fixed left-6 top-24 bottom-24 w-20 rounded-full bg-zinc-900/20 backdrop-blur-2xl flex flex-col items-center py-10 justify-between tonal-shift-only shadow-2xl shadow-purple-900/20 z-40 hidden md:flex">
+<div class="flex flex-col gap-8 items-center">
+<div class="flex flex-col items-center justify-center text-zinc-500 w-12 h-12 hover:scale-110 hover:text-[#cabeff] transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="dynamic_form">dynamic_form</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-[#5D3FD3] text-white rounded-full w-12 h-12 shadow-[0_0_15px_rgba(93,63,211,0.5)] active:scale-90 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="hub">hub</span>
+</div>
+<div class="flex flex-col items-center justify-center text-zinc-500 w-12 h-12 hover:scale-110 hover:text-[#cabeff] transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+</div>
+<div class="flex flex-col items-center justify-center text-zinc-500 w-12 h-12 hover:scale-110 hover:text-[#cabeff] transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-4">
+<div class="flex flex-col items-center justify-center text-zinc-700 w-12 h-12 hover:opacity-100 transition-opacity cursor-pointer">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="relative h-screen w-full flex items-center justify-center overflow-hidden">
+<!-- Background Elements -->
+<div class="absolute inset-0 radial-blur-bg pointer-events-none"></div>
+<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDFPVzO-vzO8NTi4bHRoJghLar3g4HihJWt8ogjtGbpgj55A4L94v-pF6UaDj-0YKOh-kX5GBeCLPwNNzs9cdrKNYDcbqTseawH-PeyULuQyGrQ8g6YZ9RXTsVneIbT1S4sPbiglk-xxsz2hgHo7QbgYgDvw3oE4dBF1vohV3h07mNHx9yi9GpBySyUCE3gdRoluM0qUWrKztslnjOMRzXFwaF1feZX-RFU5hupaEkzMmTAGulsPzTpx0qbSz8O3B_EuM81mmLUyqI');"></div>
+<!-- Center Stage: The Pulse Reveal -->
+<div class="relative z-10 flex flex-col items-center">
+<div class="mb-4">
+<span class="font-label text-xs tracking-[0.4em] uppercase text-primary/60">02. EVALUATION: THE HARMONY</span>
+</div>
+<!-- Abstract Pulse Visualizer Container -->
+<div class="relative w-[500px] h-[500px] flex items-center justify-center">
+<!-- Glowing Pulsing Rings -->
+<div class="absolute inset-0 rounded-full border border-primary/10 animate-ping opacity-20"></div>
+<div class="absolute inset-8 rounded-full border-2 border-primary/20 animate-pulse"></div>
+<div class="absolute inset-20 rounded-full border border-primary/30"></div>
+<!-- Central Data Pulse -->
+<div class="absolute w-80 h-80 rounded-full bg-primary/5 backdrop-blur-3xl flex items-center justify-center shadow-[0_0_100px_rgba(93,63,211,0.2)]">
+<div class="text-center">
+<h1 class="font-headline text-8xl md:text-9xl font-bold tracking-tighter text-on-surface pulse-glitch">94%</h1>
+<p class="font-label text-sm tracking-[0.3em] text-primary mt-2">MATCH SCORE</p>
+</div>
+</div>
+<!-- Neural Markers & Connecting Lines (SVG Layer) -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none" viewbox="0 0 500 500">
+<line opacity="0.4" stroke="url(#lineGradient)" stroke-width="1" x1="250" x2="100" y1="250" y2="100"></line>
+<line opacity="0.4" stroke="url(#lineGradient)" stroke-width="1" x1="250" x2="400" y1="250" y2="150"></line>
+<line opacity="0.4" stroke="url(#lineGradient)" stroke-width="1" x1="250" x2="350" y1="250" y2="400"></line>
+<defs>
+<lineargradient id="lineGradient" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#cabeff" stop-opacity="0"></stop>
+<stop offset="100%" stop-color="#5d3fd3" stop-opacity="1"></stop>
+</lineargradient>
+</defs>
+</svg>
+<!-- Floating Neural Markers -->
+<!-- Marker: Skills -->
+<div class="absolute top-[80px] left-[60px] group">
+<div class="flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border border-primary/20 group-hover:border-primary transition-all duration-500">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="bolt">bolt</span>
+</div>
+<div class="mt-2 bg-surface-container/80 backdrop-blur-md px-3 py-1 rounded-full border border-outline-variant/20">
+<span class="font-label text-[10px] tracking-widest uppercase">Skills</span>
+</div>
+</div>
+</div>
+<!-- Marker: Experience -->
+<div class="absolute top-[130px] right-[40px] group">
+<div class="flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border border-primary/20 group-hover:border-primary transition-all duration-500">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="history_edu">history_edu</span>
+</div>
+<div class="mt-2 bg-surface-container/80 backdrop-blur-md px-3 py-1 rounded-full border border-outline-variant/20">
+<span class="font-label text-[10px] tracking-widest uppercase">Experience</span>
+</div>
+</div>
+</div>
+<!-- Marker: Tone -->
+<div class="absolute bottom-[80px] right-[100px] group">
+<div class="flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border border-primary/20 group-hover:border-primary transition-all duration-500">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="record_voice_over">record_voice_over</span>
+</div>
+<div class="mt-2 bg-surface-container/80 backdrop-blur-md px-3 py-1 rounded-full border border-outline-variant/20">
+<span class="font-label text-[10px] tracking-widest uppercase">Tone</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Action -->
+<div class="mt-12">
+<button class="px-10 py-4 bg-gradient-to-r from-primary to-primary-container text-on-primary font-label font-bold text-sm tracking-[0.2em] uppercase rounded-full shadow-[0_0_30px_rgba(93,63,211,0.4)] hover:scale-105 transition-transform active:scale-95 group">
+                    DECRYPT INSIGHTS
+                    <span class="material-symbols-outlined align-middle ml-2 group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Background Data Noise -->
+<div class="absolute bottom-20 left-20 hidden lg:block opacity-20 font-headline text-[12px] tracking-widest leading-relaxed text-primary">
+            SYNC_STATUS: 0.9421<br/>
+            NEURAL_PATHWAY: ACTIVE<br/>
+            LATENCY: 0.003ms
+        </div>
+</main>
+<!-- Global Footer -->
+<footer class="fixed bottom-4 w-full flex justify-center items-center gap-8 px-12 z-50 pointer-events-none">
+<div class="font-['Manrope'] text-[10px] tracking-[0.2em] uppercase opacity-40 text-zinc-700">
+            SYSTEM STATUS: OPTIMIZED // SHIFT_04
+        </div>
+<div class="flex gap-4 pointer-events-auto">
+<a class="font-['Manrope'] text-[10px] tracking-[0.2em] uppercase text-zinc-700 hover:opacity-100 transition-opacity" href="#">Security</a>
+<a class="font-['Manrope'] text-[10px] tracking-[0.2em] uppercase text-zinc-700 hover:opacity-100 transition-opacity" href="#">Latency</a>
+<a class="font-['Manrope'] text-[10px] tracking-[0.2em] uppercase text-zinc-700 hover:opacity-100 transition-opacity" href="#">Protocol</a>
+</div>
+</footer>
+</body></html>

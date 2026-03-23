@@ -1,0 +1,5 @@
+[     108ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:24678/?token=vSGqgin6rRTf' failed: Error during WebSocket handshake: Unexpected response code: 400 @ http://127.0.0.1:3100/@vite/client:801
+[     109ms] [ERROR] [vite] failed to connect to websocket (Error: WebSocket closed without opened.).  @ http://127.0.0.1:3100/@vite/client:840
+[     126ms] Error: WebSocket closed without opened.
+    at WebSocket.<anonymous> (http://127.0.0.1:3100/@vite/client:454:22)
+[     405ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3100/favicon.ico:0

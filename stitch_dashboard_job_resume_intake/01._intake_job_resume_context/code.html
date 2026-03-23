@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Modern Strategist | Intake Phase</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-bright": "#faf9f8",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "outline": "#747878",
+                        "on-secondary-container": "#54675e",
+                        "surface-container-highest": "#e3e2e1",
+                        "inverse-on-surface": "#f1f0f0",
+                        "tertiary": "#000000",
+                        "on-secondary-fixed": "#0d1f18",
+                        "on-tertiary-fixed": "#261900",
+                        "surface-tint": "#5f5e5e",
+                        "secondary-fixed": "#d3e7dc",
+                        "primary-fixed": "#e5e2e1",
+                        "inverse-surface": "#2f3130",
+                        "background": "#faf9f8",
+                        "on-secondary-fixed-variant": "#384b42",
+                        "tertiary-fixed": "#ffdea5",
+                        "tertiary-container": "#261900",
+                        "secondary-fixed-dim": "#b7cbc0",
+                        "on-secondary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface": "#faf9f8",
+                        "primary": "#000000",
+                        "on-primary-fixed-variant": "#474646",
+                        "surface-container-high": "#e9e8e7",
+                        "inverse-primary": "#c8c6c5",
+                        "on-primary-container": "#858383",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "surface-variant": "#e3e2e1",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#e9c176",
+                        "error-container": "#ffdad6",
+                        "secondary": "#50635a",
+                        "on-surface": "#1a1c1c",
+                        "surface-container": "#eeeeed",
+                        "on-surface-variant": "#444748",
+                        "primary-container": "#1c1b1b",
+                        "on-background": "#1a1c1c",
+                        "secondary-container": "#d0e5d9",
+                        "on-tertiary-fixed-variant": "#5d4201",
+                        "outline-variant": "#c4c7c7",
+                        "surface-dim": "#dadad9",
+                        "on-tertiary-container": "#a17f3b",
+                        "surface-container-low": "#f4f3f2",
+                        "on-primary-fixed": "#1c1b1b",
+                        "surface-container-lowest": "#ffffff"
+                    },
+                    fontFamily: {
+                        "headline": ["Newsreader", "serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #faf9f8;
+            color: #1a1c1c;
+        }
+        .serif-italic {
+            font-family: 'Newsreader', serif;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<nav class="bg-[#faf9f8] dark:bg-[#121212] flex justify-between items-center px-8 py-6 w-full max-w-screen-2xl mx-auto sticky top-0 z-50">
+<div class="font-serif italic text-2xl text-[#000000] dark:text-[#f4f3f2]">The Modern Strategist</div>
+<div class="hidden md:flex gap-8 items-center">
+<a class="text-[#000000] dark:text-[#ffffff] border-b-2 border-[#50635a] pb-1 font-medium hover:text-[#50635a] transition-colors duration-200" href="#">Portfolio</a>
+<a class="text-[#50635a]/60 dark:text-[#f4f3f2]/40 font-medium hover:text-[#50635a] transition-colors duration-200" href="#">Insights</a>
+<a class="text-[#50635a]/60 dark:text-[#f4f3f2]/40 font-medium hover:text-[#50635a] transition-colors duration-200" href="#">Archive</a>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface" data-icon="account_circle">account_circle</span>
+</div>
+</nav>
+<div class="bg-[#f4f3f2] dark:bg-[#1c1b1b] h-[1px] w-full"></div>
+<!-- Layout Container -->
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar (The Chronicle) -->
+<aside class="hidden lg:flex flex-col gap-10 pt-32 px-6 h-screen w-64 fixed left-0 top-0 bg-[#f4f3f2] dark:bg-[#1c1b1b] border-r border-[#eeeeed] dark:border-[#2a2a2a]">
+<div class="mb-8">
+<div class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] Inter text-[#000000] dark:text-[#f4f3f2] opacity-60">The Chronicle</div>
+<div class="text-sm font-bold text-secondary">Phase IV Progress</div>
+</div>
+<nav class="flex flex-col gap-6">
+<!-- Active Tab: Intake -->
+<div class="flex items-center gap-4 text-[#000000] dark:text-[#ffffff] font-bold border-l-2 border-[#50635a] pl-4 scale-100 active:scale-[0.99] transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] Inter">Intake</span>
+</div>
+<div class="flex items-center gap-4 text-[#50635a]/50 dark:text-[#f4f3f2]/30 pl-4 hover:bg-[#eeeeed] dark:hover:bg-[#2a2a2a] scale-100 active:scale-[0.99] transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] Inter">Evaluation</span>
+</div>
+<div class="flex items-center gap-4 text-[#50635a]/50 dark:text-[#f4f3f2]/30 pl-4 hover:bg-[#eeeeed] dark:hover:bg-[#2a2a2a] scale-100 active:scale-[0.99] transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] Inter">Diagnosis</span>
+</div>
+<div class="flex items-center gap-4 text-[#50635a]/50 dark:text-[#f4f3f2]/30 pl-4 hover:bg-[#eeeeed] dark:hover:bg-[#2a2a2a] scale-100 active:scale-[0.99] transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="download_done">download_done</span>
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] Inter">Refinement</span>
+</div>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 lg:ml-64 p-8 md:p-16 max-w-6xl mx-auto">
+<!-- Phase Indicator -->
+<div class="mb-12 flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="font-sans uppercase tracking-[0.1em] text-[0.6875rem] font-bold text-secondary">Step 01</span>
+<div class="w-8 h-[2px] bg-secondary"></div>
+</div>
+<h1 class="font-headline italic text-4xl text-on-surface tracking-tight">Intake</h1>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+<!-- Card 1: The Mission -->
+<section class="bg-surface-container-lowest p-8 border border-outline-variant/15 shadow-sm">
+<div class="mb-8">
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] text-secondary font-bold block mb-1">01. The Mission</span>
+<h2 class="font-headline text-2xl text-on-surface">Job Description</h2>
+<p class="text-on-surface-variant text-sm mt-2 leading-relaxed">Provide the context of the role you are pursuing. Our engine requires the specific nuances of the requirements to begin mapping your trajectory.</p>
+</div>
+<div class="space-y-6">
+<div>
+<label class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] text-on-surface-variant block mb-2">Source URL</label>
+<input class="w-full bg-transparent border-b border-outline-variant focus:border-secondary focus:ring-0 px-0 py-2 text-on-surface placeholder:text-outline-variant transition-all outline-none" placeholder="https://careers.example.com/role" type="url"/>
+</div>
+<div class="relative py-8 border-2 border-dashed border-outline-variant flex flex-col items-center justify-center gap-3">
+<span class="material-symbols-outlined text-secondary text-3xl" data-icon="upload_file">upload_file</span>
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] text-on-surface-variant">Drop PDF or Document</span>
+<button class="text-xs underline hover:text-secondary transition-colors">or browse files</button>
+</div>
+<div>
+<label class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] text-on-surface-variant block mb-2">Plain Text Entry</label>
+<textarea class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-secondary/20 p-4 text-sm text-on-surface placeholder:text-outline-variant resize-none" placeholder="Paste the job description text here..." rows="4"></textarea>
+</div>
+</div>
+</section>
+<!-- Card 2: Your Profile -->
+<section class="bg-surface-container-low p-8 border border-outline-variant/10 shadow-sm">
+<div class="mb-8">
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] text-secondary font-bold block mb-1">02. Your Profile</span>
+<h2 class="font-headline text-2xl text-on-surface">Experience Dossier</h2>
+<p class="text-on-surface-variant text-sm mt-2 leading-relaxed">Upload your current resume or professional bio. We extract strategic milestones and core competencies.</p>
+</div>
+<div class="space-y-8">
+<!-- Primary Upload Button -->
+<button class="w-full bg-primary text-on-primary py-4 px-6 flex items-center justify-between hover:bg-primary-container transition-all duration-200 group">
+<span class="font-sans uppercase tracking-[0.1em] text-[0.75rem] font-bold">Upload New Document</span>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<!-- Recent Files -->
+<div>
+<h3 class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] text-on-surface-variant font-bold mb-4">Recently Analyzed</h3>
+<div class="space-y-4">
+<!-- File Row -->
+<div class="flex items-center justify-between p-4 bg-surface-container-lowest border border-outline-variant/5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" data-icon="article">article</span>
+<div>
+<div class="text-xs font-bold text-on-surface">Resume_Strategist_2024.pdf</div>
+<div class="text-[0.625rem] text-on-surface-variant uppercase tracking-tighter">Processed 2h ago</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-sm text-outline-variant cursor-pointer hover:text-secondary" data-icon="more_vert">more_vert</span>
+</div>
+<!-- File Row -->
+<div class="flex items-center justify-between p-4 bg-surface-container-lowest border border-outline-variant/5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" data-icon="article">article</span>
+<div>
+<div class="text-xs font-bold text-on-surface">Executive_Summary_V2.docx</div>
+<div class="text-[0.625rem] text-on-surface-variant uppercase tracking-tighter">Processed yesterday</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-sm text-outline-variant cursor-pointer hover:text-secondary" data-icon="more_vert">more_vert</span>
+</div>
+</div>
+</div>
+<!-- Image Placeholder -->
+<div class="pt-4">
+<img alt="Clean minimal office interior representing focus" class="w-full h-32 object-cover opacity-80 grayscale hover:grayscale-0 transition-all duration-700" data-alt="Modern minimal office workspace with clean desk" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJKO5_EIlWPWevytlXBlWPug7ew9EgejMulFFo_aO54eCxkKvBddEBuZUXTu9t3jS-2zWVXReI0BzXogGp4cVgdEgmMv6q0MkYG2x767AgfYCdwlhq8A95K-8vwvwByGY5ucnlVedKOyek6pXHPU_RQgRU0ynlZqO6VSN0JGuo2BZ31V8ghajkMaseOM-9mbydiJb0gZr9TuRvmHEc0v7sBWgaiPQg7g4hJWdpWpQuKgvjZdhfwh7T15N5w74ScI7MCrB5eUFylX0"/>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer Section -->
+<footer class="mt-24 pt-12 border-t border-outline-variant/15 flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="font-serif italic text-lg text-black dark:text-white">The Modern Strategist</div>
+<div class="flex gap-8">
+<a class="font-sans text-[0.6875rem] tracking-tight Inter text-[#50635a]/60 dark:text-[#f4f3f2]/40 hover:text-black dark:hover:text-white transition-colors" href="#">Terms of Service</a>
+<a class="font-sans text-[0.6875rem] tracking-tight Inter text-[#50635a]/60 dark:text-[#f4f3f2]/40 hover:text-black dark:hover:text-white transition-colors" href="#">Privacy Policy</a>
+<a class="font-sans text-[0.6875rem] tracking-tight Inter text-[#50635a]/60 dark:text-[#f4f3f2]/40 hover:text-black dark:hover:text-white transition-colors" href="#">Methodology</a>
+</div>
+<div class="font-sans text-[0.6875rem] tracking-tight Inter text-[#50635a] dark:text-[#f4f3f2]/60">© 2024 The Modern Strategist. All rights reserved.</div>
+</footer>
+</main>
+</div>
+</body></html>

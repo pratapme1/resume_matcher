@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700;800&amp;family=Noto+Serif:ital,wght@0,300;0,400;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container": "#121a25",
+              "outline": "#6a768a",
+              "primary": "#c6c6c7",
+              "primary-container": "#454747",
+              "on-secondary-fixed": "#354052",
+              "error-container": "#7f2927",
+              "primary-fixed": "#e2e2e2",
+              "surface-bright": "#1e2d41",
+              "on-surface": "#d9e6fd",
+              "secondary-fixed-dim": "#cad5ec",
+              "background": "#0a0e14",
+              "on-secondary": "#152031",
+              "on-primary-container": "#d0d0d0",
+              "on-error": "#490106",
+              "outline-variant": "#3c495b",
+              "surface-variant": "#1a2637",
+              "secondary-container": "#313c4e",
+              "on-primary-fixed": "#3e4040",
+              "inverse-surface": "#f8f9ff",
+              "secondary-fixed": "#d8e3fa",
+              "on-tertiary-fixed": "#40454d",
+              "on-primary": "#3f4041",
+              "surface-container-lowest": "#000000",
+              "tertiary-container": "#e7ebf5",
+              "surface-container-high": "#16202e",
+              "tertiary": "#f8f9ff",
+              "inverse-on-surface": "#51555d",
+              "tertiary-fixed-dim": "#d9dde7",
+              "inverse-primary": "#5e5f60",
+              "on-background": "#d9e6fd",
+              "surface-tint": "#c6c6c7",
+              "surface-dim": "#0a0e14",
+              "primary-fixed-dim": "#d4d4d4",
+              "on-tertiary-fixed-variant": "#5c6169",
+              "surface-container-low": "#0e141c",
+              "tertiary-dim": "#d9dde7",
+              "on-tertiary-container": "#52575f",
+              "primary-dim": "#b8b9b9",
+              "on-surface-variant": "#9facc1",
+              "on-error-container": "#ff9993",
+              "secondary-dim": "#939eb4",
+              "secondary": "#939eb4",
+              "surface-container-highest": "#1a2637",
+              "on-secondary-container": "#b4c0d6",
+              "on-tertiary": "#5a5f68",
+              "error": "#ee7d77",
+              "error-dim": "#bb5551",
+              "tertiary-fixed": "#e7ebf5",
+              "on-primary-fixed-variant": "#5a5c5c",
+              "surface": "#0a0e14",
+              "on-secondary-fixed-variant": "#515c6f"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Noto Serif"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24;
+            font-size: 1.25rem;
+        }
+        body {
+            background-color: #0a0e14;
+            color: #d9e6fd;
+            -webkit-font-smoothing: antialiased;
+        }
+        .resume-shadow {
+            box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.8);
+        }
+    </style>
+</head>
+<body class="font-body selection:bg-primary selection:text-on-primary">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#0A0E14]/60 backdrop-blur-xl flex justify-center items-center py-6 px-6 md:px-12 w-full">
+<div class="flex justify-between items-center w-full max-w-7xl">
+<span class="text-[#C6C6C7] tracking-[0.3em] font-black text-lg font-headline">THE ARCHITECT</span>
+<nav class="hidden md:flex gap-8">
+<a class="font-headline tracking-[0.2em] text-sm font-bold uppercase text-[#6A768A] hover:text-white transition-colors duration-500" href="#">PHASE 01</a>
+<a class="font-headline tracking-[0.2em] text-sm font-bold uppercase text-[#6A768A] hover:text-white transition-colors duration-500" href="#">PHASE 02</a>
+<a class="font-headline tracking-[0.2em] text-sm font-bold uppercase text-[#6A768A] hover:text-white transition-colors duration-500" href="#">PHASE 03</a>
+<a class="font-headline tracking-[0.2em] text-sm font-bold uppercase text-[#C6C6C7] hover:text-white transition-colors duration-500" href="#">PHASE 04</a>
+</nav>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-outline">account_circle</span>
+</div>
+</div>
+<div class="bg-[#0E141C] h-[1px] w-full absolute bottom-0 opacity-20"></div>
+</header>
+<main class="pt-32 pb-48 px-6 flex flex-col items-center">
+<!-- Headline Section -->
+<div class="w-full max-w-5xl mb-24">
+<h1 class="font-headline text-5xl md:text-7xl font-extrabold tracking-tighter text-primary mb-4 opacity-90">
+                THE REFINED OUTPUT
+            </h1>
+<p class="font-body italic text-xl text-outline-variant max-w-2xl">
+                Synthesis complete. Your professional narrative has been architecturaly restructured for maximum impact.
+            </p>
+</div>
+<!-- Main Layout: Sidebar controls + Resume Canvas -->
+<div class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+<!-- Floating Controls (Side) -->
+<aside class="lg:col-span-3 flex flex-col gap-8 order-2 lg:order-1">
+<div class="bg-surface-container-low p-8 rounded-xl border border-outline-variant/10 flex flex-col gap-6">
+<h3 class="font-headline text-[10px] tracking-[0.3em] font-bold text-outline uppercase">Actions</h3>
+<button class="flex items-center justify-between group w-full text-left py-2">
+<span class="font-headline text-xs tracking-widest text-primary group-hover:text-white transition-colors">DOWNLOAD PDF</span>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">download</span>
+</button>
+<button class="flex items-center justify-between group w-full text-left py-2">
+<span class="font-headline text-xs tracking-widest text-primary group-hover:text-white transition-colors">COPY MARKDOWN</span>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">content_copy</span>
+</button>
+<div class="h-[1px] bg-outline-variant/20 w-full my-2"></div>
+<button class="flex items-center justify-between group w-full text-left py-2">
+<span class="font-headline text-xs tracking-widest text-outline group-hover:text-primary transition-colors">EDIT SOURCE</span>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">edit</span>
+</button>
+</div>
+<div class="px-4">
+<p class="font-body text-sm text-outline leading-relaxed italic">
+                        "Precision is the byproduct of subtraction."
+                    </p>
+</div>
+</aside>
+<!-- Resume Document Canvas -->
+<div class="lg:col-span-9 order-1 lg:order-2">
+<article class="bg-white text-[#1a1a1a] rounded-sm p-12 md:p-20 resume-shadow aspect-[1/1.41] flex flex-col gap-12 selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- Resume Header -->
+<section class="border-b-[3px] border-[#1a1a1a] pb-8">
+<h2 class="font-headline text-4xl font-extrabold tracking-tight uppercase mb-2">Julian V. Sterling</h2>
+<div class="flex flex-wrap gap-x-6 gap-y-2 font-headline text-[11px] font-bold tracking-widest text-[#444]">
+<span>STRATEGIC DESIGN LEAD</span>
+<span>•</span>
+<span>LONDON, UK</span>
+<span>•</span>
+<span>STERLING.STUDIO</span>
+<span>•</span>
+<span>LINKEDIN.COM/IN/JVS</span>
+</div>
+</section>
+<!-- Profile / Summary -->
+<section>
+<h3 class="font-headline text-[10px] font-black tracking-[0.4em] uppercase text-[#888] mb-4">Executive Summary</h3>
+<p class="font-body text-lg leading-relaxed">
+                            Interdisciplinary design leader with 12+ years of experience constructing digital ecosystems for Fortune 100 firms. Expert in bridging the gap between brutalist structural efficiency and human-centric emotional resonance.
+                        </p>
+</section>
+<!-- Experience -->
+<section class="flex flex-col gap-8">
+<h3 class="font-headline text-[10px] font-black tracking-[0.4em] uppercase text-[#888]">Professional Experience</h3>
+<!-- Role 01 -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="font-headline text-xs font-bold tracking-tighter text-[#666]">2019 — PRESENT</div>
+<div class="md:col-span-3">
+<h4 class="font-headline text-xl font-bold mb-1">Principal Systems Architect</h4>
+<p class="font-headline text-xs font-bold uppercase tracking-widest text-[#444] mb-4">Vanguard Technologies</p>
+<ul class="font-body text-md list-disc list-outside ml-4 space-y-2 opacity-90">
+<li>Orchestrated the redesign of the core enterprise platform, resulting in a 40% increase in operational velocity.</li>
+<li>Developed a proprietary design token system used by 45+ internal engineering teams globally.</li>
+<li>Mentored a cross-functional team of 12 designers through three successful product launches.</li>
+</ul>
+</div>
+</div>
+<!-- Role 02 -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="font-headline text-xs font-bold tracking-tighter text-[#666]">2015 — 2019</div>
+<div class="md:col-span-3">
+<h4 class="font-headline text-xl font-bold mb-1">Senior Product Designer</h4>
+<p class="font-headline text-xs font-bold uppercase tracking-widest text-[#444] mb-4">Aura Digital Agency</p>
+<ul class="font-body text-md list-disc list-outside ml-4 space-y-2 opacity-90">
+<li>Led design for the 'Helios' project, winning the 2018 Red Dot Design Award for Interface Excellence.</li>
+<li>Spearheaded the integration of machine learning visualizations into client dashboards.</li>
+</ul>
+</div>
+</div>
+</section>
+<!-- Skills / Education Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-12 mt-4 pt-12 border-t border-[#eee]">
+<div>
+<h3 class="font-headline text-[10px] font-black tracking-[0.4em] uppercase text-[#888] mb-6">Expertise</h3>
+<div class="flex flex-wrap gap-2">
+<span class="bg-[#f0f0f0] px-3 py-1 font-headline text-[9px] font-bold tracking-widest uppercase">System Architecture</span>
+<span class="bg-[#f0f0f0] px-3 py-1 font-headline text-[9px] font-bold tracking-widest uppercase">UX Strategy</span>
+<span class="bg-[#f0f0f0] px-3 py-1 font-headline text-[9px] font-bold tracking-widest uppercase">Bento Layouts</span>
+<span class="bg-[#f0f0f0] px-3 py-1 font-headline text-[9px] font-bold tracking-widest uppercase">React / Next.js</span>
+<span class="bg-[#f0f0f0] px-3 py-1 font-headline text-[9px] font-bold tracking-widest uppercase">Design Ops</span>
+</div>
+</div>
+<div>
+<h3 class="font-headline text-[10px] font-black tracking-[0.4em] uppercase text-[#888] mb-6">Education</h3>
+<div>
+<h5 class="font-headline text-sm font-bold">Royal College of Art</h5>
+<p class="font-body text-xs italic">MA in Information Design, 2014</p>
+</div>
+</div>
+</section>
+</article>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Phase Tracking) -->
+<nav class="fixed bottom-24 w-full z-40 bg-transparent flex justify-center items-center gap-6 md:gap-12 w-full">
+<div class="flex items-center gap-12 bg-surface-container-high/40 backdrop-blur-md px-10 py-4 rounded-full border border-outline-variant/10">
+<div class="flex flex-col items-center gap-2 text-[#6A768A] opacity-40 hover:opacity-100 transition-opacity duration-500 cursor-pointer">
+<span class="material-symbols-outlined">circle</span>
+<span class="font-headline text-[10px] tracking-widest font-medium uppercase">PHASE 01</span>
+</div>
+<div class="flex flex-col items-center gap-2 text-[#6A768A] opacity-40 hover:opacity-100 transition-opacity duration-500 cursor-pointer">
+<span class="material-symbols-outlined">circle</span>
+<span class="font-headline text-[10px] tracking-widest font-medium uppercase">PHASE 02</span>
+</div>
+<div class="flex flex-col items-center gap-2 text-[#6A768A] opacity-40 hover:opacity-100 transition-opacity duration-500 cursor-pointer">
+<span class="material-symbols-outlined">circle</span>
+<span class="font-headline text-[10px] tracking-widest font-medium uppercase">PHASE 03</span>
+</div>
+<div class="flex flex-col items-center gap-2 text-[#C6C6C7] after:content-[''] after:w-1 after:h-1 after:bg-[#C6C6C7] after:rounded-full after:mt-1 cursor-default">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">circle</span>
+<span class="font-headline text-[10px] tracking-widest font-medium uppercase">PHASE 04</span>
+</div>
+</div>
+</nav>
+<!-- Footer -->
+<footer class="w-full py-12 bg-[#0A0E14] flex flex-col items-center justify-center gap-4 opacity-30 hover:opacity-100 transition-all duration-300">
+<span class="font-headline text-[9px] tracking-[0.2em] font-light text-[#6A768A] uppercase">© ARCHITECT INTELLIGENCE</span>
+<div class="flex gap-6">
+<a class="font-headline text-[9px] tracking-[0.2em] font-light text-[#6A768A] hover:text-[#C6C6C7] uppercase" href="#">TERMS</a>
+<a class="font-headline text-[9px] tracking-[0.2em] font-light text-[#6A768A] hover:text-[#C6C6C7] uppercase" href="#">PRIVACY</a>
+</div>
+</footer>
+</body></html>

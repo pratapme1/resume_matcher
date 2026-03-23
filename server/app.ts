@@ -2,6 +2,9 @@ import express from 'express';
 import type { Express, NextFunction, Request, Response } from 'express';
 import multer from 'multer';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import pinoHttp from 'pino-http';
 import { z } from 'zod';
 import { buildAnalysis, buildTailoringPlan } from './analysis.ts';
 import { buildGapAnalysis } from './gap-analysis.ts';
@@ -29,6 +32,10 @@ import { tailorResumeWithAI } from './tailor.ts';
 import { validateTailoredResume } from './validate.ts';
 import { startAutoApply, submitAutoApply } from './auto-apply.ts';
 import { searchJobs, buildCandidateProfile } from './job-search.ts';
+import { requireAuth } from './middleware/auth.ts';
+import { writeUsageEvent, isOverQuota } from './db/queries/usage.ts';
+import { createJobSearchSession } from './db/queries/sessions.ts';
+import { logger } from './logger.ts';
 import type {
   JobSearchPreferences,
   ResumeTemplateProfile,
@@ -62,6 +69,8 @@ export interface AppDependencies {
   getAI: (req?: Request) => AIClient;
   fetchImpl?: typeof fetch;
   disablePlaywrightJdFallback?: boolean;
+  /** Skip auth + DB writes — for unit/integration tests */
+  skipAuth?: boolean;
 }
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -170,6 +179,23 @@ function sendErrorResponse(res: Response, error: unknown, context: string) {
   res.status(appError.status).json(body);
 }
 
+// Rate limit factories — keyed by user ID after auth, IP fallback before
+function makeRateLimit(opts: { windowMs: number; max: number; message: string }) {
+  return rateLimit({
+    windowMs: opts.windowMs,
+    max: opts.max,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => (req as Request).userId ?? req.ip ?? 'unknown',
+    message: { error: opts.message, code: 'RATE_LIMITED' },
+  });
+}
+
+const rateLimitSearch   = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 5,  message: 'Job search limit: 5 per hour.' });
+const rateLimitTailor   = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 10, message: 'Tailor limit: 10 per hour.' });
+const rateLimitExtract  = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 30, message: 'Extract limit: 30 per hour.' });
+const rateLimitProfile  = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 20, message: 'Profile build limit: 20 per hour.' });
+
 export function createApp(deps: AppDependencies): Express {
   const app = express();
   const upload = multer({
@@ -177,14 +203,21 @@ export function createApp(deps: AppDependencies): Express {
     storage: multer.memoryStorage(),
   });
 
-  app.use(cors());
-  app.use(express.json({ limit: '10mb' }));
+  const appUrl = process.env.APP_URL;
+  app.use(helmet({ contentSecurityPolicy: false })); // CSP managed by Vite in dev
+  app.use(cors(appUrl ? { origin: appUrl } : {}));
+  app.use(pinoHttp({ logger, quietReqLogger: true }));
+  app.use(express.json({ limit: '2mb' }));
 
-  app.get('/api/health', (req, res) => {
+  const auth = deps.skipAuth
+    ? (_req: Request, _res: Response, next: NextFunction) => next()
+    : requireAuth;
+
+  app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok' });
   });
 
-  app.post('/api/extract-jd-url', async (req, res) => {
+  app.post('/api/extract-jd-url', auth, rateLimitExtract, async (req, res) => {
     try {
       const { url } = extractJdUrlRequestSchema.parse(req.body);
       const rawText = await fetchJobDescriptionText(
@@ -200,7 +233,7 @@ export function createApp(deps: AppDependencies): Express {
     }
   });
 
-  app.post('/api/extract-jd-file', async (req, res) => {
+  app.post('/api/extract-jd-file', auth, rateLimitExtract, async (req, res) => {
     try {
       await runSingleUpload(upload, req, res, 'file');
       if (!req.file) {
@@ -216,7 +249,7 @@ export function createApp(deps: AppDependencies): Express {
     }
   });
 
-  app.post('/api/extract-jd-text', async (req, res) => {
+  app.post('/api/extract-jd-text', auth, rateLimitExtract, async (req, res) => {
     try {
       const { text } = z.object({ text: z.string().min(1) }).parse(req.body);
       const normalized = buildNormalizedJobDescription(text, 'paste');
@@ -226,8 +259,14 @@ export function createApp(deps: AppDependencies): Express {
     }
   });
 
-  app.post('/api/tailor-resume', async (req, res) => {
+  app.post('/api/tailor-resume', auth, rateLimitTailor, async (req, res) => {
     try {
+      // Monthly quota check
+      if (!deps.skipAuth && req.userId && await isOverQuota(req.userId, 'tailor')) {
+        res.status(402).json({ error: 'Monthly tailor limit reached. Upgrade to Pro for more.', code: 'QUOTA_EXCEEDED' });
+        return;
+      }
+
       await runSingleUpload(upload, req, res, 'resume');
       if (!req.file) {
         throw badRequest('Resume file is required.', 'INVALID_REQUEST', {
@@ -305,13 +344,23 @@ export function createApp(deps: AppDependencies): Express {
             jdCompanyName: jdRequirements.companyName,
           };
 
+      if (!deps.skipAuth && req.userId) {
+        void writeUsageEvent({
+          userId: req.userId,
+          eventType: 'tailor',
+          status: validation.isValid ? 'success' : 'blocked',
+        });
+      }
       res.json(response);
     } catch (error) {
+      if (!deps.skipAuth && req.userId) {
+        void writeUsageEvent({ userId: req.userId, eventType: 'tailor', status: 'error' });
+      }
       sendErrorResponse(res, error, 'tailor-resume');
     }
   });
 
-  app.post('/api/generate-docx', async (req, res) => {
+  app.post('/api/generate-docx', auth, async (req, res) => {
     try {
       const { tailoredResume, templateProfile, validation } = generateDocxRequestSchema.parse(req.body);
       if (!validation.isValid) {
@@ -342,7 +391,7 @@ export function createApp(deps: AppDependencies): Express {
 
   // Job search: build candidate profile from resume + search via Gemini grounding
   // Lightweight: parse resume → return candidate profile (no AI search)
-  app.post('/api/build-profile', async (req, res) => {
+  app.post('/api/build-profile', auth, rateLimitProfile, async (req, res) => {
     try {
       await runSingleUpload(upload, req, res, 'resume');
       if (!req.file) {
@@ -365,8 +414,14 @@ export function createApp(deps: AppDependencies): Express {
   });
 
   // Job search: build candidate profile from resume + search via Gemini grounding
-  app.post('/api/search-jobs', async (req, res) => {
+  app.post('/api/search-jobs', auth, rateLimitSearch, async (req, res) => {
     try {
+      // Monthly quota check
+      if (!deps.skipAuth && req.userId && await isOverQuota(req.userId, 'search')) {
+        res.status(402).json({ error: 'Monthly search limit reached. Upgrade to Pro for more.', code: 'QUOTA_EXCEEDED' });
+        return;
+      }
+
       await runSingleUpload(upload, req, res, 'resume');
       if (!req.file) {
         throw badRequest('Resume file is required.', 'INVALID_REQUEST', {
@@ -399,15 +454,35 @@ export function createApp(deps: AppDependencies): Express {
       }
 
       const ai = deps.getAI(req);
+      const t0 = Date.now();
       const response = await searchJobs(parsedResume.resume, preferences, ai);
+
+      if (!deps.skipAuth && req.userId) {
+        void writeUsageEvent({
+          userId: req.userId,
+          eventType: 'search',
+          status: 'success',
+          durationMs: Date.now() - t0,
+        });
+        void createJobSearchSession({
+          userId: req.userId,
+          preferencesJson: preferences,
+          candidateProfileJson: response.candidateProfile,
+          resultsJson: response.results,
+          totalResults: response.totalFound,
+        });
+      }
       res.json(response);
     } catch (error) {
+      if (!deps.skipAuth && req.userId) {
+        void writeUsageEvent({ userId: req.userId, eventType: 'search', status: 'error' });
+      }
       sendErrorResponse(res, error, 'search-jobs');
     }
   });
 
   // AI-powered form filler — called by the Chrome extension content script
-  app.post('/api/smart-fill', async (req, res) => {
+  app.post('/api/smart-fill', auth, async (req, res) => {
     try {
       const { fields, prefill } = z.object({
         fields: z.array(z.object({
@@ -462,7 +537,7 @@ Instructions:
   });
 
   // Server-side Playwright auto-apply agent
-  app.post('/api/auto-apply', async (req, res) => {
+  app.post('/api/auto-apply', auth, async (req, res) => {
     try {
       const body = z.object({
         applyUrl: z.string().url(),
@@ -491,7 +566,7 @@ Instructions:
     }
   });
 
-  app.post('/api/auto-apply/submit', async (req, res) => {
+  app.post('/api/auto-apply/submit', auth, async (req, res) => {
     try {
       const { sessionId } = z.object({ sessionId: z.string() }).parse(req.body);
       const result = await submitAutoApply(sessionId);

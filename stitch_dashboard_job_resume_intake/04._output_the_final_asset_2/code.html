@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface": "#e5e1e4",
+              "tertiary-fixed-dim": "#ffb68b",
+              "tertiary-container": "#954500",
+              "on-tertiary": "#522300",
+              "tertiary": "#ffb68b",
+              "surface-container": "#201f21",
+              "on-background": "#e5e1e4",
+              "outline": "#938ea0",
+              "primary": "#cabeff",
+              "on-tertiary-fixed-variant": "#743400",
+              "on-primary-fixed-variant": "#4723be",
+              "on-secondary-fixed-variant": "#45474b",
+              "on-error-container": "#ffdad6",
+              "surface-container-highest": "#353437",
+              "primary-container": "#5d3fd3",
+              "secondary": "#c6c6cc",
+              "outline-variant": "#484554",
+              "on-surface-variant": "#c9c4d7",
+              "surface": "#131315",
+              "secondary-fixed-dim": "#c6c6cc",
+              "secondary-fixed": "#e2e2e8",
+              "on-error": "#690005",
+              "error": "#ffb4ab",
+              "primary-fixed": "#e6deff",
+              "on-secondary-fixed": "#1a1c20",
+              "surface-container-low": "#1c1b1d",
+              "inverse-surface": "#e5e1e4",
+              "on-primary-fixed": "#1c0062",
+              "surface-tint": "#cabeff",
+              "surface-variant": "#353437",
+              "secondary-container": "#47494e",
+              "on-primary-container": "#d8ceff",
+              "on-secondary-container": "#b7b8be",
+              "on-primary": "#30009a",
+              "surface-container-lowest": "#0e0e10",
+              "background": "#131315",
+              "on-tertiary-fixed": "#321300",
+              "on-tertiary-container": "#ffc9ab",
+              "primary-fixed-dim": "#cabeff",
+              "tertiary-fixed": "#ffdbc8",
+              "error-container": "#93000a",
+              "inverse-primary": "#6042d6",
+              "surface-bright": "#39393b",
+              "surface-container-high": "#2a2a2c",
+              "surface-dim": "#131315",
+              "inverse-on-surface": "#313032",
+              "on-secondary": "#2f3035"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Manrope"],
+              "label": ["Space Grotesk"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-effect {
+            backdrop-filter: blur(40px);
+        }
+        .pulse-gradient {
+            background: linear-gradient(135deg, #cabeff 0%, #5d3fd3 100%);
+        }
+        .resume-shadow {
+            box-shadow: 0 40px 100px -20px rgba(93, 63, 211, 0.25);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary selection:text-on-primary overflow-x-hidden">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-zinc-950/40 backdrop-blur-xl flex justify-between items-center px-8 py-4 shadow-[0_20px_50px_rgba(93,63,211,0.06)]">
+<div class="flex items-center gap-4">
+<span class="text-2xl font-bold tracking-widest text-[#cabeff] uppercase font-headline">The Pulse</span>
+<div class="hidden md:flex gap-6 ml-12">
+<a class="font-['Space_Grotesk'] tracking-tighter uppercase text-sm text-zinc-500 hover:text-zinc-300 transition-colors" href="#">Neural Feed</a>
+<a class="font-['Space_Grotesk'] tracking-tighter uppercase text-sm text-[#cabeff] font-bold border-b-2 border-[#5D3FD3] pb-1" href="#">Terminal</a>
+<a class="font-['Space_Grotesk'] tracking-tighter uppercase text-sm text-zinc-500 hover:text-zinc-300 transition-colors" href="#">Sync Hub</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-[#cabeff] cursor-pointer" data-icon="sensors">sensors</span>
+<span class="material-symbols-outlined text-[#cabeff] cursor-pointer" data-icon="data_thresholding">data_thresholding</span>
+</div>
+<img class="w-8 h-8 rounded-full border border-primary/20" data-alt="User Pulse Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBq899J8LOIunCQ_-rCOr9NGVLzQ_ffhk_gAcfOWCvtjwVNQaxxbEIP8gq-sgC3yDmOGtkmd1RYFd1f5fjELkCqcAAbP4XGsB6u6Gby2FpkP4AdOFAzoCZz0WYqKkrPi7LHPObRZK5ilzpW8Q4OjB1fgrYUlmJipdDJJ-L7RctRwu_9GwMS7om-wwMOaM7A6TCGATlfbiz58B4nx917qpFWvlr4rUJ_PTvo8VJypNqFqx6RJnGFeKcMAP03owSTZK522695G26ecCQ"/>
+</div>
+</header>
+<!-- SideNavBar -->
+<nav class="fixed left-6 top-24 bottom-24 w-20 rounded-full bg-zinc-900/20 backdrop-blur-2xl flex flex-col items-center py-10 justify-between shadow-2xl shadow-purple-900/20 z-40 hidden md:flex">
+<div class="flex flex-col gap-8 items-center">
+<div class="flex flex-col items-center justify-center text-zinc-500 w-12 h-12 hover:scale-110 hover:text-[#cabeff] transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="dynamic_form">dynamic_form</span>
+</div>
+<div class="flex flex-col items-center justify-center text-zinc-500 w-12 h-12 hover:scale-110 hover:text-[#cabeff] transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="hub">hub</span>
+</div>
+<div class="flex flex-col items-center justify-center text-zinc-500 w-12 h-12 hover:scale-110 hover:text-[#cabeff] transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-[#5D3FD3] text-white rounded-full w-12 h-12 shadow-[0_0_15px_rgba(93,63,211,0.5)] active:scale-90 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-4">
+<div class="flex flex-col items-center justify-center text-zinc-500 w-12 h-12 hover:scale-110 hover:text-[#cabeff] transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</div>
+</div>
+</nav>
+<!-- Main Workspace -->
+<main class="min-h-screen pt-32 pb-24 px-8 md:pl-32 md:pr-12">
+<div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+<!-- Floating Resume Document -->
+<div class="lg:col-span-7 flex flex-col gap-6">
+<div class="flex items-center justify-between mb-4">
+<div>
+<h1 class="font-headline text-3xl font-bold tracking-tight text-on-surface">OPTIMIZED_ASSET_04</h1>
+<p class="font-label text-xs tracking-[0.2em] text-primary mt-1">STATUS: SYNCED // LIVE_ANNOTATIONS_ON</p>
+</div>
+</div>
+<div class="relative group">
+<!-- Glow Layer -->
+<div class="absolute -inset-1 pulse-gradient rounded-xl blur-2xl opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+<!-- Paper Surface -->
+<div class="relative bg-white text-zinc-900 p-12 md:p-16 rounded-sm resume-shadow aspect-[1/1.414] overflow-hidden">
+<header class="border-b-2 border-zinc-100 pb-8 mb-8 flex justify-between items-start">
+<div>
+<h2 class="text-3xl font-headline font-bold uppercase tracking-tighter">Alex Sterling</h2>
+<p class="text-sm font-body text-zinc-500 mt-1 uppercase tracking-widest">Lead Systems Architect</p>
+</div>
+<div class="text-right text-[10px] font-label text-zinc-400 leading-relaxed uppercase">
+                                San Francisco, CA<br/>
+                                alex.sterling@neural.dev<br/>
+                                +1 (555) 010-9942
+                            </div>
+</header>
+<section class="mb-10">
+<h3 class="text-xs font-label font-bold uppercase tracking-[0.3em] text-zinc-400 mb-4">Executive Summary</h3>
+<p class="text-sm font-body leading-relaxed text-zinc-800">
+                                Results-driven Systems Architect with 12+ years of experience in <span class="bg-primary/20 text-primary-container px-1 font-bold rounded-sm">scaling distributed infrastructure</span> and neural processing clusters. Proven track record of reducing latency by 40% while maintaining <span class="bg-primary/20 text-primary-container px-1 font-bold rounded-sm">99.99% uptime</span> across mission-critical enterprise environments.
+                            </p>
+</section>
+<section class="mb-10">
+<h3 class="text-xs font-label font-bold uppercase tracking-[0.3em] text-zinc-400 mb-4">Core Competencies</h3>
+<div class="grid grid-cols-2 gap-y-2 text-sm font-body font-medium">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span>Cloud-Native Orchestration</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span class="bg-primary/20 text-primary-container px-1 rounded-sm">Neural Engine Optimization</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span>Asynchronous Logic Flows</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span>Zero-Trust Security</span>
+</div>
+</div>
+</section>
+<section class="mb-10">
+<div class="flex justify-between items-center mb-4">
+<h3 class="text-xs font-label font-bold uppercase tracking-[0.3em] text-zinc-400">Professional Experience</h3>
+<span class="text-[10px] text-zinc-300 font-label italic tracking-widest uppercase">2018 — Present</span>
+</div>
+<div class="mb-6">
+<div class="flex justify-between items-baseline mb-2">
+<h4 class="text-base font-bold text-zinc-900">Senior Architect // Quantum Dynamics</h4>
+<span class="text-xs font-label text-zinc-500">SF, CA</span>
+</div>
+<ul class="space-y-3 text-sm text-zinc-700 leading-relaxed list-none pl-0">
+<li class="relative pl-5 before:content-['—'] before:absolute before:left-0 before:text-zinc-300">
+                                        Spearheaded the migration of <span class="bg-primary/20 text-primary-container px-1 font-bold rounded-sm">legacy monoliths to microservices</span> architecture, improving deployment velocity by 300%.
+                                    </li>
+<li class="relative pl-5 before:content-['—'] before:absolute before:left-0 before:text-zinc-300">
+                                        Engineered a proprietary <span class="bg-primary/20 text-primary-container px-1 font-bold rounded-sm">auto-scaling protocol</span> that saved $2M annually in compute overhead.
+                                    </li>
+</ul>
+</div>
+</section>
+<!-- Annotation Overlays -->
+<div class="absolute top-1/4 right-8 bg-primary-container text-on-primary-container text-[10px] font-label p-2 rounded shadow-lg backdrop-blur-md transform rotate-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-xs" data-icon="auto_awesome">auto_awesome</span>
+<span>KEYWORD OPTIMIZED FOR FAANG ATS</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Refinement Dashboard -->
+<div class="lg:col-span-5 flex flex-col gap-8 lg:sticky lg:top-32">
+<!-- ATS Score Card -->
+<div class="bg-surface-container rounded-xl p-8 border-l-4 border-primary">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-headline text-sm font-bold tracking-widest uppercase opacity-50">Market Intelligence</h3>
+<p class="text-2xl font-headline font-light mt-1">ATS COMPATIBILITY</p>
+</div>
+<div class="w-16 h-16 rounded-full border-4 border-surface-container-highest flex items-center justify-center relative">
+<svg class="absolute inset-0 w-full h-full -rotate-90">
+<circle class="text-primary-container" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" stroke-dasharray="175" stroke-dashoffset="14" stroke-width="4"></circle>
+</svg>
+<span class="font-headline font-bold text-lg text-primary">98</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-low p-4 rounded-lg">
+<p class="font-label text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Impact Factor</p>
+<p class="font-headline text-xl text-on-surface">9.4<span class="text-xs opacity-40 ml-1">/10</span></p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-lg">
+<p class="font-label text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Keywords</p>
+<p class="font-headline text-xl text-on-surface">114<span class="text-xs text-primary ml-1">MATCH</span></p>
+</div>
+</div>
+</div>
+<!-- Live Updates Feed -->
+<div class="bg-surface-container-low p-6 rounded-xl space-y-4">
+<h4 class="font-label text-[10px] text-zinc-400 uppercase tracking-[0.2em] flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                        Neural Refinements Applied
+                    </h4>
+<div class="space-y-3">
+<div class="flex items-start gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
+<span class="material-symbols-outlined text-primary text-sm mt-0.5" data-icon="check_circle">check_circle</span>
+<div>
+<p class="text-xs font-bold font-headline uppercase">Formatting Verified</p>
+<p class="text-[10px] text-zinc-400 leading-normal">Standardized margin ratios for OCR accuracy.</p>
+</div>
+</div>
+<div class="flex items-start gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
+<span class="material-symbols-outlined text-primary text-sm mt-0.5" data-icon="psychology">psychology</span>
+<div>
+<p class="text-xs font-bold font-headline uppercase">Action Verb Injection</p>
+<p class="text-[10px] text-zinc-400 leading-normal">Swapped passive voice for impact-driven leadership terms.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex flex-col gap-4">
+<button class="w-full py-5 rounded-full pulse-gradient text-on-primary font-headline font-bold tracking-[0.15em] uppercase text-sm hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary-container/20 flex items-center justify-center gap-3">
+<span class="material-symbols-outlined" data-icon="picture_as_pdf">picture_as_pdf</span>
+                        EXPORT TO PDF
+                    </button>
+<button class="w-full py-5 rounded-full bg-surface-container-highest text-on-surface font-headline font-bold tracking-[0.15em] uppercase text-sm hover:bg-surface-bright transition-all border border-outline-variant/30 flex items-center justify-center gap-3">
+<span class="material-symbols-outlined" data-icon="refresh">refresh</span>
+                        GENERATE NEW VERSION
+                    </button>
+</div>
+<div class="flex items-center justify-center gap-2 text-[10px] font-label text-zinc-500 uppercase tracking-widest mt-4">
+<span class="material-symbols-outlined text-xs" data-icon="lock">lock</span>
+                    Encrypted Protocol v4.2 Secure Session
+                </div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="fixed bottom-4 w-full flex justify-center items-center gap-8 px-12 z-10 pointer-events-none">
+<div class="flex items-center gap-8 pointer-events-auto">
+<span class="font-['Manrope'] text-[10px] tracking-[0.2em] uppercase opacity-40 text-zinc-700">SYSTEM STATUS: OPTIMIZED // SHIFT_04</span>
+<div class="flex gap-4">
+<a class="font-['Manrope'] text-[10px] tracking-[0.2em] uppercase text-zinc-700 hover:opacity-100 transition-opacity" href="#">Security</a>
+<a class="font-['Manrope'] text-[10px] tracking-[0.2em] uppercase text-zinc-700 hover:opacity-100 transition-opacity" href="#">Latency</a>
+<a class="font-['Manrope'] text-[10px] tracking-[0.2em] uppercase text-zinc-700 hover:opacity-100 transition-opacity" href="#">Protocol</a>
+</div>
+</div>
+</footer>
+<!-- Ambient Design Elements -->
+<div class="fixed top-[-10%] left-[-5%] w-[40vw] h-[40vw] bg-primary/5 rounded-full blur-[120px] pointer-events-none z-[-1]"></div>
+<div class="fixed bottom-[-5%] right-[-5%] w-[30vw] h-[30vw] bg-primary-container/10 rounded-full blur-[120px] pointer-events-none z-[-1]"></div>
+</body></html>

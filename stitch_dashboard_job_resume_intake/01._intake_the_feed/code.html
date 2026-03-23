@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Pulse // Neural Intake</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Manrope:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #131315;
+            color: #e5e1e4;
+            font-family: 'Manrope', sans-serif;
+            overflow-x: hidden;
+        }
+        .font-headline { font-family: 'Space Grotesk', sans-serif; }
+        .font-label { font-family: 'Space Grotesk', sans-serif; }
+        .glass-panel {
+            background: rgba(53, 52, 55, 0.4);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .liquid-bg {
+            background: linear-gradient(135deg, rgba(93, 63, 211, 0.15) 0%, rgba(202, 190, 255, 0.05) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .liquid-bg::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(93, 63, 211, 0.1) 0%, transparent 70%);
+            opacity: 0.5;
+        }
+        .grain-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 99;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-surface": "#e5e1e4",
+                        "tertiary-fixed-dim": "#ffb68b",
+                        "tertiary-container": "#954500",
+                        "on-tertiary": "#522300",
+                        "tertiary": "#ffb68b",
+                        "surface-container": "#201f21",
+                        "on-background": "#e5e1e4",
+                        "outline": "#938ea0",
+                        "primary": "#cabeff",
+                        "on-tertiary-fixed-variant": "#743400",
+                        "on-primary-fixed-variant": "#4723be",
+                        "on-secondary-fixed-variant": "#45474b",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-highest": "#353437",
+                        "primary-container": "#5d3fd3",
+                        "secondary": "#c6c6cc",
+                        "outline-variant": "#484554",
+                        "on-surface-variant": "#c9c4d7",
+                        "surface": "#131315",
+                        "secondary-fixed-dim": "#c6c6cc",
+                        "secondary-fixed": "#e2e2e8",
+                        "on-error": "#690005",
+                        "error": "#ffb4ab",
+                        "primary-fixed": "#e6deff",
+                        "on-secondary-fixed": "#1a1c20",
+                        "surface-container-low": "#1c1b1d",
+                        "inverse-surface": "#e5e1e4",
+                        "on-primary-fixed": "#1c0062",
+                        "surface-tint": "#cabeff",
+                        "surface-variant": "#353437",
+                        "secondary-container": "#47494e",
+                        "on-primary-container": "#d8ceff",
+                        "on-secondary-container": "#b7b8be",
+                        "on-primary": "#30009a",
+                        "surface-container-lowest": "#0e0e10",
+                        "background": "#131315",
+                        "on-tertiary-fixed": "#321300",
+                        "on-tertiary-container": "#ffc9ab",
+                        "primary-fixed-dim": "#cabeff",
+                        "tertiary-fixed": "#ffdbc8",
+                        "error-container": "#93000a",
+                        "inverse-primary": "#6042d6",
+                        "surface-bright": "#39393b",
+                        "surface-container-high": "#2a2a2c",
+                        "surface-dim": "#131315",
+                        "inverse-on-surface": "#313032",
+                        "on-secondary": "#2f3035"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Manrope"],
+                        "label": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface selection:bg-primary/30">
+<div class="grain-overlay"></div>
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-zinc-950/40 backdrop-blur-xl flex justify-between items-center px-8 py-4 shadow-[0_20px_50px_rgba(93,63,211,0.06)]">
+<div class="flex items-center gap-6">
+<span class="text-2xl font-bold tracking-widest text-[#cabeff] uppercase font-headline">The Pulse</span>
+<div class="hidden md:flex gap-8">
+<a class="text-zinc-500 hover:text-zinc-300 transition-colors font-['Space_Grotesk'] tracking-tighter uppercase text-sm" href="#">Neural Feed</a>
+<a class="text-[#cabeff] font-bold border-b-2 border-[#5D3FD3] pb-1 font-['Space_Grotesk'] tracking-tighter uppercase text-sm" href="#">Sync Hub</a>
+<a class="text-zinc-500 hover:text-zinc-300 transition-colors font-['Space_Grotesk'] tracking-tighter uppercase text-sm" href="#">Growth Path</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex gap-2">
+<button class="p-2 hover:bg-white/5 transition-all duration-300 rounded-full text-zinc-400">
+<span class="material-symbols-outlined" data-icon="sensors">sensors</span>
+</button>
+<button class="p-2 hover:bg-white/5 transition-all duration-300 rounded-full text-zinc-400">
+<span class="material-symbols-outlined" data-icon="data_thresholding">data_thresholding</span>
+</button>
+</div>
+<div class="h-10 w-10 rounded-full bg-surface-container-high border border-outline-variant/20 overflow-hidden">
+<img alt="User Pulse Avatar" data-alt="Abstract geometric avatar for user profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVO1jDFLQLZtlqSdTE38_QaIoEOrZgRyevZrEYry-I5VNHYRNI9PnTqedrvWMGJ5SCZX7foVeWnbgwaG2-beA59Kjy1Swo5ynQ85F2DmJXFXeewB07a8Pq_qocA73oFODUPTfoaRwzurI4SmSXWS0kohxLbaPdt6_13C1-DgIGoIZ1kli50t5eE6uwu85OqMmnhvEIPT3u1qBx7D8y0xfOQF6NVBxROSNMKbfgADfKihna4V2V7vQ94hjFu0l2vWCHT-x7BqdJ59E"/>
+</div>
+</div>
+</nav>
+<!-- SideNavBar (Mobile / Floating Desktop) -->
+<aside class="fixed left-6 top-24 bottom-24 w-20 rounded-full bg-zinc-900/20 backdrop-blur-2xl flex flex-col items-center py-10 justify-between shadow-2xl shadow-purple-900/20 z-40 hidden md:flex">
+<div class="flex flex-col gap-8">
+<button class="flex flex-col items-center justify-center text-zinc-500 w-12 h-12 hover:scale-110 hover:text-[#cabeff] transition-transform">
+<span class="material-symbols-outlined" data-icon="dynamic_form">dynamic_form</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-[#5D3FD3] text-white rounded-full w-12 h-12 shadow-[0_0_15px_rgba(93,63,211,0.5)] active:scale-90 transition-all">
+<span class="material-symbols-outlined" data-icon="hub">hub</span>
+</button>
+<button class="flex flex-col items-center justify-center text-zinc-500 w-12 h-12 hover:scale-110 hover:text-[#cabeff] transition-transform">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+</button>
+<button class="flex flex-col items-center justify-center text-zinc-500 w-12 h-12 hover:scale-110 hover:text-[#cabeff] transition-transform">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+</button>
+</div>
+<button class="flex flex-col items-center justify-center text-zinc-500 w-12 h-12 hover:scale-110 hover:text-[#cabeff] transition-transform">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</aside>
+<main class="min-h-screen pt-32 pb-24 px-6 md:pl-36 md:pr-12 max-w-7xl mx-auto flex flex-col">
+<!-- Header Section -->
+<header class="mb-16">
+<h1 class="font-headline text-5xl md:text-7xl font-bold tracking-tighter uppercase mb-4 leading-none">
+                Neural <span class="text-primary italic">Sync</span>
+</h1>
+<p class="font-body text-zinc-400 max-w-xl text-lg opacity-80">
+                Bridge the gap between opportunity and identity. Feed the core with your mission context and professional persona.
+            </p>
+</header>
+<!-- Input Hub: The Bento Feed -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+<!-- The Mission (Data Receptor 1) -->
+<div class="lg:col-span-5 flex flex-col gap-4">
+<div class="glass-panel rounded-3xl p-8 flex-1 flex flex-col border border-white/5 shadow-xl">
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="target">target</span>
+<span class="font-label text-xs tracking-widest uppercase text-primary">The Mission</span>
+</div>
+<span class="font-label text-[10px] text-zinc-500 uppercase tracking-widest">Awaiting Context</span>
+</div>
+<div class="flex-1 flex flex-col">
+<textarea class="w-full h-full bg-transparent border-none focus:ring-0 text-2xl font-headline font-medium tracking-tight placeholder:text-zinc-800 resize-none text-on-surface" placeholder="PASTE JOB DESCRIPTION, MISSION STATEMENT, OR PROJECT URL..."></textarea>
+</div>
+<div class="mt-8 pt-6 border-t border-white/5 flex gap-4">
+<button class="text-xs font-label uppercase tracking-widest text-zinc-500 hover:text-primary transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="link">link</span> Paste Link
+                        </button>
+<button class="text-xs font-label uppercase tracking-widest text-zinc-500 hover:text-primary transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="description">description</span> Scan File
+                        </button>
+</div>
+</div>
+</div>
+<!-- The Persona (Data Receptor 2) -->
+<div class="lg:col-span-7">
+<div class="liquid-bg rounded-3xl p-1 flex flex-col h-full group">
+<div class="glass-panel rounded-[22px] flex-1 flex flex-col items-center justify-center p-12 border border-white/5 group-hover:bg-primary/5 transition-colors duration-700 relative overflow-hidden">
+<!-- Floating Background Elements -->
+<div class="absolute top-10 right-10 w-32 h-32 bg-primary/20 blur-[60px] rounded-full animate-pulse"></div>
+<div class="absolute bottom-10 left-10 w-24 h-24 bg-primary-container/20 blur-[50px] rounded-full"></div>
+<div class="relative z-10 flex flex-col items-center text-center">
+<div class="mb-6 w-20 h-20 rounded-2xl bg-surface-container-high flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-4xl text-primary" data-icon="upload_file" style="font-variation-settings: 'FILL' 1;">upload_file</span>
+</div>
+<h2 class="font-headline text-3xl font-bold uppercase tracking-tight mb-2">The Persona</h2>
+<p class="font-body text-zinc-500 mb-8 max-w-xs">Drop your CV, portfolio, or digital identity file here to begin extraction.</p>
+<label class="cursor-pointer">
+<span class="px-8 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 font-label text-xs tracking-widest uppercase transition-all inline-block">Select Resume</span>
+<input class="hidden" type="file"/>
+</label>
+</div>
+<!-- Fluid Indicator -->
+<div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1">
+<div class="w-1 h-1 rounded-full bg-primary/40"></div>
+<div class="w-1 h-1 rounded-full bg-primary/20"></div>
+<div class="w-1 h-1 rounded-full bg-primary/40"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Area -->
+<div class="mt-12 flex flex-col items-center">
+<button class="relative group">
+<div class="absolute -inset-1 bg-gradient-to-r from-primary to-primary-container rounded-full blur opacity-25 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+<div class="relative px-12 py-5 bg-primary-container rounded-full flex items-center gap-4 transition-transform active:scale-95">
+<span class="font-headline text-lg font-bold uppercase tracking-widest text-on-primary">Neural Sync</span>
+<span class="material-symbols-outlined text-on-primary animate-pulse" data-icon="bolt">bolt</span>
+</div>
+</button>
+<p class="mt-6 font-label text-[10px] tracking-[0.3em] uppercase text-zinc-600">Secure Protocol v4.02 Active</p>
+</div>
+</main>
+<!-- Footer -->
+<footer class="fixed bottom-4 w-full flex justify-center items-center gap-8 px-12 z-10">
+<span class="font-['Manrope'] text-[10px] tracking-[0.2em] uppercase opacity-40 text-zinc-700">SYSTEM STATUS: OPTIMIZED // SHIFT_04</span>
+<div class="flex gap-6">
+<a class="font-['Manrope'] text-[10px] tracking-[0.2em] uppercase opacity-40 text-zinc-700 hover:opacity-100 transition-opacity" href="#">Security</a>
+<a class="font-['Manrope'] text-[10px] tracking-[0.2em] uppercase opacity-40 text-zinc-700 hover:opacity-100 transition-opacity" href="#">Latency</a>
+<a class="font-['Manrope'] text-[10px] tracking-[0.2em] uppercase opacity-40 text-zinc-700 hover:opacity-100 transition-opacity" href="#">Protocol</a>
+</div>
+</footer>
+<!-- Decorative Elements -->
+<div class="fixed top-0 right-0 w-[50vw] h-[512px] bg-primary/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
+<div class="fixed bottom-0 left-0 w-[40vw] h-[409px] bg-primary-container/5 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/4 pointer-events-none"></div>
+</body></html>

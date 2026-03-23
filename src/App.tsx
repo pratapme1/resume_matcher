@@ -4,8 +4,10 @@ import {
   Upload, Link as LinkIcon, FileText, Settings, AlertCircle,
   Download, Loader2, ShieldAlert, ShieldCheck, ArrowLeft,
   Sun, Moon, CheckCircle2, X, Mail, Phone, MapPin, Linkedin,
-  Search, Briefcase, ChevronDown, ChevronUp, Building2,
+  Search, Briefcase, ChevronDown, ChevronUp, Building2, LogOut,
 } from 'lucide-react';
+import type { Session } from '@supabase/supabase-js';
+import { supabase, getAuthHeader } from './supabaseClient.ts';
 import type {
   CandidateProfile,
   ExtractionWarning,
@@ -211,8 +213,8 @@ function ResumePreview({ resume }: { resume: TailoredResumeDocument }) {
 /* ─────────────────────────────────────────
    Sidebar — fixed left nav
 ───────────────────────────────────────── */
-function Sidebar({ step, isDark, onToggleDark }: {
-  step: number; isDark: boolean; onToggleDark: () => void;
+function Sidebar({ step, isDark, onToggleDark, onSignOut, userEmail }: {
+  step: number; isDark: boolean; onToggleDark: () => void; onSignOut: () => void; userEmail?: string;
 }) {
   const steps = [
     { n: 1, label: 'Discover',   sublabel: 'Find opportunities' },
@@ -286,13 +288,23 @@ function Sidebar({ step, isDark, onToggleDark }: {
       </nav>
 
       {/* Bottom */}
-      <div className="p-3 border-t border-zinc-100 dark:border-zinc-800/80">
+      <div className="p-3 border-t border-zinc-100 dark:border-zinc-800/80 space-y-1">
         <button
           onClick={onToggleDark}
           className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors"
         >
           {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
           <span className="text-xs font-medium">{isDark ? 'Light mode' : 'Dark mode'}</span>
+        </button>
+        {userEmail && (
+          <div className="px-3 py-1 text-[10px] text-zinc-400 dark:text-zinc-600 truncate">{userEmail}</div>
+        )}
+        <button
+          onClick={onSignOut}
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-zinc-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span className="text-xs font-medium">Sign out</span>
         </button>
       </div>
     </aside>
@@ -312,6 +324,31 @@ const preservationLabels = {
    Main App
 ───────────────────────────────────────── */
 export default function App() {
+  const [session, setSession] = useState<Session | null | undefined>(undefined); // undefined = loading
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function handleAuth(e: React.FormEvent) {
+    e.preventDefault();
+    setAuthLoading(true);
+    setAuthError(null);
+    const fn = authMode === 'signup'
+      ? supabase.auth.signUp({ email: authEmail, password: authPassword })
+      : supabase.auth.signInWithPassword({ email: authEmail, password: authPassword });
+    const { error } = await fn;
+    setAuthLoading(false);
+    if (error) setAuthError(error.message);
+  }
+
   const [step, setStep] = useState(1);
   const [isDark, setIsDark] = useState(
     () => window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -454,7 +491,7 @@ export default function App() {
     setProfilePreviewLoading(true);
     try {
       const fd = new FormData(); fd.append('resume', file);
-      const r = await fetch('/api/build-profile', { method: 'POST', body: fd });
+      const r = await fetch('/api/build-profile', { method: 'POST', headers: await getAuthHeader(), body: fd });
       if (r.ok) {
         const profile = await r.json();
         setProfilePreview(profile);
@@ -471,7 +508,7 @@ export default function App() {
       const fd = new FormData();
       fd.append('resume', searchResumeFile);
       fd.append('preferences', JSON.stringify(searchPreferences));
-      const r = await fetch('/api/search-jobs', { method: 'POST', body: fd });
+      const r = await fetch('/api/search-jobs', { method: 'POST', headers: await getAuthHeader(), body: fd });
       if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Search failed');
       const data = await r.json();
       setJobSearchResults(data.results ?? []);
@@ -499,12 +536,12 @@ export default function App() {
     try {
       let normalized: NormalizedJobDescription | null = null;
       if (jdType === 'url') {
-        const r = await fetch('/api/extract-jd-url', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: jdUrl }) });
+        const r = await fetch('/api/extract-jd-url', { method: 'POST', headers: { 'Content-Type': 'application/json', ...await getAuthHeader() }, body: JSON.stringify({ url: jdUrl }) });
         if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to extract from URL');
         normalized = await r.json();
       } else if (jdType === 'file' && jdFile) {
         const fd = new FormData(); fd.append('file', jdFile);
-        const r = await fetch('/api/extract-jd-file', { method: 'POST', body: fd });
+        const r = await fetch('/api/extract-jd-file', { method: 'POST', headers: await getAuthHeader(), body: fd });
         if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to extract from file');
         normalized = await r.json();
       } else if (jdType === 'paste') {
@@ -539,7 +576,7 @@ export default function App() {
       fd.append('preferences', JSON.stringify(
         Object.fromEntries(Object.entries(preferences).filter(([, v]) => (v as string).trim() !== ''))
       ));
-      const r = await fetch('/api/tailor-resume', { method: 'POST', body: fd });
+      const r = await fetch('/api/tailor-resume', { method: 'POST', headers: await getAuthHeader(), body: fd });
       if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to tailor resume');
       const data = (await r.json()) as TailorResumeResponse;
       clearInterval(iv); setProgress(100);
@@ -552,7 +589,7 @@ export default function App() {
   const handleDownload = async () => {
     if (!result || result.blocked) return;
     try {
-      const r = await fetch('/api/generate-docx', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tailoredResume: result.tailoredResume, templateProfile: result.templateProfile, validation: result.validation }) });
+      const r = await fetch('/api/generate-docx', { method: 'POST', headers: { 'Content-Type': 'application/json', ...await getAuthHeader() }, body: JSON.stringify({ tailoredResume: result.tailoredResume, templateProfile: result.templateProfile, validation: result.validation }) });
       if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to generate DOCX');
       const blob = await r.blob();
       const url = window.URL.createObjectURL(blob);
@@ -594,7 +631,7 @@ export default function App() {
     try {
       const r = await fetch('/api/auto-apply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...await getAuthHeader() },
         body: JSON.stringify({
           applyUrl,
           contactInfo: result.tailoredResume.contactInfo,
@@ -618,7 +655,7 @@ export default function App() {
     try {
       const r = await fetch('/api/auto-apply/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...await getAuthHeader() },
         body: JSON.stringify({ sessionId: agentSessionId }),
       });
       const data = await r.json();
@@ -641,6 +678,79 @@ export default function App() {
   const inputCls = 'w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/25 focus:border-violet-500 transition-all duration-200';
   const transition = { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] };
 
+  // Show loading spinner while session is being determined
+  if (session === undefined) {
+    return (
+      <div className={isDark ? 'dark' : ''}>
+        <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show sign-in / sign-up gate
+  if (!session) {
+    return (
+      <div className={isDark ? 'dark' : ''}>
+        <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 flex items-center justify-center px-4">
+          <div className="w-full max-w-md">
+            <div className="flex items-center justify-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                <FileText className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-2xl font-bold">Resume Tailor Pro</span>
+            </div>
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-8 shadow-xl">
+              <h2 className="text-xl font-semibold mb-6">
+                {authMode === 'signin' ? 'Sign in to continue' : 'Create your account'}
+              </h2>
+              <form onSubmit={handleAuth} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">Email</label>
+                  <input
+                    type="email" required value={authEmail}
+                    onChange={e => setAuthEmail(e.target.value)}
+                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/25 focus:border-violet-500 transition-all"
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">Password</label>
+                  <input
+                    type="password" required value={authPassword}
+                    onChange={e => setAuthPassword(e.target.value)}
+                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/25 focus:border-violet-500 transition-all"
+                    placeholder="••••••••"
+                  />
+                </div>
+                {authError && (
+                  <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2">{authError}</p>
+                )}
+                <button
+                  type="submit" disabled={authLoading}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {authLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {authMode === 'signin' ? 'Sign In' : 'Create Account'}
+                </button>
+              </form>
+              <p className="text-center text-sm text-zinc-500 mt-6">
+                {authMode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
+                <button
+                  onClick={() => { setAuthMode(m => m === 'signin' ? 'signup' : 'signin'); setAuthError(null); }}
+                  className="text-violet-600 dark:text-violet-400 font-medium hover:underline"
+                >
+                  {authMode === 'signin' ? 'Sign up' : 'Sign in'}
+                </button>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={isDark ? 'dark' : ''}>
       <div className="relative min-h-screen bg-zinc-50 dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 transition-colors duration-500 overflow-x-hidden">
@@ -652,7 +762,7 @@ export default function App() {
         </div>
 
         {/* ── Sidebar (desktop) ── */}
-        <Sidebar step={step} isDark={isDark} onToggleDark={() => setIsDark(d => !d)} />
+        <Sidebar step={step} isDark={isDark} onToggleDark={() => setIsDark(d => !d)} onSignOut={() => supabase.auth.signOut()} userEmail={session?.user?.email} />
 
         {/* ── Mobile header ── */}
         <header className="lg:hidden fixed inset-x-0 top-0 z-30 h-13 border-b border-zinc-200/60 dark:border-zinc-800/60 bg-white/80 dark:bg-[#09090b]/90 backdrop-blur-xl">

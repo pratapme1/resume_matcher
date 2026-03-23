@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary": "#002388",
+              "secondary-container": "#3c4a5e",
+              "tertiary": "#bec6e0",
+              "error-container": "#93000a",
+              "on-primary-fixed-variant": "#0035be",
+              "on-secondary": "#233144",
+              "on-error": "#690005",
+              "secondary": "#b9c7df",
+              "on-tertiary-container": "#eef0ff",
+              "secondary-fixed": "#d5e3fc",
+              "tertiary-fixed-dim": "#bec6e0",
+              "secondary-fixed-dim": "#b9c7df",
+              "surface-container-high": "#222a3d",
+              "background": "#0b1326",
+              "on-error-container": "#ffdad6",
+              "inverse-on-surface": "#283044",
+              "outline": "#8e90a2",
+              "inverse-primary": "#124af0",
+              "primary-fixed-dim": "#b8c3ff",
+              "surface": "#0b1326",
+              "error": "#ffb4ab",
+              "primary-container": "#2e5bff",
+              "on-primary-container": "#efefff",
+              "inverse-surface": "#dae2fd",
+              "surface-dim": "#0b1326",
+              "tertiary-fixed": "#dae2fd",
+              "on-tertiary-fixed": "#131b2e",
+              "on-secondary-fixed": "#0d1c2e",
+              "surface-tint": "#b8c3ff",
+              "outline-variant": "#434656",
+              "surface-container-low": "#131b2e",
+              "surface-container": "#171f33",
+              "primary-fixed": "#dde1ff",
+              "on-primary-fixed": "#001356",
+              "surface-container-lowest": "#060e20",
+              "on-surface-variant": "#c4c5d9",
+              "surface-variant": "#2d3449",
+              "on-surface": "#dae2fd",
+              "tertiary-container": "#656d84",
+              "surface-bright": "#31394d",
+              "on-background": "#dae2fd",
+              "on-tertiary-fixed-variant": "#3f465c",
+              "on-secondary-fixed-variant": "#3a485b",
+              "primary": "#b8c3ff",
+              "surface-container-highest": "#2d3449",
+              "on-tertiary": "#283044",
+              "on-secondary-container": "#abb9d1"
+            },
+            fontFamily: {
+              "headline": ["Newsreader"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(45, 52, 73, 0.6);
+            backdrop-filter: blur(20px);
+        }
+        .kinetic-grid {
+            background-image: radial-gradient(circle at 2px 2px, rgba(46, 91, 255, 0.05) 1px, transparent 0);
+            background-size: 32px 32px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-primary-container selection:text-on-primary-container min-h-screen flex overflow-hidden">
+<!-- SideNavBar Component -->
+<nav class="bg-slate-950 flex flex-col py-10 px-6 space-y-8 docked left-0 h-screen w-72 shrink-0 z-50">
+<div class="flex flex-col space-y-1">
+<span class="text-white font-black text-xl font-['Manrope']">ASCEND</span>
+<span class="font-['Manrope'] uppercase tracking-widest text-[10px] font-bold text-primary">Career Velocity</span>
+</div>
+<div class="flex-1 space-y-2 mt-8">
+<div class="flex items-center gap-3 py-3 px-4 rounded transition-all hover:bg-slate-900 text-slate-500 hover:text-slate-300 group">
+<span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>
+<span class="font-['Manrope'] uppercase tracking-widest text-[10px] font-bold">Phase 01: Intake</span>
+</div>
+<div class="flex items-center gap-3 py-3 px-4 rounded transition-all hover:bg-slate-900 text-slate-500 hover:text-slate-300 group">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-['Manrope'] uppercase tracking-widest text-[10px] font-bold">Phase 02: Analysis</span>
+</div>
+<!-- ACTIVE: Phase 03 -->
+<div class="flex items-center gap-3 py-3 px-4 rounded transition-all text-white bg-blue-600/10 border-r-4 border-blue-600 translate-x-1 group">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+<span class="font-['Manrope'] uppercase tracking-widest text-[10px] font-bold">Phase 03: Diagnosis</span>
+</div>
+<div class="flex items-center gap-3 py-3 px-4 rounded transition-all hover:bg-slate-900 text-slate-500 hover:text-slate-300 group">
+<span class="material-symbols-outlined" data-icon="auto_fix_high">auto_fix_high</span>
+<span class="font-['Manrope'] uppercase tracking-widest text-[10px] font-bold">Phase 04: Refinement</span>
+</div>
+</div>
+<div class="pt-6 space-y-2 border-t border-slate-900">
+<div class="flex items-center gap-3 py-3 px-4 rounded transition-all hover:bg-slate-900 text-slate-500 hover:text-slate-300">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+<span class="font-['Manrope'] uppercase tracking-widest text-[10px] font-bold">Support</span>
+</div>
+<div class="flex items-center gap-3 py-3 px-4 rounded transition-all hover:bg-slate-900 text-slate-500 hover:text-slate-300">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+<span class="font-['Manrope'] uppercase tracking-widest text-[10px] font-bold">Settings</span>
+</div>
+</div>
+</nav>
+<div class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto kinetic-grid">
+<!-- TopNavBar Component -->
+<header class="bg-slate-900/60 backdrop-blur-xl flex justify-between items-center w-full px-8 h-20 docked full-width top-0 sticky z-40 shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
+<div class="flex items-center gap-12">
+<span class="font-['Manrope'] font-black tracking-[0.2em] text-white">ASCEND</span>
+<nav class="hidden md:flex gap-8">
+<a class="text-slate-400 font-medium hover:text-white transition-colors" href="#">Dashboard</a>
+<a class="text-white border-b-2 border-blue-600 pb-1" href="#">Analysis</a>
+<a class="text-slate-400 font-medium hover:text-white transition-colors" href="#">Asset</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-slate-400 hover:text-white transition-all active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-slate-400 hover:text-white transition-all active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="h-10 w-10 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/30">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="Portrait of a professional man in a suit" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCV7n98TSxyA-o4JTK2sDxpbeGkqj2H77S-PaO1a3ANVJYEwnv8a74LwBjyhxuEr-fDKg7XzVToL1lJFi81QB-FWxlb2DXLeUv4Ve0sism1kbQP36In4Gk_e0YGRe22maswCebYVz6pNgdgrp6q6gb7N2HLeunarNMHAaP44IxI_93vVV5jHdd2s-HOT2vSUAu0guh9b0rSOo5NXFr_DJWnyj38Ppmwd25bOulEW7wMkPLdx4W74_xKuc8YBI4mP7RVj6cahqfykpQ"/>
+</div>
+</div>
+</header>
+<main class="flex-1 p-12 max-w-7xl mx-auto w-full space-y-16">
+<!-- Hero / Title Section -->
+<section class="max-w-4xl">
+<span class="font-label text-label-sm uppercase tracking-[0.2em] text-primary mb-4 block">Report ID: 2024-DIA-03</span>
+<h1 class="font-headline text-5xl md:text-6xl text-on-background italic mb-6 leading-tight">Strategic Gap Analysis</h1>
+<p class="font-body text-body-md text-on-surface-variant max-w-2xl leading-relaxed">
+                    A surgical breakdown of the structural discrepancies between your professional profile and elite industry expectations. This dossier isolates the critical skill clusters required to bridge the velocity gap.
+                </p>
+</section>
+<!-- Knowledge Graph Visualization -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<div class="lg:col-span-2 bg-surface-container-low rounded-xl p-8 relative overflow-hidden h-[500px] flex flex-col">
+<div class="flex justify-between items-start mb-8 relative z-10">
+<div>
+<h2 class="font-headline text-2xl italic text-white mb-1">Knowledge Graph</h2>
+<p class="font-label text-xs uppercase tracking-widest text-slate-500">Mapping Missing Skill Clusters</p>
+</div>
+<div class="bg-surface-container-highest px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest text-primary border border-primary/20">Live Intelligence</div>
+</div>
+<!-- SVG Knowledge Graph Simulation -->
+<div class="flex-1 relative flex items-center justify-center">
+<svg class="w-full h-full max-w-md opacity-80" viewbox="0 0 400 400">
+<!-- Connections -->
+<line stroke="#2e5bff" stroke-dasharray="4 4" stroke-width="1" x1="200" x2="100" y1="200" y2="100"></line>
+<line stroke="#2e5bff" stroke-width="1" x1="200" x2="300" y1="200" y2="100"></line>
+<line stroke="#2e5bff" stroke-dasharray="4 4" stroke-width="1" x1="200" x2="300" y1="200" y2="300"></line>
+<line stroke="#2e5bff" stroke-width="1" x1="200" x2="100" y1="200" y2="300"></line>
+<line opacity="0.3" stroke="#2e5bff" stroke-width="0.5" x1="100" x2="300" y1="100" y2="100"></line>
+<!-- Nodes -->
+<circle class="animate-pulse" cx="200" cy="200" fill="#2e5bff" r="12"></circle>
+<circle cx="100" cy="100" fill="#b8c3ff" r="6"></circle>
+<circle cx="300" cy="100" fill="#ffb4ab" r="8"></circle>
+<circle cx="300" cy="300" fill="#b8c3ff" r="6"></circle>
+<circle cx="100" cy="300" fill="#656d84" r="4"></circle>
+<!-- Labels -->
+<text fill="white" font-family="Manrope" font-size="10" font-weight="bold" x="215" y="205">CURRENT PROFILE</text>
+<text fill="#b8c3ff" font-family="Manrope" font-size="8" x="80" y="85">SYSTEM ARCHITECTURE</text>
+<text fill="#ffb4ab" font-family="Manrope" font-size="8" font-weight="bold" x="310" y="95">CRITICAL: STRATEGIC LEADERSHIP</text>
+<text fill="#b8c3ff" font-family="Manrope" font-size="8" x="310" y="315">DATA SYNTHESIS</text>
+<text fill="#656d84" font-family="Manrope" font-size="8" x="60" y="320">STAKEHOLDER OPS</text>
+</svg>
+<!-- Floating Glass Labels -->
+<div class="absolute top-1/4 right-10 glass-panel p-4 rounded-lg border border-white/5 shadow-2xl">
+<span class="block font-label text-[10px] text-slate-400 mb-1">DENSITY GAP</span>
+<span class="block font-headline text-3xl italic text-error">42%</span>
+</div>
+</div>
+</div>
+<!-- Metric Sidebar / Insight Rail -->
+<div class="bg-surface-container-lowest glass-panel rounded-xl p-8 flex flex-col space-y-12">
+<div>
+<span class="material-symbols-outlined text-primary mb-4" data-icon="query_stats">query_stats</span>
+<h3 class="font-headline text-xl italic text-white mb-2">Velocity Impact</h3>
+<p class="font-body text-xs text-on-surface-variant leading-relaxed">Missing skill clusters are currently decelerating career progression by an estimated 14 months.</p>
+</div>
+<div class="space-y-6">
+<div class="flex justify-between items-end border-b border-white/5 pb-2">
+<span class="font-label text-[10px] uppercase text-slate-500">Industry Match</span>
+<span class="font-headline text-xl italic text-white">68%</span>
+</div>
+<div class="flex justify-between items-end border-b border-white/5 pb-2">
+<span class="font-label text-[10px] uppercase text-slate-500">Keyword Saturation</span>
+<span class="font-headline text-xl italic text-white">55%</span>
+</div>
+<div class="flex justify-between items-end border-b border-white/5 pb-2">
+<span class="font-label text-[10px] uppercase text-slate-500">Domain Authority</span>
+<span class="font-headline text-xl italic text-white">High</span>
+</div>
+</div>
+<button class="w-full bg-primary-container text-on-primary-container py-3 rounded font-label text-[10px] uppercase tracking-widest font-bold shadow-[0_8px_16px_rgba(46,91,255,0.2)] hover:translate-y-[-2px] transition-all">Download Dossier</button>
+</div>
+</section>
+<!-- Gaps Matrix (Bento Style) -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Critical Gaps -->
+<div class="bg-surface-container-high rounded-xl p-8 border-t-4 border-error">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-error" data-icon="report_problem">report_problem</span>
+<h3 class="font-headline text-xl italic text-white">Critical Gaps</h3>
+</div>
+<ul class="space-y-4">
+<li class="group">
+<div class="flex justify-between items-center mb-1">
+<span class="font-body text-sm text-white font-semibold">Strategic Capital Allocation</span>
+<span class="font-label text-[9px] bg-error-container text-on-error-container px-1.5 py-0.5 rounded">HIGH PRIORITY</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">Requirement for executive-level P&amp;L management experience absent from current narrative.</p>
+</li>
+<li class="group">
+<div class="flex justify-between items-center mb-1">
+<span class="font-body text-sm text-white font-semibold">Crisis Leadership Narrative</span>
+<span class="font-label text-[9px] bg-error-container text-on-error-container px-1.5 py-0.5 rounded">HIGH PRIORITY</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">Lack of documented high-stakes decision cycles in volatile market conditions.</p>
+</li>
+</ul>
+</div>
+<!-- Moderate Gaps -->
+<div class="bg-surface-container-high rounded-xl p-8 border-t-4 border-primary">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary" data-icon="emergency_home">emergency_home</span>
+<h3 class="font-headline text-xl italic text-white">Moderate Gaps</h3>
+</div>
+<ul class="space-y-4">
+<li class="group">
+<div class="flex justify-between items-center mb-1">
+<span class="font-body text-sm text-white font-semibold">Cross-Functional Synthesis</span>
+<span class="font-label text-[9px] bg-secondary-container text-on-secondary-container px-1.5 py-0.5 rounded">MID LEVEL</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">Bridge the gap between product engineering and commercial strategy metrics.</p>
+</li>
+<li class="group">
+<div class="flex justify-between items-center mb-1">
+<span class="font-body text-sm text-white font-semibold">AI Integration Strategy</span>
+<span class="font-label text-[9px] bg-secondary-container text-on-secondary-container px-1.5 py-0.5 rounded">MID LEVEL</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">Quantify impact of machine learning implementation in operational workflows.</p>
+</li>
+</ul>
+</div>
+<!-- Optimization Targets -->
+<div class="bg-surface-container-high rounded-xl p-8 border-t-4 border-slate-500">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-slate-400" data-icon="target">target</span>
+<h3 class="font-headline text-xl italic text-white">Optimization Targets</h3>
+</div>
+<ul class="space-y-4">
+<li class="group">
+<div class="flex justify-between items-center mb-1">
+<span class="font-body text-sm text-white font-semibold">Public Speaking Presence</span>
+<span class="font-label text-[9px] bg-surface-variant text-on-surface-variant px-1.5 py-0.5 rounded">OPTIMIZATION</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">Enhance external brand authority through keynotes and thought leadership.</p>
+</li>
+<li class="group">
+<div class="flex justify-between items-center mb-1">
+<span class="font-body text-sm text-white font-semibold">Mentorship Documentation</span>
+<span class="font-label text-[9px] bg-surface-variant text-on-surface-variant px-1.5 py-0.5 rounded">OPTIMIZATION</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">Formalize the pipeline of internal talent developed under current tenure.</p>
+</li>
+</ul>
+</div>
+</section>
+<!-- Keyword Cluster Analysis -->
+<section class="bg-surface-container-low rounded-xl p-10">
+<div class="mb-8">
+<h3 class="font-headline text-2xl italic text-white mb-2">Semantic Keyword Gaps</h3>
+<p class="font-label text-xs uppercase tracking-widest text-slate-500">Terms missing from algorithmic screening profiles</p>
+</div>
+<div class="flex flex-wrap gap-3">
+<span class="bg-error/10 text-error border border-error/20 px-4 py-2 rounded-full font-label text-[10px] uppercase tracking-widest">Global Governance</span>
+<span class="bg-error/10 text-error border border-error/20 px-4 py-2 rounded-full font-label text-[10px] uppercase tracking-widest">Post-Merger Integration</span>
+<span class="bg-error/10 text-error border border-error/20 px-4 py-2 rounded-full font-label text-[10px] uppercase tracking-widest">Capital Efficiency</span>
+<span class="bg-primary/10 text-primary border border-primary/20 px-4 py-2 rounded-full font-label text-[10px] uppercase tracking-widest">Digital Transformation 2.0</span>
+<span class="bg-primary/10 text-primary border border-primary/20 px-4 py-2 rounded-full font-label text-[10px] uppercase tracking-widest">Agile Scalability</span>
+<span class="bg-primary/10 text-primary border border-primary/20 px-4 py-2 rounded-full font-label text-[10px] uppercase tracking-widest">ESG Strategy</span>
+<span class="bg-white/5 text-slate-400 border border-white/5 px-4 py-2 rounded-full font-label text-[10px] uppercase tracking-widest">Stakeholder Alignment</span>
+<span class="bg-white/5 text-slate-400 border border-white/5 px-4 py-2 rounded-full font-label text-[10px] uppercase tracking-widest">Market Resilience</span>
+</div>
+</section>
+</main>
+<!-- Footer Component -->
+<footer class="bg-slate-950 border-t border-slate-900 full-width py-12 mt-12">
+<div class="flex flex-col md:flex-row justify-between items-center px-12 max-w-7xl mx-auto w-full">
+<div class="mb-8 md:mb-0">
+<p class="font-['Manrope'] text-[11px] uppercase tracking-widest text-slate-600">© 2024 ASCEND Career System. All rights reserved.</p>
+</div>
+<div class="flex gap-8">
+<a class="font-['Manrope'] text-[11px] uppercase tracking-widest text-slate-500 hover:text-blue-400 transition-colors" href="#">Support</a>
+<a class="font-['Manrope'] text-[11px] uppercase tracking-widest text-slate-500 hover:text-blue-400 transition-colors" href="#">Privacy</a>
+<a class="font-['Manrope'] text-[11px] uppercase tracking-widest text-slate-500 hover:text-blue-400 transition-colors" href="#">Terms</a>
+<a class="font-['Manrope'] text-[11px] uppercase tracking-widest text-slate-500 hover:text-blue-400 transition-colors" href="#">Security</a>
+</div>
+</div>
+</footer>
+</div>
+</body></html>

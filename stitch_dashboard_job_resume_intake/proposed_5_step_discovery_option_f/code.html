@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resume Tailor Pro | Discovery Option F</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #eaf0f7;
+        --bg-2: #e2e9f2;
+        --panel: #f7fbff;
+        --panel-2: #edf3fa;
+        --line: #cfd8e4;
+        --line-2: #b9c8d9;
+        --text: #122133;
+        --muted: #5f6f83;
+        --muted-2: #7d8b9c;
+        --accent: #2b6df6;
+        --accent-2: #154fc0;
+        --accent-soft: #dce8ff;
+        --success: #1f8f6c;
+        --warn: #9a6c11;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; min-height: 100%; }
+      body {
+        font-family: "IBM Plex Sans", sans-serif;
+        color: var(--text);
+        background:
+          linear-gradient(180deg, rgba(43,109,246,0.08), transparent 180px),
+          linear-gradient(180deg, var(--bg), var(--bg-2));
+      }
+
+      .app {
+        max-width: 1460px;
+        margin: 0 auto;
+        padding: 0 28px 40px;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: rgba(234, 240, 247, 0.86);
+        backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(18, 33, 51, 0.06);
+      }
+
+      .topbar-inner {
+        max-width: 1460px;
+        margin: 0 auto;
+        padding: 20px 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 24px;
+      }
+
+      .brand small {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.20em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .brand strong {
+        display: block;
+        margin-top: 5px;
+        font-size: 21px;
+        letter-spacing: -0.03em;
+      }
+
+      .steps {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .step {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        color: var(--muted-2);
+        font-size: 13px;
+        border: 1px solid transparent;
+      }
+
+      .step b {
+        display: inline-flex;
+        width: 22px;
+        height: 22px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: rgba(18,33,51,0.05);
+        font-size: 11px;
+      }
+
+      .step.active {
+        color: var(--text);
+        background: var(--panel);
+        border-color: rgba(18,33,51,0.08);
+      }
+      .step.active b {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .hero {
+        padding: 42px 0 22px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 28px;
+        align-items: end;
+      }
+
+      .hero small {
+        display: block;
+        margin: 0 0 12px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.20em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      .hero h1 {
+        margin: 0;
+        font-size: clamp(42px, 6.2vw, 74px);
+        line-height: 0.96;
+        letter-spacing: -0.06em;
+      }
+
+      .hero p {
+        max-width: 430px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.7;
+      }
+
+      .frame {
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr) 360px;
+        gap: 16px;
+        align-items: start;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid rgba(18, 33, 51, 0.08);
+        border-radius: 18px;
+      }
+
+      .left-col {
+        padding: 14px;
+        display: grid;
+        gap: 12px;
+        position: sticky;
+        top: 106px;
+      }
+
+      .left-col section,
+      .right-col section {
+        padding: 16px;
+        border-radius: 14px;
+        background: var(--panel-2);
+        border: 1px solid rgba(18,33,51,0.06);
+      }
+
+      .left-col h3,
+      .right-col h3 {
+        margin: 0 0 12px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--muted-2);
+      }
+
+      .left-col strong,
+      .right-col strong {
+        display: block;
+        font-size: 15px;
+        line-height: 1.4;
+      }
+
+      .left-col p,
+      .right-col p {
+        margin: 6px 0 0;
+        font-size: 14px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .tag {
+        padding: 8px 10px;
+        border-radius: 999px;
+        background: var(--panel);
+        border: 1px solid rgba(18,33,51,0.06);
+        font-size: 12px;
+        color: var(--text);
+      }
+
+      .main-col {
+        padding: 18px;
+      }
+
+      .main-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid rgba(18,33,51,0.07);
+      }
+
+      .main-head h2 {
+        margin: 0;
+        font-size: 30px;
+        letter-spacing: -0.05em;
+        line-height: 1.08;
+      }
+
+      .main-head .meta {
+        margin-top: 7px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      .score {
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: var(--accent-soft);
+        min-width: 118px;
+      }
+
+      .score strong {
+        display: block;
+        font-size: 44px;
+        line-height: 0.92;
+        letter-spacing: -0.07em;
+        color: var(--accent-2);
+      }
+
+      .score span {
+        display: block;
+        margin-top: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--success);
+      }
+
+      .main-summary {
+        margin: 18px 0 0;
+        font-size: 15px;
+        color: var(--muted);
+        line-height: 1.75;
+      }
+
+      .reason-grid {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .reason {
+        padding: 14px;
+        border-radius: 14px;
+        background: var(--panel-2);
+        border: 1px solid rgba(18,33,51,0.06);
+      }
+
+      .reason h4 {
+        margin: 0 0 10px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--muted-2);
+      }
+
+      .reason ul { margin: 0; padding-left: 16px; display: grid; gap: 8px; }
+      .reason li { font-size: 14px; line-height: 1.55; }
+
+      .main-footer {
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(18,33,51,0.07);
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+      }
+
+      .main-footer p {
+        margin: 0;
+        max-width: 520px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .btns { display: flex; gap: 10px; flex-wrap: wrap; }
+      .btn {
+        appearance: none;
+        border: 0;
+        padding: 13px 16px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .btn.primary { background: var(--accent); color: white; }
+      .btn.secondary { background: white; border: 1px solid var(--line); color: var(--text); }
+
+      .right-col {
+        padding: 14px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .alt-row + .alt-row {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(18,33,51,0.07);
+      }
+
+      .alt-row strong {
+        display: block;
+        font-size: 16px;
+      }
+
+      .alt-row p {
+        margin-top: 6px;
+      }
+
+      .badge {
+        display: inline-flex;
+        margin-top: 10px;
+        padding: 8px 10px;
+        border-radius: 999px;
+        background: white;
+        border: 1px solid rgba(18,33,51,0.06);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      @media (max-width: 1220px) {
+        .frame {
+          grid-template-columns: 1fr;
+        }
+        .left-col {
+          position: static;
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      @media (max-width: 860px) {
+        .topbar-inner, .app { padding-left: 18px; padding-right: 18px; }
+        .hero, .main-head, .main-footer { grid-template-columns: 1fr; flex-direction: column; align-items: flex-start; }
+        .reason-grid { grid-template-columns: 1fr; }
+        .left-col { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <small>Resume Tailor Pro</small>
+          <strong>Discovery</strong>
+        </div>
+        <nav class="steps" aria-label="Workflow phases">
+          <div class="step active"><b>01</b>Discovery</div>
+          <div class="step"><b>02</b>Intake</div>
+          <div class="step"><b>03</b>Match</div>
+          <div class="step"><b>04</b>Diagnosis</div>
+          <div class="step"><b>05</b>Output</div>
+        </nav>
+      </div>
+    </header>
+
+    <main class="app">
+      <section class="hero">
+        <div>
+          <small>Step 01 / Discovery</small>
+          <h1>Select the role with the cleanest story.</h1>
+        </div>
+        <p>
+          Discovery should feel like a product workflow screen, not an editorial sheet. One strong choice, a few believable alternatives, and a direct handoff into Intake.
+        </p>
+      </section>
+
+      <section class="frame">
+        <aside class="panel left-col">
+          <section>
+            <h3>Candidate</h3>
+            <strong>alex-stratton-resume.docx</strong>
+            <p>Parsed once and reused by the next four steps.</p>
+          </section>
+          <section>
+            <h3>Signal</h3>
+            <strong>Senior Product Manager</strong>
+            <p>9 years · Platform strategy · B2B SaaS + AI</p>
+          </section>
+          <section>
+            <h3>Tuning</h3>
+            <div class="tags">
+              <span class="tag">San Francisco</span>
+              <span class="tag">Remote</span>
+              <span class="tag">Platform</span>
+            </div>
+          </section>
+        </aside>
+
+        <article class="panel main-col">
+          <div class="main-head">
+            <div>
+              <h2>Senior Product Manager, AI Platform</h2>
+              <div class="meta">Series C infrastructure company · Remote · $188k-$215k</div>
+            </div>
+            <div class="score">
+              <strong>85</strong>
+              <span>Strong match</span>
+            </div>
+          </div>
+
+          <p class="main-summary">
+            The overlap is real, the risks are explicit, and the resume can be tailored toward this role without manufacturing a new narrative.
+          </p>
+
+          <div class="reason-grid">
+            <section class="reason">
+              <h4>Why it works</h4>
+              <ul>
+                <li>Clear platform strategy signal in the source resume.</li>
+                <li>AI workflow experience already exists.</li>
+                <li>Seniority fits without stretching the story.</li>
+              </ul>
+            </section>
+            <section class="reason">
+              <h4>Watchouts</h4>
+              <ul>
+                <li>Developer tooling depth needs careful phrasing.</li>
+                <li>Pricing ownership should stay framed as a gap.</li>
+                <li>Check JD language before the handoff to Intake.</li>
+              </ul>
+            </section>
+          </div>
+
+          <div class="main-footer">
+            <p>Choosing this role should prefill the Intake step automatically and remove the need to browse or upload again.</p>
+            <div class="btns">
+              <button class="btn primary">Continue with this role</button>
+              <button class="btn secondary">Compare next match</button>
+            </div>
+          </div>
+        </article>
+
+        <aside class="panel right-col">
+          <section>
+            <h3>Shortlist</h3>
+            <div class="alt-row">
+              <strong>Principal Product Manager, Workflow Automation</strong>
+              <p>Better title upside, weaker evidence on governance-heavy environments.</p>
+              <div class="badge">78 Good</div>
+            </div>
+            <div class="alt-row">
+              <strong>Group Product Manager, Customer Intelligence</strong>
+              <p>Strong analytics fit, but more narrative drift from the candidate's current platform story.</p>
+              <div class="badge">72 Moderate</div>
+            </div>
+            <div class="alt-row">
+              <strong>Lead Product Manager, Applied AI Ops</strong>
+              <p>High relevance, but it needs stronger ops framing before it becomes the best choice.</p>
+              <div class="badge">69 Fair</div>
+            </div>
+          </section>
+        </aside>
+      </section>
+    </main>
+  </body>
+</html>

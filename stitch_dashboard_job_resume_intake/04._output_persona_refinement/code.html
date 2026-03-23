@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PERSONA REFINEMENT | CINEMATIC INTELLIGENCE</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@700;800;900&amp;family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-container": "#b7b4b4",
+                        "tertiary-container": "#f1daff",
+                        "on-surface": "#e5e2e1",
+                        "error": "#ffb4ab",
+                        "outline": "#8e9379",
+                        "on-primary-fixed-variant": "#3c4d00",
+                        "surface-dim": "#131313",
+                        "secondary": "#c9c6c5",
+                        "on-primary-fixed": "#161e00",
+                        "on-secondary": "#313030",
+                        "on-error-container": "#ffdad6",
+                        "surface-variant": "#353534",
+                        "surface-tint": "#abd600",
+                        "inverse-on-surface": "#313030",
+                        "on-background": "#e5e2e1",
+                        "surface": "#131313",
+                        "surface-container-highest": "#353534",
+                        "outline-variant": "#444933",
+                        "inverse-primary": "#506600",
+                        "inverse-surface": "#e5e2e1",
+                        "background": "#131313",
+                        "surface-bright": "#3a3939",
+                        "primary-container": "#c3f400",
+                        "error-container": "#93000a",
+                        "on-primary": "#283500",
+                        "tertiary": "#ffffff",
+                        "tertiary-fixed": "#f1daff",
+                        "on-tertiary-fixed": "#2d004f",
+                        "surface-container": "#201f1f",
+                        "surface-container-low": "#1c1b1b",
+                        "on-tertiary-fixed-variant": "#6b00b0",
+                        "tertiary-fixed-dim": "#dfb7ff",
+                        "secondary-container": "#474646",
+                        "on-surface-variant": "#c4c9ac",
+                        "on-error": "#690005",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-tertiary": "#4b007e",
+                        "on-tertiary-container": "#9500f2",
+                        "primary-fixed-dim": "#abd600",
+                        "primary": "#ffffff",
+                        "on-primary-container": "#556d00",
+                        "secondary-fixed": "#e5e2e1",
+                        "surface-container-high": "#2a2a2a",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-secondary-fixed-variant": "#474646",
+                        "secondary-fixed-dim": "#c9c6c5",
+                        "primary-fixed": "#c3f400"
+                    },
+                    fontFamily: {
+                        "headline": ["Epilogue"],
+                        "body": ["Space Grotesk"],
+                        "label": ["Space Grotesk"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(53, 53, 52, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(68, 73, 51, 0.2);
+        }
+        .glow-text {
+            text-shadow: 0 0 10px rgba(195, 244, 0, 0.5);
+        }
+        .glow-border-primary {
+            box-shadow: 0 0 15px rgba(195, 244, 0, 0.2);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-surface-dim text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-8 h-16 bg-[#131313]/40 backdrop-blur-xl border-b border-[#444933]/20 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+<div class="text-xl font-black tracking-tighter text-[#c3f400] drop-shadow-[0_0_8px_rgba(195,244,0,0.4)] font-headline">
+            CINEMATIC INTELLIGENCE
+        </div>
+<nav class="hidden md:flex gap-8 items-center">
+<a class="font-['Epilogue'] tracking-tight uppercase font-bold text-xs text-[#e5e2e1]/60 hover:text-[#e5e2e1] transition-colors" href="#">SOURCE</a>
+<a class="font-['Epilogue'] tracking-tight uppercase font-bold text-xs text-[#e5e2e1]/60 hover:text-[#e5e2e1] transition-colors" href="#">BRIDGE</a>
+<a class="font-['Epilogue'] tracking-tight uppercase font-bold text-xs text-[#e5e2e1]/60 hover:text-[#e5e2e1] transition-colors" href="#">SYNTHESIS</a>
+<a class="font-['Epilogue'] tracking-tight uppercase font-bold text-xs text-[#c3f400] border-b-2 border-[#c3f400] pb-1" href="#">PERSONA</a>
+</nav>
+<div class="flex gap-4 items-center">
+<button class="material-symbols-outlined text-[#c3f400] hover:bg-[#c3f400]/10 p-2 rounded-full transition-all duration-300">sensors</button>
+<button class="material-symbols-outlined text-[#c3f400] hover:bg-[#c3f400]/10 p-2 rounded-full transition-all duration-300">settings_input_component</button>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full z-40 flex flex-col py-8 bg-[#0e0e0e]/80 backdrop-blur-2xl border-r border-[#444933]/15 shadow-[10px_0_30px_rgba(0,0,0,0.5)] w-20 hover:w-64 transition-all duration-500 group overflow-hidden">
+<div class="flex flex-col items-center group-hover:items-start px-4 mb-12">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest border border-outline-variant flex items-center justify-center overflow-hidden mb-4 shrink-0">
+<img class="w-full h-full object-cover" data-alt="User Analyst Profile avatar portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdQPAlfSdnBTdUJzycjBbH_-2HND3AZt2hOPBcrLxstfgTms-6pWzpKkAR_m8fw0IZFQLy2kyI7QWyZV3mcj75yzmlsVwuKUDNbVv8kjHg7_0KHdqDiIajIiRq-6mktUzbyrj2c7KnqPwzrdqKv7ahoFTGlw0yDuaDGettIxEw-xBabRc99f3buQz62li_m34KKkWvF48UM6ML6242ieg9-x45JdSNYri99yzs4XpxWIk_tN3J-yf8j97BuRbeAUA-Tuu2doUbeyU"/>
+</div>
+<div class="hidden group-hover:block transition-opacity duration-500 opacity-0 group-hover:opacity-100">
+<h3 class="font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase font-bold text-primary-fixed">NEURAL_ID_01</h3>
+<p class="text-[8px] text-on-surface-variant tracking-widest">STATUS: SCANNING</p>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-4 px-4">
+<button class="flex items-center gap-4 p-3 rounded-lg text-[#e5e2e1]/40 group-hover:text-[#e5e2e1]/80 hover:bg-[#353534] hover:text-[#c3f400] transition-all duration-300">
+<span class="material-symbols-outlined">upload_file</span>
+<span class="hidden group-hover:block font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase">INTAKE</span>
+</button>
+<button class="flex items-center gap-4 p-3 rounded-lg text-[#e5e2e1]/40 group-hover:text-[#e5e2e1]/80 hover:bg-[#353534] hover:text-[#c3f400] transition-all duration-300">
+<span class="material-symbols-outlined">hub</span>
+<span class="hidden group-hover:block font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase">NEURAL</span>
+</button>
+<button class="flex items-center gap-4 p-3 rounded-lg text-[#e5e2e1]/40 group-hover:text-[#e5e2e1]/80 hover:bg-[#353534] hover:text-[#c3f400] transition-all duration-300">
+<span class="material-symbols-outlined">subject</span>
+<span class="hidden group-hover:block font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase">NARRATIVE</span>
+</button>
+<button class="flex items-center gap-4 p-3 rounded-lg bg-[#c3f400] text-[#131313] shadow-[0_0_15px_rgba(195,244,0,0.3)]">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="hidden group-hover:block font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase">DOSSIER</span>
+</button>
+</nav>
+<div class="px-4 mt-auto">
+<button class="w-full bg-primary-fixed text-on-primary-fixed py-3 rounded-lg hidden group-hover:block font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase font-bold hover:shadow-[0_0_20px_rgba(195,244,0,0.4)] transition-all">
+                INITIATE SYNTHESIS
+            </button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-20 pt-24 pb-12 px-8 min-h-screen">
+<div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12">
+<!-- Left: Dossier Display (The Resume) -->
+<section class="lg:col-span-7 space-y-8">
+<div class="flex justify-between items-end mb-4">
+<div>
+<span class="text-primary-fixed font-label text-xs tracking-[0.3em] uppercase mb-2 block">Neural Output v4.02</span>
+<h1 class="text-4xl font-headline font-black tracking-tighter uppercase">Elite Persona Profile</h1>
+</div>
+<div class="flex gap-2">
+<span class="w-2 h-2 rounded-full bg-primary-fixed animate-pulse"></span>
+<span class="text-[10px] font-label text-on-surface-variant uppercase tracking-widest">Live Sync Active</span>
+</div>
+</div>
+<!-- Resume Card (Digital Dossier) -->
+<div class="glass-panel p-10 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary-fixed/5 blur-3xl rounded-full -mr-16 -mt-16"></div>
+<!-- Profile Header -->
+<div class="flex flex-col md:flex-row gap-8 items-start md:items-center border-b border-outline-variant/20 pb-10 mb-10">
+<div class="relative w-32 h-32 shrink-0">
+<div class="absolute inset-0 border border-primary-fixed/30 rounded-full scale-110"></div>
+<img class="w-full h-full object-cover rounded-full filter grayscale hover:grayscale-0 transition-all duration-700" data-alt="Professional persona portrait cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxiEObbfHU82FOsQ6FLkUwv7vVhncnD9NKoKUfE_VABoexI9_Bh0QpkzB1FJFGIvNysr9hEqC9moGSD4uVY8ANDF8ruC0T98Ho8t1CQ-pj5J4_ShTnMqtLpiQej2Tg5a547AQhMvX_QIR3cqcT8s-4EA4Dt1-Z6TA7Y7D481ZEQ9qGtUwvF8i5F7HPUe5WYQFZ0ORuCLL54cc19xzY47M0i4TIqlMO5F7Zux0NBhtO14-lDgClk08EpU_LY1vsxfSJB-e9WeVrRFQ"/>
+</div>
+<div class="flex-1">
+<h2 class="text-3xl font-headline font-bold text-on-surface tracking-tight mb-1">ALEXANDER VAUGHN</h2>
+<p class="text-primary-fixed font-label tracking-[0.2em] text-sm font-semibold uppercase mb-4">Principal Architect of Neural Logistics</p>
+<div class="flex flex-wrap gap-4 text-xs font-label text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">location_on</span> NEOM, DISTRICT 7</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">mail</span> A.VAUGHN@COGNITIVE.CORP</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">language</span> VAUGHN.LABS</span>
+</div>
+</div>
+</div>
+<!-- Resume Content Blocks -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+<!-- Experience Section -->
+<div class="md:col-span-2 space-y-8">
+<div>
+<h3 class="text-xs font-label font-bold text-primary-fixed tracking-[0.25em] uppercase mb-6 flex items-center gap-2">
+<span class="w-4 h-[1px] bg-primary-fixed"></span> Operational History
+                                </h3>
+<div class="space-y-6">
+<div class="relative pl-6 border-l border-outline-variant/30">
+<div class="absolute top-0 left-[-4.5px] w-2 h-2 rounded-full bg-primary-fixed glow-border-primary"></div>
+<div class="flex justify-between items-start mb-1">
+<h4 class="text-sm font-bold text-on-surface">LEAD SYSTEMS SYNTHESIST</h4>
+<span class="text-[10px] font-label text-on-surface-variant">2042 — PRESENT</span>
+</div>
+<p class="text-[10px] text-primary-fixed-dim uppercase tracking-widest mb-2">Omni-Net Dynamics</p>
+<p class="text-xs text-on-surface-variant leading-relaxed">Pioneered the integration of sentient sub-layers into global logistics chains, reducing latency by 44% across three sectors.</p>
+</div>
+<div class="relative pl-6 border-l border-outline-variant/30">
+<div class="absolute top-0 left-[-4.5px] w-2 h-2 rounded-full bg-outline-variant"></div>
+<div class="flex justify-between items-start mb-1">
+<h4 class="text-sm font-bold text-on-surface">CORE ANALYTICS OFFICER</h4>
+<span class="text-[10px] font-label text-on-surface-variant">2038 — 2042</span>
+</div>
+<p class="text-[10px] text-primary-fixed-dim uppercase tracking-widest mb-2">Aetheric Grid Solutions</p>
+<p class="text-xs text-on-surface-variant leading-relaxed">Engineered predictive maintenance protocols for orbital data arrays, achieving 99.99% uptime during the solar flux era.</p>
+</div>
+</div>
+</div>
+<div>
+<h3 class="text-xs font-label font-bold text-primary-fixed tracking-[0.25em] uppercase mb-6 flex items-center gap-2">
+<span class="w-4 h-[1px] bg-primary-fixed"></span> Intellectual Foundation
+                                </h3>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-4 bg-surface-container-low rounded-lg border border-outline-variant/10">
+<p class="text-[10px] text-primary-fixed-dim uppercase tracking-tighter mb-1">M.S. Neural Computation</p>
+<p class="text-[11px] font-bold">Stanford Unified</p>
+</div>
+<div class="p-4 bg-surface-container-low rounded-lg border border-outline-variant/10">
+<p class="text-[10px] text-primary-fixed-dim uppercase tracking-tighter mb-1">B.A. Cognitive Ethics</p>
+<p class="text-[11px] font-bold">ETH Zürich</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Skills / Sidebar Section -->
+<div class="space-y-8">
+<div>
+<h3 class="text-xs font-label font-bold text-primary-fixed tracking-[0.25em] uppercase mb-6">Cognitive Suite</h3>
+<div class="space-y-4">
+<div>
+<div class="flex justify-between text-[10px] mb-2 uppercase tracking-widest">
+<span>Synthesis Engine</span>
+<span class="text-primary-fixed">98%</span>
+</div>
+<div class="h-[2px] w-full bg-surface-container-highest">
+<div class="h-full bg-primary-fixed w-[98%] shadow-[0_0_8px_rgba(195,244,0,0.6)]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-[10px] mb-2 uppercase tracking-widest">
+<span>System Architecture</span>
+<span class="text-primary-fixed">92%</span>
+</div>
+<div class="h-[2px] w-full bg-surface-container-highest">
+<div class="h-full bg-primary-fixed w-[92%] shadow-[0_0_8px_rgba(195,244,0,0.6)]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-[10px] mb-2 uppercase tracking-widest">
+<span>Neural Debugging</span>
+<span class="text-primary-fixed">85%</span>
+</div>
+<div class="h-[2px] w-full bg-surface-container-highest">
+<div class="h-full bg-primary-fixed w-[85%] shadow-[0_0_8px_rgba(195,244,0,0.6)]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="pt-6 border-t border-outline-variant/20">
+<h3 class="text-xs font-label font-bold text-primary-fixed tracking-[0.25em] uppercase mb-4">Neural Keywords</h3>
+<div class="flex flex-wrap gap-2">
+<span class="text-[9px] px-2 py-1 bg-surface-container-high rounded border border-outline-variant/20 uppercase">Quantum</span>
+<span class="text-[9px] px-2 py-1 bg-surface-container-high rounded border border-outline-variant/20 uppercase">Bio-Net</span>
+<span class="text-[9px] px-2 py-1 bg-surface-container-high rounded border border-outline-variant/20 uppercase">Lead</span>
+<span class="text-[9px] px-2 py-1 bg-surface-container-high rounded border border-outline-variant/20 uppercase">Strategy</span>
+<span class="text-[9px] px-2 py-1 bg-surface-container-high rounded border border-outline-variant/20 uppercase">Optimization</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Subtle Dossier Footer -->
+<div class="mt-12 flex justify-between items-center text-[8px] font-label text-on-surface-variant/40 tracking-[0.4em] uppercase">
+<span>Generated by Cinematic Intelligence v4.02</span>
+<span>Auth Code: 9X-212-SYN</span>
+</div>
+</div>
+</section>
+<!-- Right: Refinement Analytics & Actions -->
+<section class="lg:col-span-5 space-y-8">
+<!-- Analytics Panel -->
+<div class="glass-panel p-8 rounded-xl border-l-4 border-l-primary-fixed">
+<h2 class="text-sm font-headline font-black tracking-widest uppercase mb-8 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary-fixed">monitoring</span>
+                        Refinement Analytics
+                    </h2>
+<div class="space-y-10">
+<!-- Abstract "Neural Map" Chart -->
+<div class="relative h-48 bg-surface-container-lowest/50 rounded-lg overflow-hidden border border-outline-variant/10">
+<div class="absolute inset-0 flex items-center justify-center">
+<!-- Simulated Tech SVG/Grid -->
+<svg class="w-full h-full opacity-20" viewbox="0 0 400 200">
+<path d="M0 100 Q 100 50, 200 100 T 400 100" fill="transparent" stroke="#c3f400" stroke-width="0.5"></path>
+<path d="M0 120 Q 150 20, 300 120 T 400 80" fill="transparent" stroke="#dfb7ff" stroke-width="0.5"></path>
+<circle cx="200" cy="100" fill="none" r="50" stroke="#c3f400" stroke-width="0.2"></circle>
+<circle cx="200" cy="100" fill="none" r="80" stroke="#c3f400" stroke-width="0.1"></circle>
+</svg>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim to-transparent"></div>
+<div class="absolute flex flex-col items-center">
+<span class="text-primary-fixed font-headline text-4xl font-black">9.8</span>
+<span class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">PERSONA IMPACT SCORE</span>
+</div>
+</div>
+</div>
+<!-- Data Points -->
+<div class="grid grid-cols-2 gap-4">
+<div class="p-4 bg-surface-container-high/40 rounded border border-outline-variant/10">
+<p class="text-[9px] text-on-surface-variant uppercase tracking-widest mb-1">ATS Optimization</p>
+<p class="text-xl font-headline font-bold text-on-surface">99.4%</p>
+</div>
+<div class="p-4 bg-surface-container-high/40 rounded border border-outline-variant/10">
+<p class="text-[9px] text-on-surface-variant uppercase tracking-widest mb-1">Market Alignment</p>
+<p class="text-xl font-headline font-bold text-tertiary-fixed-dim">TIER 1</p>
+</div>
+<div class="p-4 bg-surface-container-high/40 rounded border border-outline-variant/10">
+<p class="text-[9px] text-on-surface-variant uppercase tracking-widest mb-1">Word Density</p>
+<p class="text-xl font-headline font-bold text-on-surface">OPTIMAL</p>
+</div>
+<div class="p-4 bg-surface-container-high/40 rounded border border-outline-variant/10">
+<p class="text-[9px] text-on-surface-variant uppercase tracking-widest mb-1">Tone Analysis</p>
+<p class="text-xl font-headline font-bold text-primary-fixed">ELITE</p>
+</div>
+</div>
+<!-- Comparison Bar -->
+<div class="space-y-2">
+<p class="text-[10px] font-label uppercase tracking-[0.2em] text-on-surface-variant">Competitive Dominance</p>
+<div class="h-6 w-full bg-surface-container-highest rounded-full overflow-hidden flex items-center px-1">
+<div class="h-4 bg-primary-fixed w-[88%] rounded-full relative group">
+<span class="absolute right-2 top-0 text-[10px] font-black text-on-primary-fixed leading-4">YOU</span>
+</div>
+</div>
+<p class="text-[9px] text-on-surface-variant/60 italic leading-relaxed">Your persona profile currently exceeds 88.4% of high-tier candidates in the Neom tech-corridor.</p>
+</div>
+</div>
+</div>
+<!-- Export CTA -->
+<div class="space-y-4">
+<button class="w-full h-16 bg-primary-fixed text-on-primary-fixed font-headline font-black tracking-widest uppercase flex items-center justify-center gap-3 rounded-lg shadow-[0_0_30px_rgba(195,244,0,0.4)] hover:shadow-[0_0_50px_rgba(195,244,0,0.6)] hover:scale-[1.02] transition-all duration-300 group">
+<span class="material-symbols-outlined font-bold group-hover:animate-bounce">file_download</span>
+                        EXPORT INTELLIGENCE
+                    </button>
+<div class="flex gap-4">
+<button class="flex-1 py-4 glass-panel text-primary-fixed font-label text-[10px] tracking-widest uppercase font-bold hover:bg-primary-fixed/10 transition-colors">
+                            SHARE ENCRYPTED LINK
+                        </button>
+<button class="flex-1 py-4 glass-panel text-on-surface font-label text-[10px] tracking-widest uppercase font-bold hover:bg-surface-variant transition-colors">
+                            MODIFY PARAMETERS
+                        </button>
+</div>
+</div>
+<!-- System Log -->
+<div class="p-6 bg-surface-container-lowest rounded-lg border border-outline-variant/10 space-y-3">
+<h4 class="text-[9px] font-label text-primary-fixed/60 uppercase tracking-widest">System History Log</h4>
+<div class="space-y-2 font-mono text-[9px] text-on-surface-variant/40">
+<div class="flex justify-between">
+<span>&gt; NEURAL_CORE_READY</span>
+<span>[SUCCESS]</span>
+</div>
+<div class="flex justify-between">
+<span>&gt; ANALYZING_NARRATIVE_WEIGHT</span>
+<span>[STABLE]</span>
+</div>
+<div class="flex justify-between">
+<span>&gt; SYNTHESIZING_EXPORT_PACKAGE</span>
+<span>[PENDING]</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Visual Background Element -->
+<div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+<div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-fixed/5 blur-[120px] rounded-full"></div>
+<div class="absolute bottom-1/4 right-1/4 w-64 h-64 bg-tertiary-fixed-dim/5 blur-[100px] rounded-full"></div>
+<!-- Scanline effect -->
+<div class="absolute inset-0 opacity-[0.03]" style="background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 3px 100%;"></div>
+</div>
+</body></html>

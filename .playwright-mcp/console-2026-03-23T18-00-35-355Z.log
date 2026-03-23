@@ -1,0 +1,12 @@
+[     746ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/favicon.ico:0
+[  117210ms] [ERROR] WebSocket connection to 'ws://localhost:24678/?token=dIoXwfkfbZ5q' failed:  @ http://localhost:3000/@vite/client:801
+[  117215ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed:  @ http://localhost:3000/@vite/client:1034
+[  118222ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[  119229ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[  120235ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[  121240ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[  122244ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[  123251ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[  124258ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[  125277ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034
+[  126311ms] [ERROR] WebSocket connection to 'ws://localhost:24678/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/@vite/client:1034

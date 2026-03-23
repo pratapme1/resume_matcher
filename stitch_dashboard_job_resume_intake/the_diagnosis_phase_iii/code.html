@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Newsreader:ital,wght@0,400;0,700;0,800;1,400;1,700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-container": "#461f00",
+                        "on-surface-variant": "#c2c6d6",
+                        "primary-container": "#4d8eff",
+                        "surface-container-low": "#1c1b1b",
+                        "on-primary-fixed-variant": "#004395",
+                        "surface-tint": "#adc6ff",
+                        "background": "#131313",
+                        "tertiary-fixed": "#ffdcc6",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "on-secondary-container": "#9fb5e7",
+                        "surface-dim": "#131313",
+                        "secondary-fixed": "#d8e2ff",
+                        "on-secondary-fixed-variant": "#304671",
+                        "error": "#ffb4ab",
+                        "surface-bright": "#3a3939",
+                        "surface-variant": "#353534",
+                        "inverse-primary": "#005ac2",
+                        "primary-fixed": "#d8e2ff",
+                        "on-primary-fixed": "#001a42",
+                        "error-container": "#93000a",
+                        "on-error": "#690005",
+                        "tertiary-container": "#df7412",
+                        "inverse-on-surface": "#313030",
+                        "secondary-container": "#304671",
+                        "on-surface": "#e5e2e1",
+                        "secondary-fixed-dim": "#b1c6f9",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-secondary": "#182f59",
+                        "on-primary": "#002e6a",
+                        "outline-variant": "#424754",
+                        "secondary": "#b1c6f9",
+                        "primary": "#adc6ff",
+                        "on-tertiary-fixed": "#311400",
+                        "outline": "#8c909f",
+                        "surface-container": "#201f1f",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed": "#001a42",
+                        "on-background": "#e5e2e1",
+                        "surface-container-high": "#2a2a2a",
+                        "primary-fixed-dim": "#adc6ff",
+                        "tertiary": "#ffb786",
+                        "on-primary-container": "#00285d",
+                        "inverse-surface": "#e5e2e1",
+                        "on-tertiary": "#502400",
+                        "surface-container-highest": "#353534",
+                        "surface": "#131313"
+                    },
+                    fontFamily: {
+                        "headline": ["Newsreader"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(53, 53, 52, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-primary/30">
+<!-- TopNavBar -->
+<nav class="bg-white/70 dark:bg-[#131313]/70 backdrop-blur-xl docked full-width top-0 sticky z-50 no-border bg-surface-container-low shadow-[0_8px_32px_0_rgba(0,0,0,0.04)]">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-screen-2xl mx-auto">
+<div class="text-2xl font-black tracking-tighter text-slate-900 dark:text-white font-['Newsreader']">LUMINA</div>
+<div class="hidden md:flex items-center gap-10">
+<a class="text-slate-500 dark:text-slate-400 font-['Inter'] font-medium text-sm hover:text-blue-600 dark:hover:text-[#ADC6FF] transition-colors duration-300" href="#">Intake</a>
+<a class="text-slate-500 dark:text-slate-400 font-['Inter'] font-medium text-sm hover:text-blue-600 dark:hover:text-[#ADC6FF] transition-colors duration-300" href="#">Evaluation</a>
+<a class="text-slate-900 dark:text-white border-b-2 border-blue-500 dark:border-[#ADC6FF] pb-1 font-['Inter'] font-medium text-sm transition-colors duration-300" href="#">Insights</a>
+<a class="text-slate-500 dark:text-slate-400 font-['Inter'] font-medium text-sm hover:text-blue-600 dark:hover:text-[#ADC6FF] transition-colors duration-300" href="#">Asset</a>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-slate-500 dark:text-slate-400 hover:text-primary transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-slate-500 dark:text-slate-400 hover:text-primary transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</div>
+</nav>
+<!-- SideNavBar (Hidden on Mobile) -->
+<aside class="hidden lg:flex fixed left-6 top-1/2 -translate-y-1/2 rounded-3xl w-20 hover:w-64 transition-all duration-500 group overflow-hidden bg-white/60 dark:bg-[#131313]/60 backdrop-blur-2xl no-border shadow-2xl z-40">
+<div class="flex flex-col items-center py-8 gap-8 w-full">
+<div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center text-center px-4">
+<p class="font-headline italic text-primary text-xl">Journey</p>
+<p class="text-[10px] tracking-[0.2em] uppercase text-slate-500">Career Intelligence</p>
+</div>
+<div class="flex flex-col gap-4 w-full px-4">
+<div class="flex items-center gap-4 p-3 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 rounded-2xl transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>
+<span class="opacity-0 group-hover:opacity-100 whitespace-nowrap text-sm font-medium transition-opacity">Intake Phase</span>
+</div>
+<div class="flex items-center gap-4 p-3 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 rounded-2xl transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="opacity-0 group-hover:opacity-100 whitespace-nowrap text-sm font-medium transition-opacity">Evaluation Phase</span>
+</div>
+<div class="flex items-center gap-4 p-3 bg-blue-50 dark:bg-[#ADC6FF]/10 text-blue-600 dark:text-[#ADC6FF] rounded-2xl transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+<span class="opacity-0 group-hover:opacity-100 whitespace-nowrap text-sm font-medium transition-opacity">Insights Phase</span>
+</div>
+<div class="flex items-center gap-4 p-3 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 rounded-2xl transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span class="opacity-0 group-hover:opacity-100 whitespace-nowrap text-sm font-medium transition-opacity">Asset Phase</span>
+</div>
+</div>
+</div>
+</aside>
+<main class="max-w-screen-2xl mx-auto px-8 lg:px-24 py-16 lg:py-24">
+<!-- Hero Title Section -->
+<header class="mb-24 relative">
+<div class="absolute -top-24 -left-24 w-96 h-96 bg-primary/10 blur-[120px] rounded-full"></div>
+<p class="font-label text-sm tracking-[0.3em] uppercase text-primary mb-6">Strategic Intelligence</p>
+<h1 class="font-headline text-6xl md:text-8xl font-bold italic tracking-tighter mb-8 max-w-4xl leading-tight">
+                The Diagnosis: <span class="text-on-surface-variant/40">Phase III</span>
+</h1>
+<div class="flex flex-wrap gap-8 items-end justify-between border-b border-outline-variant/10 pb-12">
+<p class="text-on-surface-variant font-light text-xl max-w-xl leading-relaxed">
+                    A multi-dimensional breakdown of market alignment, semantic keywords, and executive skill gaps extracted from our proprietary intelligence engine.
+                </p>
+<div class="flex items-center gap-4">
+<div class="h-12 w-[1px] bg-outline-variant/20 hidden md:block"></div>
+<div>
+<p class="font-label text-[10px] tracking-widest text-slate-500 uppercase">Confidence Score</p>
+<p class="font-headline text-3xl italic">94.8%</p>
+</div>
+</div>
+</div>
+</header>
+<!-- Bento Report Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Impact Metrics (Left Sidebar) -->
+<section class="lg:col-span-4 space-y-8">
+<div class="p-8 rounded-xl bg-surface-container-low border border-outline-variant/5 shadow-sm">
+<h3 class="font-headline text-2xl italic mb-8">Priority Gaps</h3>
+<div class="space-y-6">
+<div class="group">
+<div class="flex justify-between items-center mb-2">
+<span class="text-xs font-bold uppercase tracking-wider text-error">Critical Gap</span>
+<span class="text-xs text-on-surface-variant">Priority 01</span>
+</div>
+<h4 class="font-medium text-lg mb-1 group-hover:text-primary transition-colors">Cloud Strategy</h4>
+<p class="text-sm text-on-surface-variant leading-relaxed">Missing architectural oversight credentials for multi-cloud deployments.</p>
+</div>
+<div class="w-full h-[1px] bg-outline-variant/10"></div>
+<div class="group">
+<div class="flex justify-between items-center mb-2">
+<span class="text-xs font-bold uppercase tracking-wider text-tertiary">Moderate Gap</span>
+<span class="text-xs text-on-surface-variant">Priority 02</span>
+</div>
+<h4 class="font-medium text-lg mb-1 group-hover:text-primary transition-colors">P&amp;L Management</h4>
+<p class="text-sm text-on-surface-variant leading-relaxed">Financial narrative needs stronger emphasis on quarterly reporting cycles.</p>
+</div>
+<div class="w-full h-[1px] bg-outline-variant/10"></div>
+<div class="group">
+<div class="flex justify-between items-center mb-2">
+<span class="text-xs font-bold uppercase tracking-wider text-secondary">Optimization</span>
+<span class="text-xs text-on-surface-variant">Priority 03</span>
+</div>
+<h4 class="font-medium text-lg mb-1 group-hover:text-primary transition-colors">Digital Transformation</h4>
+<p class="text-sm text-on-surface-variant leading-relaxed">Leverage semantic keywords for "Agile Modernization" initiatives.</p>
+</div>
+</div>
+</div>
+<!-- Strategic Summary Card -->
+<div class="p-8 rounded-xl bg-gradient-to-br from-primary-container/20 to-transparent border border-primary/10 relative overflow-hidden">
+<div class="relative z-10">
+<span class="material-symbols-outlined text-primary mb-4" data-icon="auto_awesome">auto_awesome</span>
+<h3 class="font-headline text-xl italic mb-4">Core Recommendation</h3>
+<p class="text-sm leading-relaxed text-on-surface-variant/90">
+                            The current profile presents as a "Functional Expert" rather than a "Strategic Orchestrator." Pivot the narrative toward Cross-Departmental Influence to unlock Tier-1 opportunities.
+                        </p>
+</div>
+<div class="absolute -bottom-10 -right-10 w-32 h-32 bg-primary/20 blur-3xl"></div>
+</div>
+</section>
+<!-- Semantic Analysis (Main Content) -->
+<section class="lg:col-span-8 space-y-8">
+<!-- Keyword Landscape -->
+<div class="p-10 rounded-xl bg-surface-container-lowest border border-outline-variant/5">
+<div class="flex justify-between items-start mb-12">
+<div>
+<h3 class="font-headline text-3xl italic mb-2">Keyword Landscape</h3>
+<p class="text-on-surface-variant text-sm">Semantic clusters identifying missing high-intent triggers.</p>
+</div>
+<button class="px-6 py-2 rounded-full border border-outline-variant/20 text-xs font-bold uppercase tracking-widest hover:bg-surface-bright transition-all">Export Matrix</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+<div>
+<p class="text-[10px] tracking-widest uppercase text-slate-500 mb-6 flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span> Missing Core Triggers
+                            </p>
+<div class="flex flex-wrap gap-3">
+<span class="px-4 py-2 rounded-full glass-panel border border-outline-variant/10 text-sm font-medium">Enterprise Scalability</span>
+<span class="px-4 py-2 rounded-full glass-panel border border-outline-variant/10 text-sm font-medium">Fiscal Governance</span>
+<span class="px-4 py-2 rounded-full glass-panel border border-outline-variant/10 text-sm font-medium">Product-Led Growth</span>
+<span class="px-4 py-2 rounded-full glass-panel border border-outline-variant/10 text-sm font-medium">DevOps Maturity</span>
+<span class="px-4 py-2 rounded-full glass-panel border border-outline-variant/10 text-sm font-medium">Change Management</span>
+</div>
+</div>
+<div>
+<p class="text-[10px] tracking-widest uppercase text-slate-500 mb-6 flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Optimization Targets
+                            </p>
+<div class="flex flex-wrap gap-3">
+<span class="px-4 py-2 rounded-full glass-panel border border-outline-variant/10 text-sm font-medium text-primary">Operational Excellence</span>
+<span class="px-4 py-2 rounded-full glass-panel border border-outline-variant/10 text-sm font-medium text-primary">Market Penetration</span>
+<span class="px-4 py-2 rounded-full glass-panel border border-outline-variant/10 text-sm font-medium text-primary">Stakeholder Alignment</span>
+<span class="px-4 py-2 rounded-full glass-panel border border-outline-variant/10 text-sm font-medium text-primary">ROI Projection</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Editorial Analysis -->
+<div class="p-10 rounded-xl bg-surface-container-low">
+<h3 class="font-headline text-3xl italic mb-8">Executive Sentiment</h3>
+<div class="space-y-12">
+<article class="flex gap-8 group">
+<span class="text-primary font-headline italic text-4xl opacity-40 group-hover:opacity-100 transition-opacity">01</span>
+<div>
+<h4 class="text-lg font-bold uppercase tracking-tighter mb-2">The Leadership Vacuum</h4>
+<p class="text-on-surface-variant leading-relaxed">
+                                    The current resume data lacks "Impact Verbs" associated with visionary leadership. While technical proficiency is evident, there is a distinct absence of narrative regarding team culture creation or organizational restructuring.
+                                </p>
+</div>
+</article>
+<article class="flex gap-8 group">
+<span class="text-primary font-headline italic text-4xl opacity-40 group-hover:opacity-100 transition-opacity">02</span>
+<div>
+<h4 class="text-lg font-bold uppercase tracking-tighter mb-2">Narrative Misalignment</h4>
+<p class="text-on-surface-variant leading-relaxed">
+                                    The "Evaluation" phase revealed that your self-description focuses on <em class="text-on-surface underline decoration-primary/30">execution</em> while target roles demand <em class="text-on-surface underline decoration-primary/30">strategy</em>. We recommend re-mapping 40% of bullet points to high-level outcomes.
+                                </p>
+</div>
+</article>
+<div class="p-6 rounded-lg bg-surface-container-high/50 border-l-4 border-primary italic text-on-surface-variant">
+                            "The difference between an applicant and an executive is the ability to articulate not just what was done, but why it mattered to the bottom line."
+                        </div>
+</div>
+</div>
+</section>
+</div>
+<!-- Next Step CTA -->
+<section class="mt-24 text-center py-24 bg-gradient-to-t from-primary/5 to-transparent rounded-xl">
+<h2 class="font-headline text-4xl italic mb-8">Ready to bridge the gap?</h2>
+<div class="flex flex-col md:flex-row justify-center gap-6">
+<button class="px-12 py-4 bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold rounded-md hover:shadow-[0_0_40px_rgba(173,198,255,0.3)] transition-all">
+                    Initiate Asset Generation
+                </button>
+<button class="px-12 py-4 border border-outline-variant/20 rounded-md font-bold hover:bg-surface-bright transition-all">
+                    View Full Skill Map
+                </button>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-slate-50 dark:bg-[#131313] w-full py-12 border-t border-slate-200/10 tonal-shift-bg-surface-container-low flat no shadows mt-12">
+<div class="flex flex-col md:flex-row justify-between items-center px-12 gap-6 max-w-screen-2xl mx-auto">
+<div class="text-lg font-black font-['Newsreader'] tracking-tighter">LUMINA</div>
+<div class="flex flex-wrap justify-center gap-8">
+<a class="text-slate-400 dark:text-slate-600 font-['Inter'] uppercase text-[10px] tracking-[0.2em] font-bold hover:text-slate-900 dark:hover:text-white transition-colors" href="#">Privacy Policy</a>
+<a class="text-slate-400 dark:text-slate-600 font-['Inter'] uppercase text-[10px] tracking-[0.2em] font-bold hover:text-slate-900 dark:hover:text-white transition-colors" href="#">Terms of Service</a>
+<a class="text-slate-400 dark:text-slate-600 font-['Inter'] uppercase text-[10px] tracking-[0.2em] font-bold hover:text-slate-900 dark:hover:text-white transition-colors" href="#">Executive Support</a>
+</div>
+<div class="text-slate-400 dark:text-slate-600 font-['Inter'] uppercase text-[10px] tracking-[0.2em] font-bold">
+                © 2024 LUMINA INTELLIGENCE
+            </div>
+</div>
+</footer>
+</body></html>

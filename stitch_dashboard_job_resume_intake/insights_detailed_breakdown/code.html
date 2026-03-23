@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Deep Insights | Executive Architect</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "inverse-on-surface": "#eff1f3",
+              "on-surface": "#191c1e",
+              "on-tertiary-container": "#7ccd77",
+              "on-primary-fixed": "#001c3b",
+              "surface-tint": "#335f99",
+              "primary": "#003466",
+              "primary-fixed": "#d5e3ff",
+              "secondary": "#466270",
+              "surface-bright": "#f8f9fb",
+              "surface-container-lowest": "#ffffff",
+              "on-primary-fixed-variant": "#144780",
+              "on-primary": "#ffffff",
+              "tertiary": "#003d0b",
+              "on-tertiary-fixed": "#002204",
+              "on-secondary-container": "#4a6774",
+              "on-tertiary-fixed-variant": "#005312",
+              "error": "#ba1a1a",
+              "surface-dim": "#d8dadc",
+              "on-background": "#191c1e",
+              "surface-container-high": "#e6e8ea",
+              "tertiary-fixed-dim": "#88d982",
+              "background": "#f8f9fb",
+              "on-secondary-fixed": "#001f2a",
+              "on-error-container": "#93000a",
+              "primary-container": "#1a4b84",
+              "surface-container": "#eceef0",
+              "secondary-container": "#c6e4f4",
+              "on-tertiary": "#ffffff",
+              "on-secondary": "#ffffff",
+              "surface": "#f8f9fb",
+              "surface-container-highest": "#e0e3e5",
+              "on-secondary-fixed-variant": "#2e4b57",
+              "outline": "#737781",
+              "tertiary-fixed": "#a3f69c",
+              "on-error": "#ffffff",
+              "primary-fixed-dim": "#a6c8ff",
+              "tertiary-container": "#005713",
+              "error-container": "#ffdad6",
+              "inverse-surface": "#2d3133",
+              "inverse-primary": "#a6c8ff",
+              "surface-container-low": "#f2f4f6",
+              "on-surface-variant": "#424750",
+              "secondary-fixed-dim": "#adcbda",
+              "outline-variant": "#c3c6d1",
+              "surface-variant": "#e0e3e5",
+              "on-primary-container": "#93bcfc",
+              "secondary-fixed": "#c9e7f7"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-nav {
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e0e3e5;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface selection:bg-secondary-container">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm dark:shadow-none flex justify-between items-center px-8 h-16 w-full mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tighter text-blue-900 dark:text-white font-headline">Executive Architect</span>
+<div class="hidden md:flex gap-6 items-center">
+<a class="font-manrope font-semibold tracking-tight text-sm text-slate-500 dark:text-slate-400 hover:text-blue-800 transition-all duration-300" href="#">Dashboard</a>
+<a class="font-manrope font-semibold tracking-tight text-sm text-slate-500 dark:text-slate-400 hover:text-blue-800 transition-all duration-300" href="#">My Resumes</a>
+<a class="font-manrope font-semibold tracking-tight text-sm text-slate-500 dark:text-slate-400 hover:text-blue-800 transition-all duration-300" href="#">History</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-slate-100 transition-all duration-300">
+<span class="material-symbols-outlined text-slate-500" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-slate-100 transition-all duration-300">
+<span class="material-symbols-outlined text-slate-500" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline-variant/30">
+<img alt="User profile photo" class="h-full w-full object-cover" data-alt="Professional executive headshot for user profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCicye9Bpo0DDX2ZAGBxAfj_My11AietxE-tSkLqBGczWDXyTG1FSE8nvv630OqdK0ZEyofT0TyKrzZpSwH6KTnz9uqewcbEhfGh9fVYOlWmLFlwfUy-wdLoviPghjVv8YyypNDjzCe8R4mRB5BJZqZYhv4Kq00oEHNueMUf1rZiv_YttYcaaKBghO4Nxo3HZzBdqR-9UvLHAf6niFboE097KgnVjfa9skGx0S6fjhHoK1IL51MiFlRed0vx03HoxH8VefzbDIP6tM"/>
+</div>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-16 bg-slate-100 dark:bg-slate-950 flex flex-col py-6 pl-4 z-40">
+<div class="mb-8 px-4">
+<span class="block font-inter text-xs tracking-wide uppercase text-secondary mb-1">Analysis Steps</span>
+<h3 class="font-headline font-black text-blue-900 dark:text-white text-lg">Resume Intelligence</h3>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 py-3 px-4 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 hover:translate-x-1 transition-transform group" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="upload_file">upload_file</span>
+<span class="font-manrope font-medium text-sm">Upload</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 bg-white dark:bg-slate-800 text-blue-900 dark:text-blue-400 rounded-l-xl font-bold border-r-4 border-blue-900 transition-transform group" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="analytics">analytics</span>
+<span class="font-manrope font-medium text-sm">Analyze</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 hover:translate-x-1 transition-transform group" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="Fact_Check">fact_check</span>
+<span class="font-manrope font-medium text-sm">Match Score</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 hover:translate-x-1 transition-transform group" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="edit_note">edit_note</span>
+<span class="font-manrope font-medium text-sm">Refine</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-24 pb-16 px-12 min-h-screen">
+<!-- Hero Header -->
+<header class="mb-12 max-w-5xl">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<span class="font-inter text-xs tracking-[0.1em] uppercase text-primary font-semibold mb-2 block">Executive Report</span>
+<h1 class="font-headline text-5xl font-extrabold tracking-tight text-on-surface">Deep Insights</h1>
+<p class="mt-4 text-lg text-on-surface-variant max-w-2xl leading-relaxed">
+                        An editorial breakdown of your professional positioning. We've identified critical gaps between your current profile and the target leadership role.
+                    </p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/10 min-w-[240px]">
+<div class="flex justify-between items-center mb-2">
+<span class="text-sm font-label font-medium text-secondary">Match Probability</span>
+<span class="text-2xl font-headline font-bold text-primary">74%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
+<div class="bg-gradient-to-r from-secondary to-primary h-full w-[74%] rounded-full"></div>
+</div>
+</div>
+</div>
+</header>
+<!-- Split Layout Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-7xl mx-auto">
+<!-- Left Column: Missing Keywords & Suggested Skills -->
+<section class="lg:col-span-5 space-y-8">
+<!-- Missing Keywords Bento Card -->
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-outline-variant/5">
+<div class="flex items-center gap-3 mb-6">
+<div class="bg-error-container/20 p-2 rounded-lg">
+<span class="material-symbols-outlined text-error" data-icon="error">error</span>
+</div>
+<h2 class="font-headline text-xl font-bold">Missing Keywords</h2>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="px-4 py-2 bg-surface-container-low text-on-surface-variant text-sm font-medium rounded-full border border-outline-variant/20">Strategic Planning</span>
+<span class="px-4 py-2 bg-surface-container-low text-on-surface-variant text-sm font-medium rounded-full border border-outline-variant/20">P&amp;L Management</span>
+<span class="px-4 py-2 bg-surface-container-low text-on-surface-variant text-sm font-medium rounded-full border border-outline-variant/20">Cross-functional Leadership</span>
+<span class="px-4 py-2 bg-surface-container-low text-on-surface-variant text-sm font-medium rounded-full border border-outline-variant/20">Agile Transformation</span>
+<span class="px-4 py-2 bg-surface-container-low text-on-surface-variant text-sm font-medium rounded-full border border-outline-variant/20">Stakeholder Alignment</span>
+<span class="px-4 py-2 bg-surface-container-low text-on-surface-variant text-sm font-medium rounded-full border border-outline-variant/20">SaaS Metrics</span>
+</div>
+<p class="mt-6 text-sm text-on-surface-variant leading-relaxed italic">
+                        "ATS systems prioritize these terms in 92% of Executive-level screenings."
+                    </p>
+</div>
+<!-- Suggested Skills to Add -->
+<div class="bg-surface-container-low p-8 rounded-xl border border-outline-variant/10">
+<h2 class="font-headline text-xl font-bold mb-6">Suggested Skills</h2>
+<ul class="space-y-4">
+<li class="flex items-start gap-4 p-4 bg-surface-container-lowest rounded-lg">
+<span class="material-symbols-outlined text-tertiary mt-1" data-icon="add_circle">add_circle</span>
+<div>
+<span class="font-bold block text-on-surface">Change Management</span>
+<span class="text-sm text-on-surface-variant">Essential for high-growth tech roles.</span>
+</div>
+</li>
+<li class="flex items-start gap-4 p-4 bg-surface-container-lowest rounded-lg">
+<span class="material-symbols-outlined text-tertiary mt-1" data-icon="add_circle">add_circle</span>
+<div>
+<span class="font-bold block text-on-surface">Data-Driven Decisioning</span>
+<span class="text-sm text-on-surface-variant">Quantify your impact with analytical evidence.</span>
+</div>
+</li>
+<li class="flex items-start gap-4 p-4 bg-surface-container-lowest rounded-lg">
+<span class="material-symbols-outlined text-tertiary mt-1" data-icon="add_circle">add_circle</span>
+<div>
+<span class="font-bold block text-on-surface">Executive Presence</span>
+<span class="text-sm text-on-surface-variant">Refine your summary for board-level visibility.</span>
+</div>
+</li>
+</ul>
+</div>
+</section>
+<!-- Right Column: Score Breakdown -->
+<section class="lg:col-span-7 space-y-8">
+<!-- Breakdown Why Score Was Given -->
+<div class="bg-surface-container-lowest p-10 rounded-xl shadow-sm border border-outline-variant/5">
+<h2 class="font-headline text-2xl font-extrabold mb-8 tracking-tight">Score Attribution</h2>
+<div class="space-y-10">
+<!-- Category 1 -->
+<div class="group">
+<div class="flex justify-between items-end mb-3">
+<div>
+<span class="font-inter text-xs tracking-wider uppercase text-secondary font-bold mb-1 block">Certification &amp; Education</span>
+<h3 class="text-lg font-headline font-bold text-on-surface">Structural Authority</h3>
+</div>
+<span class="text-error font-headline font-bold">Low Impact</span>
+</div>
+<div class="w-full bg-surface-container-highest h-2 rounded-full mb-4">
+<div class="bg-error h-full w-[35%] rounded-full"></div>
+</div>
+<div class="flex gap-4 p-4 bg-error-container/10 border-l-4 border-error rounded-r-lg">
+<span class="material-symbols-outlined text-error" data-icon="info">info</span>
+<p class="text-sm text-on-surface-variant">
+<strong class="text-on-surface">Missing specialized certification:</strong> Your profile lacks a PMP or CSM certification which is explicitly listed as a "Requirement" for this position.
+                                </p>
+</div>
+</div>
+<!-- Category 2 -->
+<div class="group">
+<div class="flex justify-between items-end mb-3">
+<div>
+<span class="font-inter text-xs tracking-wider uppercase text-secondary font-bold mb-1 block">Experience Depth</span>
+<h3 class="text-lg font-headline font-bold text-on-surface">Industry Tenure</h3>
+</div>
+<span class="text-tertiary font-headline font-bold">High Impact</span>
+</div>
+<div class="w-full bg-surface-container-highest h-2 rounded-full mb-4">
+<div class="bg-tertiary h-full w-[85%] rounded-full"></div>
+</div>
+<div class="flex gap-4 p-4 bg-tertiary-fixed/10 border-l-4 border-tertiary rounded-r-lg">
+<span class="material-symbols-outlined text-tertiary" data-icon="check_circle">check_circle</span>
+<p class="text-sm text-on-surface-variant">
+<strong class="text-on-surface">Tenure Strength:</strong> Your 12+ years of progressive leadership exceeds the minimum requirements and anchors your profile.
+                                </p>
+</div>
+</div>
+<!-- Category 3 -->
+<div class="group">
+<div class="flex justify-between items-end mb-3">
+<div>
+<span class="font-inter text-xs tracking-wider uppercase text-secondary font-bold mb-1 block">Quantitative Narrative</span>
+<h3 class="text-lg font-headline font-bold text-on-surface">Impact Metrics</h3>
+</div>
+<span class="text-secondary font-headline font-bold">Moderate Impact</span>
+</div>
+<div class="w-full bg-surface-container-highest h-2 rounded-full mb-4">
+<div class="bg-secondary h-full w-[55%] rounded-full"></div>
+</div>
+<div class="flex gap-4 p-4 bg-secondary-container/20 border-l-4 border-secondary rounded-r-lg">
+<span class="material-symbols-outlined text-secondary" data-icon="warning">warning</span>
+<p class="text-sm text-on-surface-variant">
+<strong class="text-on-surface">Vague Results:</strong> Several bullet points mention "increased revenue" without specific percentages or dollar amounts.
+                                </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Call to Action Section -->
+<div class="bg-primary p-8 rounded-xl flex flex-col md:flex-row items-center justify-between gap-6 text-on-primary shadow-lg overflow-hidden relative">
+<div class="relative z-10">
+<h3 class="text-xl font-headline font-bold mb-2">Ready to optimize?</h3>
+<p class="text-on-primary/80 max-w-sm">Our AI can automatically rephrase your experience to target these specific gaps.</p>
+</div>
+<button class="relative z-10 px-8 py-3 bg-tertiary-fixed text-on-tertiary-fixed font-headline font-bold rounded-xl hover:scale-105 transition-transform">
+                        Launch Refine Tool
+                    </button>
+<!-- Abstract Background Pattern -->
+<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.2) 0%, transparent 50%);"></div>
+<img alt="Abstract tech background" class="absolute right-0 top-0 h-full opacity-20" data-alt="Abstract deep blue geometric network pattern" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQcqRP_-z6Ld-gntqv6ts5Gd3GT7m2plewg-Oe3Qx8K6xTvFc6n8CoQPiidXzmMxLk5Qysd8u6mtZ_pf8lK6HOpVpWaCFyXSsttBepyvGG2jKDJ1stdJOH7x9Qpd69n2f7u0x9ZKGdEXAk6HJ629gazkHnJQnFNbcqbl2o6dN1C8_XEqguvLSIZ1WaLxy3MpDYb_GP1PAVRlM-f6DQ04eL9oBN98u5_TsR77GNH174O5SXjrtVlQ8DW5HQkyXUMSExk-YNWzlxXQU"/>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-8 mt-auto bg-slate-50 dark:bg-slate-900 border-t border-slate-200/15">
+<div class="flex flex-col md:flex-row justify-between items-center px-8 max-w-7xl mx-auto">
+<span class="font-inter text-xs tracking-wide uppercase text-slate-500 dark:text-slate-400">© 2024 Executive Architect. Editorial Career Intelligence.</span>
+<div class="flex gap-6 mt-4 md:mt-0">
+<a class="font-inter text-xs tracking-wide uppercase text-slate-400 hover:text-blue-700 hover:underline underline-offset-4 transition-all opacity-80 hover:opacity-100" href="#">Support</a>
+<a class="font-inter text-xs tracking-wide uppercase text-slate-400 hover:text-blue-700 hover:underline underline-offset-4 transition-all opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
+<a class="font-inter text-xs tracking-wide uppercase text-slate-400 hover:text-blue-700 hover:underline underline-offset-4 transition-all opacity-80 hover:opacity-100" href="#">Terms of Service</a>
+<a class="font-inter text-xs tracking-wide uppercase text-slate-400 hover:text-blue-700 hover:underline underline-offset-4 transition-all opacity-80 hover:opacity-100" href="#">Help Center</a>
+</div>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LUMINA | Intake Phase</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,800;1,6..72,900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-container": "#461f00",
+              "on-surface-variant": "#c2c6d6",
+              "primary-container": "#4d8eff",
+              "surface-container-low": "#1c1b1b",
+              "on-primary-fixed-variant": "#004395",
+              "surface-tint": "#adc6ff",
+              "background": "#131313",
+              "tertiary-fixed": "#ffdcc6",
+              "on-tertiary-fixed-variant": "#723600",
+              "on-secondary-container": "#9fb5e7",
+              "surface-dim": "#131313",
+              "secondary-fixed": "#d8e2ff",
+              "on-secondary-fixed-variant": "#304671",
+              "error": "#ffb4ab",
+              "surface-bright": "#3a3939",
+              "surface-variant": "#353534",
+              "inverse-primary": "#005ac2",
+              "primary-fixed": "#d8e2ff",
+              "on-primary-fixed": "#001a42",
+              "error-container": "#93000a",
+              "on-error": "#690005",
+              "tertiary-container": "#df7412",
+              "inverse-on-surface": "#313030",
+              "secondary-container": "#304671",
+              "on-surface": "#e5e2e1",
+              "secondary-fixed-dim": "#b1c6f9",
+              "tertiary-fixed-dim": "#ffb786",
+              "surface-container-lowest": "#0e0e0e",
+              "on-secondary": "#182f59",
+              "on-primary": "#002e6a",
+              "outline-variant": "#424754",
+              "secondary": "#b1c6f9",
+              "primary": "#adc6ff",
+              "on-tertiary-fixed": "#311400",
+              "outline": "#8c909f",
+              "surface-container": "#201f1f",
+              "on-error-container": "#ffdad6",
+              "on-secondary-fixed": "#001a42",
+              "on-background": "#e5e2e1",
+              "surface-container-high": "#2a2a2a",
+              "primary-fixed-dim": "#adc6ff",
+              "tertiary": "#ffb786",
+              "on-primary-container": "#00285d",
+              "inverse-surface": "#e5e2e1",
+              "on-tertiary": "#502400",
+              "surface-container-highest": "#353534",
+              "surface": "#131313"
+            },
+            fontFamily: {
+              "headline": ["Newsreader"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        body {
+            background-color: #131313;
+            color: #e5e2e1;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background selection:bg-primary/30">
+<!-- TopNavBar -->
+<nav class="bg-white/70 dark:bg-[#131313]/70 backdrop-blur-xl docked full-width top-0 sticky z-50 no-border bg-surface-container-low shadow-[0_8px_32px_0_rgba(0,0,0,0.04)]">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-screen-2xl mx-auto">
+<div class="text-2xl font-black tracking-tighter text-slate-900 dark:text-white font-['Newsreader']">LUMINA</div>
+<div class="hidden md:flex items-center gap-10">
+<a class="text-slate-900 dark:text-white border-b-2 border-blue-500 dark:border-[#ADC6FF] pb-1 font-['Inter'] font-medium text-sm transition-all" href="#">Intake</a>
+<a class="text-slate-500 dark:text-slate-400 font-['Inter'] font-medium text-sm hover:text-blue-600 dark:hover:text-[#ADC6FF] transition-colors duration-300" href="#">Evaluation</a>
+<a class="text-slate-500 dark:text-slate-400 font-['Inter'] font-medium text-sm hover:text-blue-600 dark:hover:text-[#ADC6FF] transition-colors duration-300" href="#">Insights</a>
+<a class="text-slate-500 dark:text-slate-400 font-['Inter'] font-medium text-sm hover:text-blue-600 dark:hover:text-[#ADC6FF] transition-colors duration-300" href="#">Asset</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</div>
+</nav>
+<!-- SideNavBar (Desktop Only) -->
+<aside class="hidden md:flex fixed left-6 top-1/2 -translate-y-1/2 rounded-3xl w-20 hover:w-64 transition-all duration-500 group overflow-hidden bg-white/60 dark:bg-[#131313]/60 backdrop-blur-2xl no-border shadow-2xl z-40 border border-outline-variant/10">
+<div class="flex flex-col items-center py-8 gap-8 w-full">
+<div class="px-6 w-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<p class="font-headline italic text-primary text-xl">Journey</p>
+<p class="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">Career Intelligence</p>
+</div>
+<div class="flex flex-col gap-4 w-full px-3">
+<button class="flex items-center gap-4 p-3 bg-blue-50 dark:bg-[#ADC6FF]/10 text-blue-600 dark:text-[#ADC6FF] rounded-2xl w-full transition-transform hover:translate-x-1">
+<span class="material-symbols-outlined flex-shrink-0" data-icon="edit_note">edit_note</span>
+<span class="font-label text-sm opacity-0 group-hover:opacity-100 whitespace-nowrap">Intake Phase</span>
+</button>
+<button class="flex items-center gap-4 p-3 text-slate-400 dark:text-slate-500 rounded-2xl w-full hover:bg-slate-100 dark:hover:bg-white/5 transition-transform hover:translate-x-1">
+<span class="material-symbols-outlined flex-shrink-0" data-icon="analytics">analytics</span>
+<span class="font-label text-sm opacity-0 group-hover:opacity-100 whitespace-nowrap">Evaluation Phase</span>
+</button>
+<button class="flex items-center gap-4 p-3 text-slate-400 dark:text-slate-500 rounded-2xl w-full hover:bg-slate-100 dark:hover:bg-white/5 transition-transform hover:translate-x-1">
+<span class="material-symbols-outlined flex-shrink-0" data-icon="visibility">visibility</span>
+<span class="font-label text-sm opacity-0 group-hover:opacity-100 whitespace-nowrap">Insights Phase</span>
+</button>
+<button class="flex items-center gap-4 p-3 text-slate-400 dark:text-slate-500 rounded-2xl w-full hover:bg-slate-100 dark:hover:bg-white/5 transition-transform hover:translate-x-1">
+<span class="material-symbols-outlined flex-shrink-0" data-icon="auto_awesome">auto_awesome</span>
+<span class="font-label text-sm opacity-0 group-hover:opacity-100 whitespace-nowrap">Asset Phase</span>
+</button>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="max-w-screen-xl mx-auto px-6 py-20 md:pl-32">
+<!-- Hero Section -->
+<header class="mb-24 relative">
+<div class="absolute -top-20 -left-20 w-96 h-96 bg-primary/5 rounded-full blur-[120px] -z-10"></div>
+<h1 class="font-headline italic text-6xl md:text-8xl text-on-surface tracking-tighter mb-4">
+                The Intake: <span class="text-primary-container">Phase I</span>
+</h1>
+<p class="font-body text-lg text-on-surface-variant max-w-2xl leading-relaxed">
+                Welcome to the digital curator. Begin by uploading your career narrative. We transform raw experience into intelligence.
+            </p>
+</header>
+<!-- Intake Canvas -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+<!-- The Mission (Job Description) -->
+<section class="lg:col-span-7 group">
+<div class="mb-6 flex justify-between items-end">
+<div>
+<span class="font-label text-[10px] uppercase tracking-[0.3em] text-primary mb-2 block">Source A</span>
+<h2 class="font-headline text-4xl text-on-surface">The Mission</h2>
+</div>
+<span class="font-body text-xs text-outline italic">Target Role Context</span>
+</div>
+<div class="bg-surface-container-low rounded-xl p-8 shadow-2xl relative overflow-hidden transition-all duration-500 hover:shadow-primary/5 ring-1 ring-white/5 group-hover:ring-primary/20">
+<div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-primary to-transparent"></div>
+<div class="space-y-6">
+<div class="relative">
+<input class="w-full bg-surface-container-highest/50 border-none rounded-md px-6 py-4 font-body text-sm focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-on-surface-variant/30" placeholder="Paste LinkedIn or Job Portal URL..." type="text"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-primary hover:text-primary-container">
+<span class="material-symbols-outlined" data-icon="link">link</span>
+</button>
+</div>
+<div class="relative h-64 w-full">
+<textarea class="w-full h-full bg-surface-container-highest/30 border-none rounded-md p-6 font-body text-sm leading-relaxed resize-none focus:ring-1 focus:ring-primary/30 transition-all placeholder:text-on-surface-variant/30" placeholder="Or paste the full job description here..."></textarea>
+</div>
+<div class="flex justify-between items-center pt-4">
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-surface-container-highest rounded-full text-[10px] font-label text-on-surface-variant uppercase tracking-wider">Analysis Pending</span>
+</div>
+<button class="px-8 py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary font-label text-sm font-bold rounded-md hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-primary/10">
+                                INITIALIZE ANALYSIS
+                            </button>
+</div>
+</div>
+</div>
+</section>
+<!-- The Archive (Resume) -->
+<section class="lg:col-span-5">
+<div class="mb-6">
+<span class="font-label text-[10px] uppercase tracking-[0.3em] text-tertiary mb-2 block">Source B</span>
+<h2 class="font-headline text-4xl text-on-surface">The Archive</h2>
+</div>
+<div class="bg-surface-container-low rounded-xl p-1 shadow-xl ring-1 ring-white/5">
+<div class="bg-surface-container-lowest rounded-[2.5rem] border-2 border-dashed border-outline-variant/20 hover:border-primary/40 transition-colors p-12 flex flex-col items-center justify-center gap-6 min-h-[400px] text-center group cursor-pointer">
+<div class="w-20 h-20 rounded-full bg-surface-container-high flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-4xl text-primary" data-icon="upload_file">upload_file</span>
+</div>
+<div>
+<p class="font-headline text-2xl text-on-surface mb-2">Deposit Narrative</p>
+<p class="font-body text-sm text-on-surface-variant px-8 leading-relaxed">
+                                Drop your CV, Portfolio, or Executive Summary here. PDF, DOCX, or Markdown accepted.
+                            </p>
+</div>
+<div class="flex flex-wrap justify-center gap-2 mt-4">
+<span class="material-symbols-outlined text-on-surface-variant/20" data-icon="description">description</span>
+<span class="material-symbols-outlined text-on-surface-variant/20" data-icon="history_edu">history_edu</span>
+<span class="material-symbols-outlined text-on-surface-variant/20" data-icon="article">article</span>
+</div>
+</div>
+</div>
+<!-- Recent Artifacts -->
+<div class="mt-12 space-y-4">
+<p class="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">Previously Synced</p>
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-md hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="draft">draft</span>
+<div>
+<p class="font-body text-sm font-medium">Executive_Resume_2024.pdf</p>
+<p class="font-label text-[10px] text-outline">Last analyzed 2 days ago</p>
+</div>
+</div>
+<span class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity text-primary" data-icon="arrow_forward_ios" style="font-size: 14px;">arrow_forward_ios</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Lower Section: The Intelligence Layer -->
+<section class="mt-32 border-t border-outline-variant/10 pt-20">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+<div class="p-8 bg-surface-container-low rounded-lg transition-transform hover:-translate-y-2">
+<span class="material-symbols-outlined text-primary mb-6 block" data-icon="temp_preferences_custom">temp_preferences_custom</span>
+<h3 class="font-headline text-2xl mb-4">Semantic Alignment</h3>
+<p class="font-body text-sm text-on-surface-variant leading-relaxed">
+                        Our engine maps your experience against the hidden intent of the mission, identifying the 5% that matters most.
+                    </p>
+</div>
+<div class="p-8 bg-surface-container-low rounded-lg transition-transform hover:-translate-y-2">
+<span class="material-symbols-outlined text-tertiary mb-6 block" data-icon="auto_detect_voice">auto_detect_voice</span>
+<h3 class="font-headline text-2xl mb-4">Tone Synthesis</h3>
+<p class="font-body text-sm text-on-surface-variant leading-relaxed">
+                        We extract the unique linguistic DNA of your brand to ensure consistency across the Evaluation and Asset phases.
+                    </p>
+</div>
+<div class="p-8 bg-surface-container-low rounded-lg transition-transform hover:-translate-y-2">
+<span class="material-symbols-outlined text-primary-container mb-6 block" data-icon="layers">layers</span>
+<h3 class="font-headline text-2xl mb-4">Knowledge Graph</h3>
+<p class="font-body text-sm text-on-surface-variant leading-relaxed">
+                        Every upload enriches your personal Intelligence Archive, building a perpetual memory of your career milestones.
+                    </p>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-slate-50 dark:bg-[#131313] w-full py-12 border-t border-slate-200/10 tonal-shift-bg-surface-container-low">
+<div class="flex flex-col md:flex-row justify-between items-center px-12 gap-6 max-w-screen-2xl mx-auto">
+<div class="text-lg font-black font-['Newsreader'] text-slate-900 dark:text-white">LUMINA</div>
+<div class="flex flex-wrap justify-center gap-8">
+<a class="font-['Inter'] uppercase text-[10px] tracking-[0.2em] font-bold text-slate-400 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white transition-colors" href="#">Privacy Policy</a>
+<a class="font-['Inter'] uppercase text-[10px] tracking-[0.2em] font-bold text-slate-400 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white transition-colors" href="#">Terms of Service</a>
+<a class="font-['Inter'] uppercase text-[10px] tracking-[0.2em] font-bold text-slate-400 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white transition-colors" href="#">Executive Support</a>
+</div>
+<div class="font-['Inter'] uppercase text-[10px] tracking-[0.2em] font-bold text-slate-400 dark:text-slate-600">© 2024 LUMINA INTELLIGENCE</div>
+</div>
+</footer>
+<!-- Mobile Navigation (Bottom) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface-container-low/90 backdrop-blur-xl border-t border-outline-variant/10 px-6 py-4 flex justify-around items-center z-50">
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>
+<span class="text-[10px] font-label uppercase tracking-tighter">Intake</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="text-[10px] font-label uppercase tracking-tighter">Eval</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+<span class="text-[10px] font-label uppercase tracking-tighter">Insights</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span class="text-[10px] font-label uppercase tracking-tighter">Asset</span>
+</button>
+</nav>
+<!-- Visual Texture Overlays -->
+<div class="fixed inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay z-[-1]" data-alt="Subtle noise and grain texture for paper feel" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAvAf9yjfjl3edz2jodXrRacE5nXGU-GtdlGukn3uY6kpBffZYq-OREVBSPk9bkO23I6TXD3BOsTsX9O0oOemekKiWrzbgPqiELtAfBbcU9yjWjE8AIqppczpE37mz4xkcAy5UNZO-uKlrPkM5MOYJs7mDrMjYoxe-Fmg-EMEKX_Mfk8-fgpjObTJbN-33c3Scb9O3j2bU5ymx3ALq8WwyT0qdKUQi3ACZfWinT10zzYqzNc7GgPfJXe6_h1S8JKJQVDza59NSESNw');"></div>
+</body></html>

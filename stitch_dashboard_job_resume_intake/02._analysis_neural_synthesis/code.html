@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@700;800;900&amp;family=Space+Grotesk:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-container": "#b7b4b4",
+              "tertiary-container": "#f1daff",
+              "on-surface": "#e5e2e1",
+              "error": "#ffb4ab",
+              "outline": "#8e9379",
+              "on-primary-fixed-variant": "#3c4d00",
+              "surface-dim": "#131313",
+              "secondary": "#c9c6c5",
+              "on-primary-fixed": "#161e00",
+              "on-secondary": "#313030",
+              "on-error-container": "#ffdad6",
+              "surface-variant": "#353534",
+              "surface-tint": "#abd600",
+              "inverse-on-surface": "#313030",
+              "on-background": "#e5e2e1",
+              "surface": "#131313",
+              "surface-container-highest": "#353534",
+              "outline-variant": "#444933",
+              "inverse-primary": "#506600",
+              "inverse-surface": "#e5e2e1",
+              "background": "#131313",
+              "surface-bright": "#3a3939",
+              "primary-container": "#c3f400",
+              "error-container": "#93000a",
+              "on-primary": "#283500",
+              "tertiary": "#ffffff",
+              "tertiary-fixed": "#f1daff",
+              "on-tertiary-fixed": "#2d004f",
+              "surface-container": "#201f1f",
+              "surface-container-low": "#1c1b1b",
+              "on-tertiary-fixed-variant": "#6b00b0",
+              "tertiary-fixed-dim": "#dfb7ff",
+              "secondary-container": "#474646",
+              "on-surface-variant": "#c4c9ac",
+              "on-error": "#690005",
+              "on-secondary-fixed": "#1c1b1b",
+              "on-tertiary": "#4b007e",
+              "on-tertiary-container": "#9500f2",
+              "primary-fixed-dim": "#abd600",
+              "primary": "#ffffff",
+              "on-primary-container": "#556d00",
+              "secondary-fixed": "#e5e2e1",
+              "surface-container-high": "#2a2a2a",
+              "surface-container-lowest": "#0e0e0e",
+              "on-secondary-fixed-variant": "#474646",
+              "secondary-fixed-dim": "#c9c6c5",
+              "primary-fixed": "#c3f400"
+            },
+            fontFamily: {
+              "headline": ["Epilogue"],
+              "body": ["Space Grotesk"],
+              "label": ["Space Grotesk"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+      }
+      .neural-web-bg {
+        background-image: radial-gradient(circle at 50% 50%, rgba(195, 244, 0, 0.05) 0%, transparent 70%);
+      }
+      .glass-card {
+        background: rgba(53, 53, 52, 0.4);
+        backdrop-filter: blur(20px);
+      }
+    </style>
+</head>
+<body class="bg-surface-dim text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-8 h-16 bg-[#131313]/40 backdrop-blur-xl border-b border-[#444933]/20 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+<div class="flex items-center gap-4">
+<span class="text-xl font-black tracking-tighter text-[#c3f400] drop-shadow-[0_0_8px_rgba(195,244,0,0.4)] font-headline uppercase">CINEMATIC INTELLIGENCE</span>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-[#e5e2e1]/60 hover:text-[#e5e2e1] transition-colors font-headline tracking-tight uppercase font-bold text-xs" href="#">SOURCE</a>
+<a class="text-[#e5e2e1]/60 hover:text-[#e5e2e1] transition-colors font-headline tracking-tight uppercase font-bold text-xs" href="#">BRIDGE</a>
+<a class="text-[#c3f400] border-b-2 border-[#c3f400] pb-1 font-headline tracking-tight uppercase font-bold text-xs" href="#">SYNTHESIS</a>
+<a class="text-[#e5e2e1]/60 hover:text-[#e5e2e1] transition-colors font-headline tracking-tight uppercase font-bold text-xs" href="#">PERSONA</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="p-2 text-[#c3f400] hover:bg-[#c3f400]/10 transition-all duration-300 rounded-full">
+<span class="material-symbols-outlined" data-icon="sensors">sensors</span>
+</button>
+<button class="p-2 text-[#c3f400] hover:bg-[#c3f400]/10 transition-all duration-300 rounded-full">
+<span class="material-symbols-outlined" data-icon="settings_input_component">settings_input_component</span>
+</button>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full z-40 flex flex-col py-8 bg-[#0e0e0e]/80 backdrop-blur-2xl border-r border-[#444933]/15 shadow-[10px_0_30px_rgba(0,0,0,0.5)] w-20 hover:w-64 transition-all duration-500 group overflow-hidden">
+<div class="px-4 mb-12 flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden border border-outline-variant/30">
+<img alt="User Analyst Profile" data-alt="Cybernetic user analyst profile avatar portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAqya_dqzKMYB69IbkCQQftBct1ZAls1RGyKPqfCQq81wzTBN2zMlHO25qHN_Ugnmvw0a5lFFdsdtNL6h_JUuNudt0Ppyfsovo41G1X9Xyndkn7l9jcUymBd9hUfQ6wRj_Z9AwNnhWuhL19QCUVJuzl4GAazD64Zu00905Y8k-_JGePTusd2Jv5NsUCGNg6ZiNUyOqw31pFznzHDx8nxwS2gjNAv1mn6OriM5ZXivU-C-AVB_9weF-KrF3Z59PI2171mmKmMG0bD1c"/>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-bold text-primary-fixed tracking-widest font-body">NEURAL_ID_01</span>
+<span class="text-[8px] text-on-surface/40 font-body">STATUS: SCANNING</span>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-2 px-2">
+<button class="flex items-center gap-4 p-4 rounded-xl text-[#e5e2e1]/40 group-hover:text-[#e5e2e1]/80 hover:bg-[#353534] hover:text-[#c3f400] transition-all duration-300">
+<span class="material-symbols-outlined" data-icon="upload_file">upload_file</span>
+<span class="font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase hidden group-hover:block">INTAKE</span>
+</button>
+<button class="flex items-center gap-4 p-4 rounded-xl bg-[#c3f400] text-[#131313] shadow-[0_0_15px_rgba(195,244,0,0.3)] transition-all duration-300">
+<span class="material-symbols-outlined" data-icon="hub">hub</span>
+<span class="font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase hidden group-hover:block">NEURAL</span>
+</button>
+<button class="flex items-center gap-4 p-4 rounded-xl text-[#e5e2e1]/40 group-hover:text-[#e5e2e1]/80 hover:bg-[#353534] hover:text-[#c3f400] transition-all duration-300">
+<span class="material-symbols-outlined" data-icon="Subject">subject</span>
+<span class="font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase hidden group-hover:block">NARRATIVE</span>
+</button>
+<button class="flex items-center gap-4 p-4 rounded-xl text-[#e5e2e1]/40 group-hover:text-[#e5e2e1]/80 hover:bg-[#353534] hover:text-[#c3f400] transition-all duration-300">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="font-['Space_Grotesk'] text-[10px] tracking-[0.2em] uppercase hidden group-hover:block">DOSSIER</span>
+</button>
+</nav>
+<div class="px-4 mt-auto">
+<button class="w-full bg-primary-fixed py-3 rounded-none font-bold text-[10px] tracking-[0.2em] text-on-primary-fixed uppercase hidden group-hover:block shadow-[0_0_20px_rgba(195,244,0,0.2)] hover:scale-105 transition-transform">
+                INITIATE SYNTHESIS
+            </button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-20 min-h-screen relative pt-16 flex flex-col items-center justify-center overflow-hidden">
+<!-- Background Effects -->
+<div class="absolute inset-0 pointer-events-none">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] neural-web-bg opacity-30"></div>
+<!-- Light Leaks -->
+<div class="absolute -top-40 -left-40 w-96 h-96 bg-primary-fixed/5 blur-[120px] rounded-full"></div>
+<div class="absolute -bottom-40 -right-40 w-96 h-96 bg-tertiary-fixed-dim/5 blur-[120px] rounded-full"></div>
+</div>
+<!-- Section 1: The Neural Constellation (Data Visual) -->
+<div class="relative w-full max-w-6xl px-8 flex flex-col items-center z-10">
+<div class="w-full text-center mb-4">
+<p class="font-label text-primary-fixed text-[10px] tracking-[0.4em] uppercase opacity-80">System Analysis: Node Sequence Gamma-9</p>
+<div class="h-[1px] w-24 bg-primary-fixed/30 mx-auto mt-2"></div>
+</div>
+<!-- The Core Score -->
+<div class="relative flex flex-col items-center justify-center py-20">
+<!-- Abstract Neural Lines Overlay (SVG) -->
+<svg class="absolute w-[800px] h-[800px] opacity-20 pointer-events-none" viewbox="0 0 800 800">
+<circle cx="400" cy="400" fill="none" r="150" stroke="#c3f400" stroke-dasharray="4 8" stroke-width="0.5"></circle>
+<circle cx="400" cy="400" fill="none" r="280" stroke="#dfb7ff" stroke-dasharray="2 10" stroke-width="0.5"></circle>
+<line stroke="#c3f400" stroke-width="1" x1="400" x2="600" y1="400" y2="200"></line>
+<line stroke="#c3f400" stroke-width="1" x1="400" x2="200" y1="400" y2="300"></line>
+<line stroke="#dfb7ff" stroke-width="1" x1="400" x2="500" y1="400" y2="650"></line>
+<circle cx="600" cy="200" fill="#c3f400" r="4"></circle>
+<circle cx="200" cy="300" fill="#c3f400" r="4"></circle>
+<circle cx="500" cy="650" fill="#dfb7ff" r="4"></circle>
+</svg>
+<div class="text-center relative">
+<h1 class="font-headline text-[12rem] font-black leading-none tracking-tighter text-on-surface drop-shadow-[0_0_40px_rgba(255,255,255,0.1)]">
+                        78<span class="text-primary-fixed text-[8rem]">%</span>
+</h1>
+<h2 class="font-headline text-4xl font-bold tracking-[0.2em] uppercase -mt-8 text-on-surface/80">ALIGNMENT</h2>
+</div>
+</div>
+<!-- Bridge Action -->
+<div class="mt-8 flex flex-col items-center gap-6">
+<button class="group relative px-12 py-5 bg-primary-fixed text-on-primary-fixed font-headline font-extrabold text-sm tracking-widest uppercase transition-all duration-500 hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(195,244,0,0.3)]">
+<div class="absolute inset-0 border border-primary-fixed animate-ping opacity-20 group-hover:opacity-40"></div>
+                    BRIDGE THE GAP
+                </button>
+<div class="flex gap-12">
+<div class="flex flex-col items-center">
+<span class="font-label text-[10px] text-on-surface/40 uppercase tracking-widest">Logic Flow</span>
+<span class="font-headline text-xl text-primary-fixed">OPTIMIZED</span>
+</div>
+<div class="flex flex-col items-center">
+<span class="font-label text-[10px] text-on-surface/40 uppercase tracking-widest">Data Drift</span>
+<span class="font-headline text-xl text-tertiary-fixed-dim">0.042%</span>
+</div>
+<div class="flex flex-col items-center">
+<span class="font-label text-[10px] text-on-surface/40 uppercase tracking-widest">Synapse Load</span>
+<span class="font-headline text-xl text-on-surface">NOMINAL</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Section 2: Component Breakdown (Bento Style) -->
+<section class="w-full max-w-7xl px-8 py-24 grid grid-cols-12 gap-6 z-10">
+<div class="col-span-12 md:col-span-8 glass-card border border-outline-variant/10 p-8 rounded-none relative overflow-hidden group h-[400px]">
+<img alt="Neural Map Surface" class="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-overlay group-hover:scale-110 transition-transform duration-700" data-alt="Abstract cybernetic data streams and particles in dark space" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAauBioUvmL3RnzDErKnpcDAj8CJr2GX_K1yymAiWjnz1ZH2L_WObSV64CjKDlUWMBW56lN8r18yWnVXL5z-YXUghZhQZP76f8cdje-umoWExBfg8grcnc9Cc08z86szh0xXi9H7EiVkPyrTnM8-ff_lJ_1FdrjSok0WPqIGaOrlJE-r5eOhBpxq_jloLeKTbByMeIJ5l3s7gS4WYq634xqxWoR78L6_IaQ7rdXWdOOd1lhH8MsP7F75aK8T5r28V5pagoq85im2Qc"/>
+<div class="relative z-10 h-full flex flex-col justify-between">
+<div>
+<span class="font-label text-primary-fixed text-xs tracking-widest uppercase">Visual Connection Engine</span>
+<h3 class="font-headline text-4xl font-bold mt-2">NEURAL_STREAM_02</h3>
+</div>
+<div class="grid grid-cols-3 gap-8">
+<div>
+<p class="font-label text-[10px] text-on-surface/40 uppercase">Mapping Nodes</p>
+<p class="font-headline text-2xl">1,402</p>
+</div>
+<div>
+<p class="font-label text-[10px] text-on-surface/40 uppercase">Relational Density</p>
+<p class="font-headline text-2xl">84.2%</p>
+</div>
+<div>
+<p class="font-label text-[10px] text-on-surface/40 uppercase">Latency</p>
+<p class="font-headline text-2xl">12ms</p>
+</div>
+</div>
+</div>
+</div>
+<div class="col-span-12 md:col-span-4 glass-card border border-outline-variant/10 p-8 rounded-none flex flex-col justify-between">
+<div>
+<span class="font-label text-tertiary-fixed-dim text-xs tracking-widest uppercase">Sub-System Status</span>
+<h3 class="font-headline text-2xl font-bold mt-2">ANALYTICS_VOID</h3>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-center border-b border-outline-variant/20 pb-2">
+<span class="text-xs text-on-surface/60">Pattern Integrity</span>
+<span class="text-xs text-primary-fixed">92%</span>
+</div>
+<div class="flex justify-between items-center border-b border-outline-variant/20 pb-2">
+<span class="text-xs text-on-surface/60">Dissonance Level</span>
+<span class="text-xs text-error">0.08%</span>
+</div>
+<div class="flex justify-between items-center border-b border-outline-variant/20 pb-2">
+<span class="text-xs text-on-surface/60">Persona Lock</span>
+<span class="text-xs text-tertiary-fixed-dim">SECURED</span>
+</div>
+</div>
+<button class="w-full mt-6 py-3 border border-outline-variant/40 hover:bg-surface-variant/40 transition-colors font-label text-[10px] tracking-widest uppercase">VIEW LOGS</button>
+</div>
+<div class="col-span-12 md:col-span-4 glass-card border border-outline-variant/10 p-8 rounded-none">
+<span class="material-symbols-outlined text-primary-fixed mb-4" data-icon="troubleshoot">troubleshoot</span>
+<h4 class="font-headline text-xl mb-2">Deep Diagnostics</h4>
+<p class="text-on-surface/60 text-sm leading-relaxed mb-6 font-body">Cross-referencing historical synthesis data with current node alignment to predict future drift markers.</p>
+<div class="flex items-center gap-2">
+<div class="h-1 flex-1 bg-surface-container-high overflow-hidden">
+<div class="h-full bg-primary-fixed w-[78%]"></div>
+</div>
+<span class="text-[10px] font-label">78%</span>
+</div>
+</div>
+<div class="col-span-12 md:col-span-8 glass-card border border-outline-variant/10 p-8 rounded-none flex items-center gap-12 overflow-hidden group">
+<div class="w-1/3 shrink-0 h-48 bg-surface-container-lowest border border-outline-variant/20 relative overflow-hidden">
+<img alt="Hardware Scan" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="Macro circuit board glowing with neon green light pulses" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOxttC5-zWMdIZmd8eDZB9rJekvL4kVsPofcWduPAbEtz55I_hT74P6Zhv3QJeVDdu3ym2AYlzqwq1bDMB03kYSp9SGkizaHU3TFuMWSaXbt-hdGq5tIJnHh2ZKvTVlvNT7rwdNdHvFat4AyNT5F1YafG7F62u1tmwP7Yq8GI3vmaO2JQKmM3-ddXWseSmYOA9O2by7O6RgI7QqRgrV10Y5Sv3egVpl8MBq8xupFjG57nchWyWA9H60a8TeCSZEgHQpDntdDw7FSU"/>
+</div>
+<div>
+<h4 class="font-headline text-2xl font-bold mb-4">COGNITIVE_LAYER_04</h4>
+<p class="text-on-surface/60 text-sm font-body mb-6">The hardware interface is processing at peak efficiency. All neural connectors are currently synced to the primary synthesis engine.</p>
+<div class="flex gap-4">
+<span class="px-3 py-1 bg-primary-fixed/10 text-primary-fixed text-[10px] font-label uppercase">Level 1: Passive</span>
+<span class="px-3 py-1 bg-tertiary-fixed-dim/10 text-tertiary-fixed-dim text-[10px] font-label uppercase">Level 2: Active</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 3: Data Scrubber -->
+<section class="w-full max-w-7xl px-8 pb-32 z-10">
+<div class="glass-card p-12 border border-outline-variant/10 rounded-none relative">
+<div class="flex justify-between items-end mb-8">
+<div>
+<span class="font-label text-[10px] text-on-surface/40 uppercase tracking-[0.4em]">Historical Feed</span>
+<h3 class="font-headline text-3xl font-bold mt-2">TIMELINE_TRACE</h3>
+</div>
+<div class="text-right">
+<p class="font-label text-primary-fixed text-xl">2024.11.14 // 14:22:01</p>
+<p class="font-label text-[10px] text-on-surface/40 uppercase mt-1">Stardate Anchor</p>
+</div>
+</div>
+<!-- Data Scrubber Component -->
+<div class="relative py-12">
+<div class="h-[1px] w-full bg-primary-fixed/20"></div>
+<!-- Nodes along timeline -->
+<div class="absolute top-1/2 left-[10%] -translate-y-1/2 w-2 h-2 bg-primary-fixed rotate-45"></div>
+<div class="absolute top-1/2 left-[35%] -translate-y-1/2 w-2 h-2 bg-on-surface/40 rotate-45"></div>
+<div class="absolute top-1/2 left-[60%] -translate-y-1/2 w-2 h-2 bg-on-surface/40 rotate-45"></div>
+<div class="absolute top-1/2 left-[85%] -translate-y-1/2 w-2 h-2 bg-on-surface/40 rotate-45"></div>
+<!-- The Handle -->
+<div class="absolute top-0 bottom-0 left-[78%] w-1 bg-primary-fixed shadow-[0_0_15px_rgba(195,244,0,0.8)] flex flex-col items-center">
+<div class="w-4 h-4 bg-primary-fixed mt-[-8px] shadow-[0_0_10px_rgba(195,244,0,0.5)]"></div>
+<div class="absolute bottom-[-30px] font-label text-[10px] text-primary-fixed whitespace-nowrap">SCANNING_SYNTHESIS_78</div>
+</div>
+</div>
+<div class="grid grid-cols-4 gap-4 mt-8">
+<div class="p-4 bg-surface-container-low border border-outline-variant/10">
+<span class="text-[8px] font-label text-on-surface/40 uppercase">Origin</span>
+<p class="text-xs mt-1">SECTOR_B5</p>
+</div>
+<div class="p-4 bg-surface-container-low border border-outline-variant/10">
+<span class="text-[8px] font-label text-on-surface/40 uppercase">Destination</span>
+<p class="text-xs mt-1">SYNTH_CORE</p>
+</div>
+<div class="p-4 bg-surface-container-low border border-outline-variant/10">
+<span class="text-[8px] font-label text-on-surface/40 uppercase">Packet Size</span>
+<p class="text-xs mt-1">102.4 PB</p>
+</div>
+<div class="p-4 bg-surface-container-low border border-outline-variant/10">
+<span class="text-[8px] font-label text-on-surface/40 uppercase">Auth Level</span>
+<p class="text-xs mt-1">DIRECTOR_01</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Contextual Footer Metadata -->
+<footer class="ml-20 border-t border-outline-variant/10 py-6 px-12 flex justify-between items-center text-[10px] font-label tracking-widest text-on-surface/40">
+<div class="flex items-center gap-6">
+<span>© 2104 CINEMATIC INTELLIGENCE</span>
+<span>SYSTEM_REVISION_6.0.2</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="flex items-center gap-1"><span class="w-1 h-1 rounded-full bg-primary-fixed animate-pulse"></span> SYSTEM ONLINE</span>
+<span class="flex items-center gap-1 text-tertiary-fixed-dim uppercase">Encrypted_Session</span>
+</div>
+</footer>
+</body></html>

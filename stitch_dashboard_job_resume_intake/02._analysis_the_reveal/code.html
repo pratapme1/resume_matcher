@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@1,6..72,200..800&amp;family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container": "#171f33",
+              "on-error-container": "#ffdad6",
+              "on-background": "#dae2fd",
+              "on-secondary-fixed": "#131b2e",
+              "outline": "#8d90a0",
+              "on-tertiary-fixed": "#191c1e",
+              "primary": "#b4c5ff",
+              "secondary": "#bec6e0",
+              "on-secondary": "#283044",
+              "on-primary": "#002a78",
+              "outline-variant": "#434655",
+              "surface": "#0b1326",
+              "surface-container-highest": "#2d3449",
+              "on-primary-container": "#eeefff",
+              "on-tertiary": "#2d3133",
+              "inverse-surface": "#dae2fd",
+              "primary-fixed-dim": "#b4c5ff",
+              "surface-container-high": "#222a3d",
+              "tertiary": "#c4c7c9",
+              "inverse-on-surface": "#283044",
+              "secondary-container": "#3f465c",
+              "on-error": "#690005",
+              "tertiary-container": "#6b6e70",
+              "error-container": "#93000a",
+              "on-primary-fixed": "#00174b",
+              "surface-container-lowest": "#060e20",
+              "secondary-fixed-dim": "#bec6e0",
+              "tertiary-fixed-dim": "#c4c7c9",
+              "on-surface": "#dae2fd",
+              "surface-bright": "#31394d",
+              "on-secondary-fixed-variant": "#3f465c",
+              "error": "#ffb4ab",
+              "secondary-fixed": "#dae2fd",
+              "inverse-primary": "#0053db",
+              "surface-variant": "#2d3449",
+              "primary-fixed": "#dbe1ff",
+              "surface-container-low": "#131b2e",
+              "primary-container": "#2563eb",
+              "on-tertiary-container": "#eff1f3",
+              "on-surface-variant": "#c3c6d7",
+              "on-secondary-container": "#adb4ce",
+              "surface-dim": "#0b1326",
+              "on-tertiary-fixed-variant": "#444749",
+              "tertiary-fixed": "#e0e3e5",
+              "background": "#0b1326",
+              "surface-tint": "#b4c5ff",
+              "on-primary-fixed-variant": "#003ea8"
+            },
+            fontFamily: {
+              "headline": ["Newsreader"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .score-ring {
+            background: conic-gradient(from 0deg, #2563eb 78%, transparent 78%);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-[#0b1326]/60 backdrop-blur-xl border-b border-[#b4c5ff]/10 flex justify-between items-center px-8 h-16 w-full">
+<div class="text-2xl font-black tracking-tighter text-white uppercase font-['Newsreader'] italic">ASCEND</div>
+<nav class="hidden md:flex items-center gap-12 h-full">
+<a class="text-[#b4c5ff]/40 flex items-center gap-4 h-full hover:text-white transition-colors font-['Manrope'] font-bold uppercase tracking-widest text-[10px]" href="#">Intake</a>
+<a class="text-[#2563eb] border-b-2 border-[#2563eb] flex items-center gap-4 h-full font-['Manrope'] font-bold uppercase tracking-widest text-[10px]" href="#">Analysis</a>
+<a class="text-[#b4c5ff]/40 flex items-center gap-4 h-full hover:text-white transition-colors font-['Manrope'] font-bold uppercase tracking-widest text-[10px]" href="#">Diagnosis</a>
+<a class="text-[#b4c5ff]/40 flex items-center gap-4 h-full hover:text-white transition-colors font-['Manrope'] font-bold uppercase tracking-widest text-[10px]" href="#">Refinement</a>
+</nav>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#b4c5ff]/60" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-[#b4c5ff]/60" data-icon="account_circle">account_circle</span>
+</div>
+</header>
+<!-- SideNavBar (Hidden on Mobile) -->
+<aside class="hidden lg:flex fixed left-0 top-16 h-[calc(100vh-64px)] w-64 bg-[#0b1326] border-r border-[#b4c5ff]/10 flex-col py-8 z-40">
+<div class="px-6 mb-8">
+<h2 class="text-xl font-black text-white font-headline italic">ASCEND</h2>
+<p class="font-['Manrope'] font-bold uppercase tracking-widest text-[10px] text-[#b4c5ff]/40">Executive Intelligence</p>
+</div>
+<div class="flex flex-col gap-1">
+<a class="text-[#b4c5ff]/40 flex items-center gap-4 px-6 py-4 w-full hover:bg-[#171f33] transition-all font-['Manrope'] font-bold uppercase tracking-widest text-[10px]" href="#">
+<span class="material-symbols-outlined" data-icon="input">input</span> Intake
+            </a>
+<a class="bg-[#2563eb] text-white flex items-center gap-4 px-6 py-4 w-full border-l-4 border-[#b4c5ff] font-['Manrope'] font-bold uppercase tracking-widest text-[10px]" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span> Analysis
+            </a>
+<a class="text-[#b4c5ff]/40 flex items-center gap-4 px-6 py-4 w-full hover:bg-[#171f33] transition-all font-['Manrope'] font-bold uppercase tracking-widest text-[10px]" href="#">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span> Diagnosis
+            </a>
+<a class="text-[#b4c5ff]/40 flex items-center gap-4 px-6 py-4 w-full hover:bg-[#171f33] transition-all font-['Manrope'] font-bold uppercase tracking-widest text-[10px]" href="#">
+<span class="material-symbols-outlined" data-icon="auto_fix_high">auto_fix_high</span> Refinement
+            </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:pl-64 pt-16 min-h-screen flex flex-col">
+<!-- Hero Analysis Reveal -->
+<section class="flex-grow flex items-center justify-center p-8 lg:p-12 relative overflow-hidden">
+<!-- Background Accent -->
+<div class="absolute inset-0 bg-gradient-to-b from-surface via-surface to-surface-container-low opacity-50 z-0"></div>
+<div class="relative z-10 w-full max-w-4xl flex flex-col items-center text-center">
+<!-- Editorial Subtitle -->
+<p class="font-label text-[12px] uppercase tracking-[0.4em] text-primary mb-12 opacity-80">PHASE 02: THE REVEAL</p>
+<!-- Compatibility Visualization -->
+<div class="relative group cursor-default">
+<!-- Outer Ring Decoration -->
+<div class="absolute -inset-8 border border-outline-variant/10 rounded-full scale-[1.1] opacity-30"></div>
+<div class="absolute -inset-4 border border-outline-variant/20 rounded-full scale-[1.05] opacity-50"></div>
+<!-- Data Ring -->
+<div class="w-80 h-80 rounded-full flex items-center justify-center relative p-1 bg-surface-container-low shadow-2xl">
+<div class="score-ring absolute inset-0 rounded-full opacity-20"></div>
+<div class="absolute inset-2 border-2 border-primary-container/40 rounded-full border-dashed animate-spin-slow"></div>
+<div class="w-full h-full bg-surface rounded-full flex flex-col items-center justify-center z-10 border border-outline-variant/20">
+<span class="font-headline text-[100px] leading-none italic tracking-tighter text-white">78%</span>
+<span class="font-label text-[10px] uppercase tracking-[0.2em] text-primary font-bold mt-2">COMPATIBILITY SCORE</span>
+</div>
+</div>
+</div>
+<!-- Strategic Summary -->
+<div class="mt-16 max-w-xl">
+<h1 class="font-headline text-3xl md:text-4xl text-white italic mb-6 leading-tight">A strong alignment with high-velocity potential.</h1>
+<div class="flex justify-center gap-12 mb-12">
+<div class="text-left border-l-2 border-primary-container pl-4">
+<p class="font-label text-[10px] uppercase text-on-surface-variant tracking-widest">Market Fit</p>
+<p class="font-headline text-xl text-white">High</p>
+</div>
+<div class="text-left border-l-2 border-primary-container pl-4">
+<p class="font-label text-[10px] uppercase text-on-surface-variant tracking-widest">Risk Factor</p>
+<p class="font-headline text-xl text-white">Minimal</p>
+</div>
+<div class="text-left border-l-2 border-primary-container pl-4">
+<p class="font-label text-[10px] uppercase text-on-surface-variant tracking-widest">Confidence</p>
+<p class="font-headline text-xl text-white">92%</p>
+</div>
+</div>
+<!-- Primary CTA -->
+<button class="bg-primary-container hover:bg-primary text-white font-label font-bold uppercase tracking-widest text-[13px] px-12 py-5 transition-all duration-300 group flex items-center gap-4 shadow-lg shadow-primary-container/20 active:scale-95">
+                        Deep Audit
+                        <span class="material-symbols-outlined transition-transform group-hover:translate-x-1" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Executive Insight Module -->
+<section class="px-8 lg:px-12 pb-24">
+<div class="bg-surface-container-low border-l-4 border-primary-container p-10 max-w-4xl mx-auto">
+<div class="flex flex-col md:flex-row gap-8 items-start">
+<div class="flex-shrink-0">
+<span class="material-symbols-outlined text-primary text-4xl" data-icon="lightbulb_outline">lightbulb_outline</span>
+</div>
+<div>
+<p class="font-label text-[10px] uppercase tracking-widest text-primary font-bold mb-4">Executive Insight</p>
+<h3 class="font-headline text-2xl text-on-surface italic leading-relaxed">
+                            "The 78% score indicates a rare structural synergy. While immediate technical alignment is present, the remaining 22% variance represents high-reward optimization opportunities in the second fiscal quarter."
+                        </h3>
+<p class="mt-6 font-label text-[10px] text-on-surface-variant/60 uppercase tracking-widest">— STRATEGIC INTELLIGENCE ENGINE</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="w-full py-12 px-8 mt-auto bg-[#0b1326] border-t border-[#b4c5ff]/5 flex flex-col items-center gap-6 text-center">
+<div class="font-['Newsreader'] text-white italic text-xl">ASCEND</div>
+<div class="flex flex-wrap justify-center gap-8 font-['Manrope'] text-[10px] uppercase tracking-[0.2em] font-light">
+<a class="text-[#b4c5ff]/30 hover:text-[#2563eb] transition-colors" href="#">Privacy Policy</a>
+<a class="text-[#b4c5ff]/30 hover:text-[#2563eb] transition-colors" href="#">Terms of Service</a>
+<a class="text-[#b4c5ff]/30 hover:text-[#2563eb] transition-colors" href="#">Contact Support</a>
+</div>
+<p class="font-['Manrope'] text-[10px] uppercase tracking-[0.2em] font-light text-[#b4c5ff]/20">
+                © 2024 ASCEND EXECUTIVE INTELLIGENCE. ALL RIGHTS RESERVED.
+            </p>
+</footer>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 w-full h-16 bg-[#0b1326]/80 backdrop-blur-xl border-t border-[#b4c5ff]/10 flex items-center justify-around z-50">
+<a class="flex flex-col items-center gap-1 text-[#b4c5ff]/40" href="#">
+<span class="material-symbols-outlined" data-icon="input">input</span>
+<span class="font-label text-[8px] uppercase tracking-widest">Intake</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[#2563eb]" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label text-[8px] uppercase tracking-widest">Analysis</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[#b4c5ff]/40" href="#">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+<span class="font-label text-[8px] uppercase tracking-widest">Diag</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[#b4c5ff]/40" href="#">
+<span class="material-symbols-outlined" data-icon="auto_fix_high">auto_fix_high</span>
+<span class="font-label text-[8px] uppercase tracking-widest">Refine</span>
+</a>
+</nav>
+</body></html>

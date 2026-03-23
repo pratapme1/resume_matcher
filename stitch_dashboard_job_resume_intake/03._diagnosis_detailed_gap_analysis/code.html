@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-bright": "#faf9f8",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "outline": "#747878",
+                        "on-secondary-container": "#54675e",
+                        "surface-container-highest": "#e3e2e1",
+                        "inverse-on-surface": "#f1f0f0",
+                        "tertiary": "#000000",
+                        "on-secondary-fixed": "#0d1f18",
+                        "on-tertiary-fixed": "#261900",
+                        "surface-tint": "#5f5e5e",
+                        "secondary-fixed": "#d3e7dc",
+                        "primary-fixed": "#e5e2e1",
+                        "inverse-surface": "#2f3130",
+                        "background": "#faf9f8",
+                        "on-secondary-fixed-variant": "#384b42",
+                        "tertiary-fixed": "#ffdea5",
+                        "tertiary-container": "#261900",
+                        "secondary-fixed-dim": "#b7cbc0",
+                        "on-secondary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface": "#faf9f8",
+                        "primary": "#000000",
+                        "on-primary-fixed-variant": "#474646",
+                        "surface-container-high": "#e9e8e7",
+                        "inverse-primary": "#c8c6c5",
+                        "on-primary-container": "#858383",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "surface-variant": "#e3e2e1",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#e9c176",
+                        "error-container": "#ffdad6",
+                        "secondary": "#50635a",
+                        "on-surface": "#1a1c1c",
+                        "surface-container": "#eeeeed",
+                        "on-surface-variant": "#444748",
+                        "primary-container": "#1c1b1b",
+                        "on-background": "#1a1c1c",
+                        "secondary-container": "#d0e5d9",
+                        "on-tertiary-fixed-variant": "#5d4201",
+                        "outline-variant": "#c4c7c7",
+                        "surface-dim": "#dadad9",
+                        "on-tertiary-container": "#a17f3b",
+                        "surface-container-low": "#f4f3f2",
+                        "on-primary-fixed": "#1c1b1b",
+                        "surface-container-lowest": "#ffffff"
+                    },
+                    fontFamily: {
+                        "headline": ["Newsreader", "serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .font-serif { font-family: 'Newsreader', serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-secondary-container">
+<!-- Top Navigation Anchor -->
+<header class="bg-[#faf9f8] dark:bg-[#121212] flex justify-between items-center px-8 py-6 w-full max-w-screen-2xl mx-auto fixed top-0 left-0 right-0 z-50">
+<div class="font-serif italic text-2xl text-[#000000] dark:text-[#f4f3f2]">The Modern Strategist</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-[#50635a]/60 dark:text-[#f4f3f2]/40 font-medium hover:text-[#50635a] transition-colors duration-200" href="#">Portfolio</a>
+<a class="text-[#50635a]/60 dark:text-[#f4f3f2]/40 font-medium hover:text-[#50635a] transition-colors duration-200" href="#">Insights</a>
+<a class="text-[#50635a]/60 dark:text-[#f4f3f2]/40 font-medium hover:text-[#50635a] transition-colors duration-200" href="#">Archive</a>
+</nav>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-2xl" data-icon="account_circle">account_circle</span>
+</div>
+</header>
+<!-- Side Navigation Sidebar (Diagnosis Active) -->
+<aside class="bg-[#f4f3f2] dark:bg-[#1c1b1b] h-screen w-64 fixed left-0 top-0 flex flex-col gap-10 pt-32 px-6 border-r border-outline-variant/10">
+<div class="space-y-1 mb-8">
+<div class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] text-on-surface opacity-40">Project</div>
+<div class="font-serif italic text-lg leading-tight">The Chronicle</div>
+<div class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] text-secondary">Phase IV Progress</div>
+</div>
+<nav class="space-y-6">
+<div class="flex items-center gap-4 text-[#50635a]/50 dark:text-[#f4f3f2]/30 pl-4 scale-100 active:scale-[0.99] transition-all cursor-pointer hover:bg-[#eeeeed]">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem]">Intake</span>
+</div>
+<div class="flex items-center gap-4 text-[#50635a]/50 dark:text-[#f4f3f2]/30 pl-4 scale-100 active:scale-[0.99] transition-all cursor-pointer hover:bg-[#eeeeed]">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem]">Evaluation</span>
+</div>
+<!-- Active State: Diagnosis -->
+<div class="flex items-center gap-4 text-[#000000] dark:text-[#ffffff] font-bold border-l-2 border-[#50635a] pl-4 scale-100 active:scale-[0.99] transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem]">Diagnosis</span>
+</div>
+<div class="flex items-center gap-4 text-[#50635a]/50 dark:text-[#f4f3f2]/30 pl-4 scale-100 active:scale-[0.99] transition-all cursor-pointer hover:bg-[#eeeeed]">
+<span class="material-symbols-outlined" data-icon="download_done">download_done</span>
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem]">Refinement</span>
+</div>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="pl-64 pt-24 min-h-screen">
+<div class="max-w-6xl mx-auto px-12 py-16">
+<!-- Hero Header Section -->
+<section class="mb-20">
+<div class="flex items-baseline gap-4 mb-2">
+<span class="font-sans uppercase tracking-[0.1em] text-[0.6875rem] text-secondary font-bold">Step 03</span>
+<div class="h-[1px] w-12 bg-outline-variant/30"></div>
+</div>
+<h1 class="font-serif italic text-6xl tracking-tight text-on-surface mb-6">Phase 03: Diagnosis</h1>
+<p class="font-body text-lg text-on-surface-variant max-w-2xl leading-relaxed">
+                    A surgical examination of alignment. We cross-reference your narrative markers against institutional benchmarks to isolate structural disparities.
+                </p>
+</section>
+<!-- Phase Indicator / Chronicle Track -->
+<div class="mb-20">
+<div class="flex justify-between items-center mb-4">
+<span class="font-sans uppercase tracking-[0.05em] text-[0.6875rem] font-bold text-secondary">Chronicle Track</span>
+<span class="font-sans text-[0.6875rem] opacity-50 italic">75% Complete</span>
+</div>
+<div class="relative h-1 w-full bg-surface-container-highest">
+<div class="absolute left-0 top-0 h-full bg-secondary w-3/4"></div>
+<div class="absolute left-3/4 -top-1.5 h-4 w-4 bg-secondary border-4 border-surface ring-2 ring-secondary/20"></div>
+</div>
+<div class="flex justify-between mt-4">
+<span class="text-[0.625rem] uppercase tracking-widest opacity-40">Intake</span>
+<span class="text-[0.625rem] uppercase tracking-widest opacity-40">Evaluation</span>
+<span class="text-[0.625rem] uppercase tracking-widest font-bold text-on-surface">Diagnosis</span>
+<span class="text-[0.625rem] uppercase tracking-widest opacity-40">Refinement</span>
+</div>
+</div>
+<!-- Bento Layout Content -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Score Attribution (Vertical Timeline) -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container-low p-8">
+<h3 class="font-serif italic text-2xl mb-10">Score Attribution</h3>
+<div class="space-y-12 relative">
+<!-- Line -->
+<div class="absolute left-[7px] top-2 bottom-2 w-[1px] bg-outline-variant/30"></div>
+<!-- High Impact -->
+<div class="relative pl-8">
+<div class="absolute left-0 top-1.5 w-4 h-4 bg-primary border-4 border-surface-container-low ring-1 ring-primary"></div>
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-sans uppercase tracking-widest text-[0.625rem] font-bold">Impact: High</span>
+<span class="font-serif italic text-sm text-secondary">A+</span>
+</div>
+<h4 class="font-body font-bold text-sm mb-1">Operational Scalability</h4>
+<p class="text-[0.75rem] leading-relaxed opacity-60">Quantifiable metrics in Series B growth align perfectly with target seniority.</p>
+</div>
+<!-- Medium Impact -->
+<div class="relative pl-8">
+<div class="absolute left-0 top-1.5 w-4 h-4 bg-outline-variant border-4 border-surface-container-low ring-1 ring-outline-variant"></div>
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-sans uppercase tracking-widest text-[0.625rem] font-bold text-outline">Impact: Medium</span>
+<span class="font-serif italic text-sm text-outline">B-</span>
+</div>
+<h4 class="font-body font-bold text-sm mb-1">Stakeholder Management</h4>
+<p class="text-[0.75rem] leading-relaxed opacity-60">Narrative evidence of board-level interaction is present but lacks specific outcomes.</p>
+</div>
+<!-- Low Impact -->
+<div class="relative pl-8">
+<div class="absolute left-0 top-1.5 w-4 h-4 bg-tertiary-fixed-dim border-4 border-surface-container-low ring-1 ring-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-sans uppercase tracking-widest text-[0.625rem] font-bold text-on-tertiary-container">Impact: Low</span>
+<span class="font-serif italic text-sm text-on-tertiary-container">D</span>
+</div>
+<h4 class="font-body font-bold text-sm mb-1">Technical Architecture</h4>
+<p class="text-[0.75rem] leading-relaxed opacity-60">Infrastructure oversight is undersold relative to the engineering lead requirements.</p>
+</div>
+</div>
+</div>
+<!-- Gap Analysis & Refinements -->
+<div class="col-span-12 lg:col-span-8 space-y-8">
+<!-- The Gap Analysis -->
+<div class="bg-surface-container p-8">
+<h3 class="font-serif italic text-2xl mb-6">The Gap Analysis</h3>
+<p class="font-body text-sm mb-8 opacity-70 leading-relaxed">
+                            We have identified critical semantic voids within your professional summary. These keywords are essential for algorithmic visibility in elite recruitment tiers.
+                        </p>
+<div class="flex flex-wrap gap-3">
+<span class="inline-flex items-center gap-2 px-4 py-2 bg-surface text-on-surface border border-outline-variant/20 font-sans tracking-tight text-xs uppercase font-medium">
+<span class="w-1.5 h-1.5 bg-error"></span>
+                                Strategic Planning
+                            </span>
+<span class="inline-flex items-center gap-2 px-4 py-2 bg-surface text-on-surface border border-outline-variant/20 font-sans tracking-tight text-xs uppercase font-medium">
+<span class="w-1.5 h-1.5 bg-error"></span>
+                                Product Vision
+                            </span>
+<span class="inline-flex items-center gap-2 px-4 py-2 bg-surface text-on-surface border border-outline-variant/20 font-sans tracking-tight text-xs uppercase font-medium">
+<span class="w-1.5 h-1.5 bg-error"></span>
+                                Capital Allocation
+                            </span>
+<span class="inline-flex items-center gap-2 px-4 py-2 bg-surface text-on-surface border border-outline-variant/20 font-sans tracking-tight text-xs uppercase font-medium">
+<span class="w-1.5 h-1.5 bg-error"></span>
+                                Change Management
+                            </span>
+<span class="inline-flex items-center gap-2 px-4 py-2 bg-surface text-on-surface border border-outline-variant/20 font-sans tracking-tight text-xs uppercase font-medium">
+<span class="w-1.5 h-1.5 bg-error"></span>
+                                M&amp;A Integration
+                            </span>
+</div>
+</div>
+<!-- Suggested Refinements -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="bg-surface-container-lowest p-8 border border-outline-variant/10">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-secondary" data-icon="edit_note">edit_note</span>
+<span class="font-sans uppercase tracking-[0.1em] text-[0.625rem] font-bold">Refinement 01</span>
+</div>
+<h4 class="font-serif italic text-xl mb-3">Narrative Pivot</h4>
+<p class="text-xs leading-relaxed opacity-70 mb-6">Transition from "Managed teams" to "Architected cross-functional growth systems."</p>
+<button class="bg-primary text-on-primary px-4 py-2 text-[0.6875rem] font-bold tracking-widest uppercase hover:bg-primary-container transition-all ease-in-out duration-200">Apply Logic</button>
+</div>
+<div class="bg-surface-container-lowest p-8 border border-outline-variant/10">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-secondary" data-icon="data_exploration">data_exploration</span>
+<span class="font-sans uppercase tracking-[0.1em] text-[0.625rem] font-bold">Refinement 02</span>
+</div>
+<h4 class="font-serif italic text-xl mb-3">Metric Density</h4>
+<p class="text-xs leading-relaxed opacity-70 mb-6">Inject fiscal outcomes into the 2021-2023 timeline to substantiate leadership claims.</p>
+<button class="bg-primary text-on-primary px-4 py-2 text-[0.6875rem] font-bold tracking-widest uppercase hover:bg-primary-container transition-all ease-in-out duration-200">Apply Logic</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Focus Module (Editorial Inset) -->
+<section class="mt-20 p-12 bg-secondary text-on-primary relative overflow-hidden">
+<div class="absolute right-0 top-0 opacity-10 pointer-events-none">
+<span class="material-symbols-outlined text-[12rem]" data-icon="biotech">biotech</span>
+</div>
+<div class="relative z-10 max-w-xl">
+<h2 class="font-serif italic text-4xl mb-6">Institutional Resonancy</h2>
+<p class="font-body text-lg opacity-80 leading-relaxed mb-8">
+                        Our diagnosis suggests that while your technical proficiency is undeniable, your "Executive Presence" score is currently shadowed by operational minutiae. 
+                    </p>
+<div class="flex gap-4">
+<button class="border border-on-primary/30 px-6 py-3 text-[0.6875rem] font-bold tracking-widest uppercase hover:bg-on-primary hover:text-secondary transition-all">Download Dossier</button>
+<button class="bg-on-primary text-secondary px-6 py-3 text-[0.6875rem] font-bold tracking-widest uppercase hover:bg-secondary-fixed transition-all">Proceed to Phase IV</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer Anchor -->
+<footer class="bg-[#faf9f8] dark:bg-[#121212] w-full py-12 px-8 mt-auto border-t border-[#outline-variant]/15">
+<div class="flex flex-col md:flex-row justify-between items-center max-w-screen-2xl mx-auto gap-6">
+<div class="font-serif italic text-lg text-black dark:text-white">The Modern Strategist</div>
+<div class="font-sans text-[0.6875rem] tracking-tight text-[#50635a] dark:text-[#f4f3f2]/60">
+                © 2024 The Modern Strategist. All rights reserved.
+            </div>
+<div class="flex gap-8">
+<a class="font-sans text-[0.6875rem] tracking-tight text-[#50635a]/60 dark:text-[#f4f3f2]/40 hover:text-black dark:hover:text-white transition-colors" href="#">Terms of Service</a>
+<a class="font-sans text-[0.6875rem] tracking-tight text-[#50635a]/60 dark:text-[#f4f3f2]/40 hover:text-black dark:hover:text-white transition-colors" href="#">Privacy Policy</a>
+<a class="font-sans text-[0.6875rem] tracking-tight text-[#50635a]/60 dark:text-[#f4f3f2]/40 hover:text-black dark:hover:text-white transition-colors" href="#">Methodology</a>
+</div>
+</div>
+</footer>
+</body></html>

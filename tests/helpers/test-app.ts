@@ -29,5 +29,6 @@ export function createTestApp(overrides: TestAppOverrides = {}) {
         headers: { 'Content-Type': 'text/html' },
       })),
     disablePlaywrightJdFallback: true,
+    skipAuth: true,
   });
 }

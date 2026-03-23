@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary": "#002388",
+              "secondary-container": "#3c4a5e",
+              "tertiary": "#bec6e0",
+              "error-container": "#93000a",
+              "on-primary-fixed-variant": "#0035be",
+              "on-secondary": "#233144",
+              "on-error": "#690005",
+              "secondary": "#b9c7df",
+              "on-tertiary-container": "#eef0ff",
+              "secondary-fixed": "#d5e3fc",
+              "tertiary-fixed-dim": "#bec6e0",
+              "secondary-fixed-dim": "#b9c7df",
+              "surface-container-high": "#222a3d",
+              "background": "#0b1326",
+              "on-error-container": "#ffdad6",
+              "inverse-on-surface": "#283044",
+              "outline": "#8e90a2",
+              "inverse-primary": "#124af0",
+              "primary-fixed-dim": "#b8c3ff",
+              "surface": "#0b1326",
+              "error": "#ffb4ab",
+              "primary-container": "#2e5bff",
+              "on-primary-container": "#efefff",
+              "inverse-surface": "#dae2fd",
+              "surface-dim": "#0b1326",
+              "tertiary-fixed": "#dae2fd",
+              "on-tertiary-fixed": "#131b2e",
+              "on-secondary-fixed": "#0d1c2e",
+              "surface-tint": "#b8c3ff",
+              "outline-variant": "#434656",
+              "surface-container-low": "#131b2e",
+              "surface-container": "#171f33",
+              "primary-fixed": "#dde1ff",
+              "on-primary-fixed": "#001356",
+              "surface-container-lowest": "#060e20",
+              "on-surface-variant": "#c4c5d9",
+              "surface-variant": "#2d3449",
+              "on-surface": "#dae2fd",
+              "tertiary-container": "#656d84",
+              "surface-bright": "#31394d",
+              "on-background": "#dae2fd",
+              "on-tertiary-fixed-variant": "#3f465c",
+              "on-secondary-fixed-variant": "#3a485b",
+              "primary": "#b8c3ff",
+              "surface-container-highest": "#2d3449",
+              "on-tertiary": "#283044",
+              "on-secondary-container": "#abb9d1"
+            },
+            fontFamily: {
+              "headline": ["Newsreader"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        background: rgba(45, 52, 73, 0.4);
+        backdrop-filter: blur(20px);
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-primary/30 min-h-screen">
+<!-- Top Navigation -->
+<nav class="bg-slate-900/60 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,0,0,0.12)] docked full-width top-0 sticky z-50 flex justify-between items-center w-full px-8 h-20">
+<div class="flex items-center gap-8">
+<span class="font-['Manrope'] font-black tracking-[0.2em] text-white">ASCEND</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-slate-400 font-medium hover:text-white transition-colors" href="#">Dashboard</a>
+<a class="text-slate-400 font-medium hover:text-white transition-colors" href="#">Analysis</a>
+<a class="text-white border-b-2 border-blue-600 pb-1" href="#">Asset</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400 hover:bg-white/5 transition-all duration-300 p-2 rounded-full cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-slate-400 hover:bg-white/5 transition-all duration-300 p-2 rounded-full cursor-pointer">settings</span>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="Professional headshot of a male consultant in dark studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1cpcQ8AbqxFmQFvloXnjBDvlM-zJZbVW5Y-ZTr4CG4-OWwJ9nmUxzgjk5jmvfCMYw1jjUxRiVcE3QwK64c5IxRkRbqAu2QBQe4zYOWwCofyz2dh_VoqvWr-8iiOpjnunBnYyFVQ9WM6NRu7loeLl4fAa3dNwEJ3w6XW9Glz_JaMAqNU5mDt7wyJta5ZGG_vXagspYY2IC2lcVnNm6fx_MrZgQpaDStZiJSs0YnTGzfi7peN7fZbp4J7kW62K5xgq4zu2RYf7hqCQ"/>
+</div>
+</div>
+</nav>
+<div class="flex">
+<!-- Sidebar Navigation -->
+<aside class="bg-slate-950 docked left-0 h-[calc(100vh-5rem)] w-72 flex flex-col py-10 px-6 space-y-8 hidden lg:flex shrink-0">
+<div class="mb-4">
+<h2 class="text-white font-black text-xl">ASCEND</h2>
+<p class="font-['Manrope'] uppercase tracking-widest text-[10px] font-bold text-slate-500">Career Velocity</p>
+</div>
+<div class="space-y-2">
+<div class="flex items-center gap-4 py-3 px-4 rounded text-slate-500 hover:text-slate-300 hover:bg-slate-900 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>
+<span class="font-['Manrope'] uppercase tracking-widest text-[10px] font-bold">Phase 01: Intake</span>
+</div>
+<div class="flex items-center gap-4 py-3 px-4 rounded text-slate-500 hover:text-slate-300 hover:bg-slate-900 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-['Manrope'] uppercase tracking-widest text-[10px] font-bold">Phase 02: Analysis</span>
+</div>
+<div class="flex items-center gap-4 py-3 px-4 rounded text-slate-500 hover:text-slate-300 hover:bg-slate-900 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+<span class="font-['Manrope'] uppercase tracking-widest text-[10px] font-bold">Phase 03: Diagnosis</span>
+</div>
+<div class="flex items-center gap-4 py-3 px-4 rounded text-white bg-blue-600/10 border-r-4 border-blue-600 Active: translate-x-1 transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-blue-500" data-icon="auto_fix_high">auto_fix_high</span>
+<span class="font-['Manrope'] uppercase tracking-widest text-[10px] font-bold">Phase 04: Refinement</span>
+</div>
+</div>
+<div class="mt-auto space-y-2">
+<div class="flex items-center gap-4 py-3 px-4 text-slate-500 hover:text-slate-300 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+<span class="font-['Manrope'] uppercase tracking-widest text-[10px] font-bold">Support</span>
+</div>
+<div class="flex items-center gap-4 py-3 px-4 text-slate-500 hover:text-slate-300 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+<span class="font-['Manrope'] uppercase tracking-widest text-[10px] font-bold">Settings</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 p-8 lg:p-16 max-w-7xl mx-auto space-y-24">
+<!-- Hero Section -->
+<header class="max-w-4xl">
+<span class="label-sm text-primary-fixed-dim uppercase tracking-[0.2em] mb-4 block">Intelligence Synthesis Complete</span>
+<h1 class="display-lg font-headline text-on-surface leading-tight mb-6">Phase 04: The Output — <span class="italic">Elite Digital Dossier</span></h1>
+<p class="text-on-surface-variant text-lg max-w-2xl">Your narrative has been architected for maximum career velocity. Every semantic node and keyword weight has been optimized for both human elite recruiters and machine-learning ATS filters.</p>
+</header>
+<!-- Workspace Bento Grid -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Live Resume Preview (Large Column) -->
+<div class="col-span-12 xl:col-span-8 space-y-8">
+<div class="flex justify-between items-end border-b border-outline-variant/20 pb-4">
+<h2 class="headline-md font-headline">Refined Portfolio Asset</h2>
+<div class="flex gap-4">
+<button class="flex items-center gap-2 px-6 py-2 bg-primary-container text-on-primary-container font-label text-xs uppercase tracking-widest rounded shadow-[0_8px_16px_rgba(46,91,255,0.2)] hover:scale-[1.02] transition-transform">
+<span class="material-symbols-outlined text-sm">download</span> Export Intelligence
+                            </button>
+</div>
+</div>
+<!-- Digital Dossier Paper -->
+<div class="surface-container-low shadow-2xl p-12 lg:p-20 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-8 opacity-10">
+<span class="text-6xl font-headline italic">CONFIDENTIAL</span>
+</div>
+<!-- Resume Content -->
+<div class="space-y-12">
+<section>
+<h3 class="text-4xl font-headline mb-2">Julian V. Sterling</h3>
+<p class="label-sm tracking-widest text-slate-500">Global Strategy Lead • Senior Product Architect</p>
+</section>
+<section class="space-y-6">
+<div class="flex justify-between items-start gap-4">
+<div class="flex-1">
+<h4 class="font-headline text-xl italic mb-2">Executive Overview</h4>
+<p class="body-md text-on-surface-variant leading-relaxed">
+                                            High-impact strategist with 12+ years of experience 
+                                            <span class="bg-primary/20 border-b border-primary/40 px-1 cursor-help group relative">
+                                                architecting digital ecosystems
+                                                <!-- Tooltip -->
+<span class="absolute bottom-full left-0 mb-2 w-64 p-3 glass-card rounded-lg text-[10px] font-label leading-tight opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
+<span class="text-primary block mb-1">AI REFINEMENT</span>
+                                                    Replaced "managing projects" with higher-value semantic verb. Increases ATS matching for "Architect" by 24%.
+                                                </span>
+</span>
+                                            at the intersection of venture capital and consumer technology. Proven record of scaling Series B entities to market dominance through rigorous 
+                                            <span class="bg-primary/20 border-b border-primary/40 px-1 cursor-help group relative">
+                                                algorithmic refinement.
+                                                <span class="absolute bottom-full left-0 mb-2 w-64 p-3 glass-card rounded-lg text-[10px] font-label leading-tight opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
+<span class="text-primary block mb-1">AI REFINEMENT</span>
+                                                    Inserted high-density keyword to align with "Intelligence" sector job descriptions.
+                                                </span>
+</span>
+</p>
+</div>
+</div>
+</section>
+<section class="space-y-10">
+<h4 class="font-headline text-xl italic border-b border-outline-variant/10 pb-2">Experience</h4>
+<div class="grid grid-cols-4 gap-4">
+<div class="col-span-1">
+<span class="label-sm text-slate-500">2020 — PRESENT</span>
+</div>
+<div class="col-span-3 space-y-4">
+<div>
+<h5 class="title-lg font-bold">Director of Product Synthesis</h5>
+<p class="label-sm text-primary uppercase">Quantum Dynamics Lab</p>
+</div>
+<ul class="space-y-3 body-md text-on-surface-variant list-none">
+<li class="flex gap-4">
+<span class="text-primary mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0"></span>
+<span>Spearheaded a $40M digital transformation initiative, 
+                                                    <span class="bg-primary/20 border-b border-primary/40 px-1 cursor-help group relative">
+                                                        capturing 18% market share
+                                                        <span class="absolute bottom-full left-0 mb-2 w-64 p-3 glass-card rounded-lg text-[10px] font-label leading-tight opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
+<span class="text-primary block mb-1">AI REFINEMENT</span>
+                                                            Quantified impact using power metrics. Recruiters prioritize data-driven outcomes over task descriptions.
+                                                        </span>
+</span> 
+                                                within the first 12 months.</span>
+</li>
+<li class="flex gap-4">
+<span class="text-primary mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0"></span>
+<span>Architected the "Core Nexus" platform, reducing operational latency by 45% through predictive analytics.</span>
+</li>
+</ul>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+<!-- Right Rail: Refinement Analytics -->
+<div class="col-span-12 xl:col-span-4 space-y-8">
+<div class="glass-card p-8 rounded-xl border border-outline-variant/10">
+<div class="flex items-center justify-between mb-8">
+<h3 class="label-sm text-primary-fixed-dim tracking-[0.1em] uppercase">Refinement Analytics</h3>
+<span class="material-symbols-outlined text-primary-fixed-dim" data-icon="query_stats">query_stats</span>
+</div>
+<div class="space-y-10">
+<!-- ATS Impact -->
+<div class="space-y-2">
+<div class="flex justify-between items-end">
+<span class="text-xs font-label uppercase text-slate-500">ATS Resonance Score</span>
+<span class="text-3xl font-headline italic">98<span class="text-sm not-italic opacity-40">/100</span></span>
+</div>
+<div class="h-1 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[98%]"></div>
+</div>
+<p class="text-[10px] text-primary/70 italic">+18 pts impact from Keyword Synthesis</p>
+</div>
+<!-- Keyword Density -->
+<div class="space-y-4">
+<span class="text-xs font-label uppercase text-slate-500 block">Optimal Keywords Detected</span>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-surface-container-highest text-[10px] font-bold rounded uppercase tracking-tighter text-on-surface">Digital Transformation</span>
+<span class="px-3 py-1 bg-surface-container-highest text-[10px] font-bold rounded uppercase tracking-tighter text-on-surface">Product Strategy</span>
+<span class="px-3 py-1 bg-surface-container-highest text-[10px] font-bold rounded uppercase tracking-tighter text-on-surface">Ecosystem Architect</span>
+<span class="px-3 py-1 bg-surface-container-highest text-[10px] font-bold rounded uppercase tracking-tighter text-on-surface">Market Scaling</span>
+<span class="px-3 py-1 bg-surface-container-highest text-[10px] font-bold rounded uppercase tracking-tighter text-on-surface">Latency reduction</span>
+<span class="px-3 py-1 bg-blue-600/20 text-blue-400 text-[10px] font-bold rounded uppercase tracking-tighter border border-blue-600/30">+12 others</span>
+</div>
+</div>
+<!-- Intelligence Summary -->
+<div class="p-6 bg-surface-container-lowest rounded space-y-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="lightbulb">lightbulb</span>
+<span class="text-[11px] font-bold uppercase tracking-widest">Synthesis Insight</span>
+</div>
+<p class="body-md text-slate-400 text-sm italic">"The document has been balanced for 'Strategic Authority'. Tone is 85% authoritative, 15% collaborative—optimal for Director-level acquisitions."</p>
+</div>
+<button class="w-full py-4 glass-card border border-primary/20 text-primary label-sm uppercase tracking-widest hover:bg-primary/10 transition-colors">
+                                View Intelligence Log
+                            </button>
+</div>
+</div>
+<!-- Secondary Gallery-feel Card -->
+<div class="p-8 surface-container-low rounded shadow-lg border border-white/5">
+<span class="label-sm text-slate-500 mb-6 block uppercase">Export Formats</span>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-4 border border-outline-variant/10 rounded hover:border-primary/40 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined mb-2 group-hover:text-primary transition-colors">picture_as_pdf</span>
+<p class="text-[10px] font-bold uppercase">Standard PDF</p>
+<p class="text-[9px] text-slate-500">A4 • Recruiter Ready</p>
+</div>
+<div class="p-4 border border-outline-variant/10 rounded hover:border-primary/40 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined mb-2 group-hover:text-primary transition-colors">description</span>
+<p class="text-[10px] font-bold uppercase">Dossier Markdown</p>
+<p class="text-[9px] text-slate-500">Web • Semantic Code</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Section -->
+<section class="max-w-4xl pt-16 border-t border-outline-variant/10">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+<div>
+<h4 class="headline-md font-headline italic mb-4">The Refinement Protocol</h4>
+<p class="body-md text-on-surface-variant">Our refinement engine doesn't just check spelling; it conducts a semantic audit. We analyze the latent Dirichlet allocation (LDA) of your target industry to ensure your professional narrative resonates at a sub-conscious level with human readers while satisfying the rigid logic of the ATS.</p>
+</div>
+<div class="space-y-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="history_edu">history_edu</span>
+</div>
+<div>
+<h5 class="text-xs font-bold uppercase tracking-widest">Narrative Integrity</h5>
+<p class="text-xs text-slate-500">100% human-verified readability score.</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="verified_user">verified_user</span>
+</div>
+<div>
+<h5 class="text-xs font-bold uppercase tracking-widest">Recruiter Proof</h5>
+<p class="text-xs text-slate-500">Tested against 45 common HR platform logics.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- Page Footer -->
+<footer class="bg-slate-950 border-t border-slate-900 full-width py-12 mt-20">
+<div class="flex flex-col md:flex-row justify-between items-center px-12 max-w-7xl mx-auto w-full">
+<span class="font-['Manrope'] text-[11px] uppercase tracking-widest text-slate-600">© 2024 ASCEND Career System. All rights reserved.</span>
+<div class="flex gap-8 mt-6 md:mt-0">
+<a class="font-['Manrope'] text-[11px] uppercase tracking-widest text-slate-500 hover:text-blue-400 transition-colors" href="#">Support</a>
+<a class="font-['Manrope'] text-[11px] uppercase tracking-widest text-slate-500 hover:text-blue-400 transition-colors" href="#">Privacy</a>
+<a class="font-['Manrope'] text-[11px] uppercase tracking-widest text-slate-500 hover:text-blue-400 transition-colors" href="#">Terms</a>
+<a class="font-['Manrope'] text-[11px] uppercase tracking-widest text-slate-500 hover:text-blue-400 transition-colors" href="#">Security</a>
+</div>
+</div>
+</footer>
+</body></html>

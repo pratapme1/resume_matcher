@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,700;0,6..72,800;1,6..72,400;1,6..72,700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-container": "#461f00",
+                        "on-surface-variant": "#c2c6d6",
+                        "primary-container": "#4d8eff",
+                        "surface-container-low": "#1c1b1b",
+                        "on-primary-fixed-variant": "#004395",
+                        "surface-tint": "#adc6ff",
+                        "background": "#131313",
+                        "tertiary-fixed": "#ffdcc6",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "on-secondary-container": "#9fb5e7",
+                        "surface-dim": "#131313",
+                        "secondary-fixed": "#d8e2ff",
+                        "on-secondary-fixed-variant": "#304671",
+                        "error": "#ffb4ab",
+                        "surface-bright": "#3a3939",
+                        "surface-variant": "#353534",
+                        "inverse-primary": "#005ac2",
+                        "primary-fixed": "#d8e2ff",
+                        "on-primary-fixed": "#001a42",
+                        "error-container": "#93000a",
+                        "on-error": "#690005",
+                        "tertiary-container": "#df7412",
+                        "inverse-on-surface": "#313030",
+                        "secondary-container": "#304671",
+                        "on-surface": "#e5e2e1",
+                        "secondary-fixed-dim": "#b1c6f9",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-secondary": "#182f59",
+                        "on-primary": "#002e6a",
+                        "outline-variant": "#424754",
+                        "secondary": "#b1c6f9",
+                        "primary": "#adc6ff",
+                        "on-tertiary-fixed": "#311400",
+                        "outline": "#8c909f",
+                        "surface-container": "#201f1f",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed": "#001a42",
+                        "on-background": "#e5e2e1",
+                        "surface-container-high": "#2a2a2a",
+                        "primary-fixed-dim": "#adc6ff",
+                        "tertiary": "#ffb786",
+                        "on-primary-container": "#00285d",
+                        "inverse-surface": "#e5e2e1",
+                        "on-tertiary": "#502400",
+                        "surface-container-highest": "#353534",
+                        "surface": "#131313"
+                    },
+                    fontFamily: {
+                        "headline": ["Newsreader"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(53, 53, 52, 0.4);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .text-gradient {
+            background: linear-gradient(to right, #adc6ff, #4d8eff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .ghost-border {
+            border: 1px solid rgba(140, 144, 159, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-container/30">
+<!-- TopNavBar -->
+<nav class="bg-white/70 dark:bg-[#131313]/70 backdrop-blur-xl docked full-width top-0 sticky z-50 no-border bg-surface-container-low shadow-[0_8px_32px_0_rgba(0,0,0,0.04)]">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-screen-2xl mx-auto">
+<div class="text-2xl font-black tracking-tighter text-slate-900 dark:text-white font-['Newsreader']">LUMINA</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-slate-500 dark:text-slate-400 font-['Inter'] font-medium text-sm hover:text-blue-600 dark:hover:text-[#ADC6FF] transition-colors duration-300" href="#">Intake</a>
+<a class="text-slate-500 dark:text-slate-400 font-['Inter'] font-medium text-sm hover:text-blue-600 dark:hover:text-[#ADC6FF] transition-colors duration-300" href="#">Evaluation</a>
+<a class="text-slate-500 dark:text-slate-400 font-['Inter'] font-medium text-sm hover:text-blue-600 dark:hover:text-[#ADC6FF] transition-colors duration-300" href="#">Insights</a>
+<a class="text-slate-900 dark:text-white border-b-2 border-blue-500 dark:border-[#ADC6FF] pb-1 font-['Inter'] font-medium text-sm" href="#">Asset</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">account_circle</button>
+</div>
+</div>
+</nav>
+<!-- SideNavBar (Desktop Only Anchor) -->
+<aside class="hidden lg:flex fixed left-6 top-1/2 -translate-y-1/2 rounded-3xl w-20 hover:w-64 transition-all duration-500 group overflow-hidden bg-white/60 dark:bg-[#131313]/60 backdrop-blur-2xl no-border shadow-2xl z-40 flex flex-col items-center py-8 gap-8">
+<div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-center px-4">
+<h3 class="font-headline italic text-primary">Journey</h3>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant">Career Intelligence</p>
+</div>
+<div class="flex flex-col gap-6 w-full px-4">
+<button class="flex items-center gap-4 p-3 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-all rounded-2xl w-full">
+<span class="material-symbols-outlined">edit_note</span>
+<span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-sm font-medium">Intake Phase</span>
+</button>
+<button class="flex items-center gap-4 p-3 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-all rounded-2xl w-full">
+<span class="material-symbols-outlined">analytics</span>
+<span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-sm font-medium">Evaluation Phase</span>
+</button>
+<button class="flex items-center gap-4 p-3 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-all rounded-2xl w-full">
+<span class="material-symbols-outlined">visibility</span>
+<span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-sm font-medium">Insights Phase</span>
+</button>
+<button class="flex items-center gap-4 p-3 bg-blue-50 dark:bg-[#ADC6FF]/10 text-blue-600 dark:text-[#ADC6FF] rounded-2xl w-full">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-sm font-medium">Asset Phase</span>
+</button>
+</div>
+</aside>
+<main class="max-w-screen-2xl mx-auto px-6 md:px-12 py-12">
+<!-- Hero Header -->
+<header class="mb-20 flex flex-col md:flex-row justify-between items-end gap-8">
+<div class="max-w-2xl">
+<p class="text-primary font-medium tracking-[0.2em] text-xs mb-4 uppercase">Executive Output</p>
+<h1 class="font-headline text-5xl md:text-7xl font-extrabold tracking-tighter leading-none mb-6">
+                    The Output: <span class="italic font-normal">Phase IV</span>
+</h1>
+<p class="text-on-surface-variant text-lg leading-relaxed font-light">
+                    Your professional narrative has been synthesized and optimized. We have reconstructed your digital footprint to meet the rigorous demands of executive search algorithms while maintaining human elegance.
+                </p>
+</div>
+<div class="flex flex-col items-end">
+<div class="glass-panel p-6 rounded-xl ghost-border mb-4">
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant mb-2">Score Optimization</p>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-bold text-primary">+18</span>
+<span class="text-on-surface-variant font-medium">PTS</span>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="h-1 w-12 bg-primary rounded-full"></div>
+<div class="h-1 w-6 bg-surface-container-highest rounded-full"></div>
+<div class="h-1 w-6 bg-surface-container-highest rounded-full"></div>
+</div>
+</div>
+</header>
+<!-- Gallery Centerpiece -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+<!-- Left: Actions & Analytics -->
+<div class="lg:col-span-3 flex flex-col gap-6 order-2 lg:order-1">
+<div class="bg-surface-container-low rounded-lg p-8 flex flex-col gap-4">
+<h4 class="font-headline text-xl mb-2">Asset Actions</h4>
+<button class="w-full py-4 px-6 rounded-md bg-gradient-to-r from-primary to-primary-container text-on-primary-container font-bold text-sm flex items-center justify-between group">
+<span>Download PDF</span>
+<span class="material-symbols-outlined group-hover:translate-y-0.5 transition-transform">download</span>
+</button>
+<button class="w-full py-4 px-6 rounded-md ghost-border text-on-surface font-medium text-sm flex items-center justify-between hover:bg-surface-container-high transition-colors">
+<span>Copy Markdown</span>
+<span class="material-symbols-outlined">content_copy</span>
+</button>
+<button class="w-full py-4 px-6 rounded-md text-primary font-medium text-sm flex items-center justify-between hover:underline">
+<span>Manual Revision</span>
+<span class="material-symbols-outlined">edit_square</span>
+</button>
+</div>
+<div class="bg-surface-container-low rounded-lg p-8">
+<h4 class="font-headline text-xl mb-6">Refinement Analytics</h4>
+<div class="space-y-6">
+<div class="flex justify-between items-center">
+<span class="text-xs text-on-surface-variant uppercase tracking-tighter">ATS Relevance</span>
+<span class="text-sm font-bold">98%</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[98%]"></div>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-xs text-on-surface-variant uppercase tracking-tighter">Impact Verb Density</span>
+<span class="text-sm font-bold">High</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-tertiary w-[85%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Center: The Asset Preview -->
+<div class="lg:col-span-9 order-1 lg:order-2">
+<div class="relative bg-surface-container-low rounded-xl p-4 md:p-12 lg:p-20 overflow-hidden shadow-2xl shadow-black/40">
+<!-- Gallery Glow Background -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
+<!-- The Document -->
+<div class="relative mx-auto bg-white text-slate-900 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] max-w-2xl min-h-[900px] p-12 md:p-16 rounded-sm">
+<!-- Document Header -->
+<div class="border-b-2 border-slate-900 pb-8 mb-10">
+<h2 class="text-4xl font-black tracking-tighter uppercase mb-2">ALEXANDER VANCE</h2>
+<p class="text-xs tracking-[0.3em] font-bold text-slate-500">EXECUTIVE DIRECTOR • GLOBAL OPERATIONS</p>
+</div>
+<!-- Content Sections with Annotations -->
+<div class="space-y-12 relative">
+<!-- Profile Section -->
+<section>
+<h3 class="text-sm font-black mb-4 flex items-center gap-2">
+<span class="w-4 h-[2px] bg-slate-900"></span>
+                                    SUMMARY
+                                </h3>
+<div class="relative group">
+<p class="text-sm leading-relaxed text-slate-700 italic">
+                                        Strategic operations leader with 15+ years of experience <span class="bg-blue-100 px-1 border-b-2 border-blue-400 font-bold">spearheading</span> cross-functional digital transformations for Fortune 500 conglomerates.
+                                    </p>
+<!-- Annotation -->
+<div class="absolute -right-12 md:-right-40 top-0 w-32 md:w-48 opacity-0 group-hover:opacity-100 transition-opacity">
+<div class="flex items-center gap-2 mb-1">
+<span class="w-8 h-[1px] bg-primary-container"></span>
+<span class="text-[9px] font-bold text-primary-container uppercase tracking-widest">Optimized</span>
+</div>
+<p class="text-[10px] text-slate-400 leading-tight">Replaced "Managing" with "Spearheading" for high-impact executive presence.</p>
+</div>
+</div>
+</section>
+<!-- Experience Section -->
+<section>
+<h3 class="text-sm font-black mb-4 flex items-center gap-2">
+<span class="w-4 h-[2px] bg-slate-900"></span>
+                                    PROFESSIONAL MILESTONES
+                                </h3>
+<div class="space-y-6">
+<div class="relative group">
+<div class="flex justify-between items-baseline mb-1">
+<h4 class="font-bold text-sm">GLOBAL LOGISTICS CORP</h4>
+<span class="text-[10px] font-medium text-slate-500">2018 — PRESENT</span>
+</div>
+<ul class="text-xs space-y-2 text-slate-600 list-disc pl-4">
+<li>Directed <span class="bg-blue-100 px-1 border-b-2 border-blue-400 font-bold">$42M infrastructure overhaul</span> resulting in a 22% reduction in operational latency.</li>
+<li>Orchestrated global cloud migration strategy across 14 international hubs.</li>
+</ul>
+<!-- Annotation -->
+<div class="absolute -right-12 md:-right-40 top-4 w-32 md:w-48 opacity-0 group-hover:opacity-100 transition-opacity">
+<div class="flex items-center gap-2 mb-1">
+<span class="w-8 h-[1px] bg-primary-container"></span>
+<span class="text-[9px] font-bold text-primary-container uppercase tracking-widest">Keyword Inserted</span>
+</div>
+<p class="text-[10px] text-slate-400 leading-tight">Added specific quantitative metrics ($42M, 22%) to satisfy algorithmic performance filters.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Floating Badge -->
+<div class="absolute -top-16 -right-12 bg-primary text-on-primary-container p-4 rounded-full w-24 h-24 flex items-center justify-center text-center shadow-xl rotate-12">
+<p class="text-[10px] font-black leading-tight uppercase">Verified<br/>Executive<br/>Ready</p>
+</div>
+</div>
+</div>
+<!-- Gallery Interaction Overlay -->
+<div class="mt-12 flex justify-center gap-8">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">zoom_in</span>
+<span class="text-[10px] uppercase tracking-widest">Hover to see AI adjustments</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">auto_fix_high</span>
+<span class="text-[10px] uppercase tracking-widest">Lumina AI Refined</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Insights Bento Grid -->
+<section class="mt-32">
+<h3 class="font-headline text-3xl mb-12 italic">Synthesis Report</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-surface-container-low p-10 rounded-lg flex flex-col justify-between min-h-[240px]">
+<span class="material-symbols-outlined text-primary text-3xl">psychology</span>
+<div>
+<h5 class="font-bold text-sm mb-2">Cognitive Alignment</h5>
+<p class="text-xs text-on-surface-variant leading-relaxed">Language patterns adjusted to match the psychographic profile of top-tier recruiters.</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-10 rounded-lg flex flex-col justify-between min-h-[240px]">
+<span class="material-symbols-outlined text-tertiary text-3xl">hub</span>
+<div>
+<h5 class="font-bold text-sm mb-2">Network Resonance</h5>
+<p class="text-xs text-on-surface-variant leading-relaxed">Keywords synchronized with current 2024 hiring trends in the Global Logistics sector.</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-10 rounded-lg flex flex-col justify-between min-h-[240px]">
+<span class="material-symbols-outlined text-secondary text-3xl">verified</span>
+<div>
+<h5 class="font-bold text-sm mb-2">Narrative Velocity</h5>
+<p class="text-xs text-on-surface-variant leading-relaxed">Sentence structure streamlined for a 4.2 second high-impact initial read.</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 border-t border-slate-200/10 bg-slate-50 dark:bg-[#131313] tonal-shift-bg-surface-container-low mt-24">
+<div class="flex flex-col md:flex-row justify-between items-center px-12 gap-6 max-w-screen-2xl mx-auto">
+<div class="text-lg font-black font-['Newsreader']">LUMINA</div>
+<div class="flex flex-wrap justify-center gap-8 font-['Inter'] uppercase text-[10px] tracking-[0.2em] font-bold">
+<a class="text-slate-400 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white transition-colors" href="#">Privacy Policy</a>
+<a class="text-slate-400 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white transition-colors" href="#">Terms of Service</a>
+<a class="text-slate-400 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white transition-colors" href="#">Executive Support</a>
+</div>
+<div class="font-['Inter'] uppercase text-[10px] tracking-[0.2em] font-bold text-slate-400">© 2024 LUMINA INTELLIGENCE</div>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resume Tailor Pro | Final Product Direction</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%235070ff'/%3E%3Ctext x='50%25' y='55%25' font-size='26' font-family='Arial, sans-serif' font-weight='700' text-anchor='middle' fill='white'%3ERT%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --font-ui: "Manrope", sans-serif;
+        --radius-shell: 28px;
+        --radius-xl: 22px;
+        --radius-lg: 18px;
+        --radius-md: 14px;
+        --radius-sm: 12px;
+        --radius-pill: 999px;
+      }
+
+      body[data-theme="dark"] {
+        --bg: #0a0f16;
+        --shell: #101720;
+        --surface: #131b26;
+        --surface-raised: #182231;
+        --surface-muted: #0f1620;
+        --line: #243140;
+        --line-soft: rgba(160, 181, 208, 0.12);
+        --text: #f3f6fb;
+        --text-soft: #9aa9bc;
+        --text-dim: #6d7b8f;
+        --accent: #5070ff;
+        --accent-strong: #3f5be4;
+        --accent-soft: rgba(80, 112, 255, 0.14);
+        --success: #32b48a;
+        --warn: #d39747;
+        --danger: #d56c6c;
+        --shadow-shell: 0 30px 80px -48px rgba(0, 0, 0, 0.72);
+        --shadow-panel: 0 18px 44px -32px rgba(0, 0, 0, 0.48);
+      }
+
+      body[data-theme="light"] {
+        --bg: #e4ebf3;
+        --shell: #f5f8fb;
+        --surface: #fbfcfe;
+        --surface-raised: #eef3f8;
+        --surface-muted: #eff4f8;
+        --line: #d1dbe7;
+        --line-soft: rgba(33, 55, 86, 0.1);
+        --text: #182536;
+        --text-soft: #556476;
+        --text-dim: #7e8c9e;
+        --accent: #4c6fff;
+        --accent-strong: #3e60ea;
+        --accent-soft: rgba(76, 111, 255, 0.1);
+        --success: #1f9f79;
+        --warn: #b98432;
+        --danger: #c95e5e;
+        --shadow-shell: 0 24px 60px -42px rgba(24, 45, 72, 0.22);
+        --shadow-panel: 0 16px 32px -24px rgba(24, 45, 72, 0.14);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        font-family: var(--font-ui);
+        background: var(--bg);
+        color: var(--text);
+        transition: background 180ms ease, color 180ms ease;
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+
+      .app-shell {
+        width: min(1440px, calc(100% - 32px));
+        margin: 16px auto;
+        padding: 18px;
+        background: var(--shell);
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius-shell);
+        box-shadow: var(--shadow-shell);
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 18px;
+        padding: 6px 4px 18px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+      }
+
+      .brand-mark {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        color: #fff;
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      .brand-copy small,
+      .kicker,
+      .eyebrow,
+      .section-label,
+      .meta-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .brand-copy small {
+        color: var(--text-dim);
+        margin-bottom: 3px;
+      }
+
+      .brand-copy strong {
+        display: block;
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+
+      .stepper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .stepper button {
+        appearance: none;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--text-soft);
+        padding: 10px 12px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: 140ms ease;
+      }
+
+      .stepper button:hover {
+        background: var(--surface-muted);
+        border-color: var(--line-soft);
+      }
+
+      .stepper button.active {
+        background: var(--surface);
+        border-color: var(--line);
+        color: var(--text);
+        box-shadow: var(--shadow-panel);
+      }
+
+      .step-index {
+        width: 28px;
+        height: 28px;
+        display: inline-grid;
+        place-items: center;
+        border-radius: 10px;
+        background: var(--surface-raised);
+        color: var(--text-dim);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .stepper button.active .step-index {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .step-name {
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .theme-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px;
+        border-radius: var(--radius-pill);
+        background: var(--surface-raised);
+        border: 1px solid var(--line-soft);
+      }
+
+      .theme-switch button {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--text-soft);
+        padding: 8px 12px;
+        border-radius: var(--radius-pill);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .theme-switch button.active {
+        background: var(--surface);
+        color: var(--text);
+        box-shadow: inset 0 0 0 1px var(--line-soft);
+      }
+
+      .context-strip {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) auto;
+        gap: 14px;
+        align-items: center;
+        margin-top: 18px;
+        padding: 14px 16px;
+        border-radius: var(--radius-xl);
+        background: var(--surface-muted);
+        border: 1px solid var(--line-soft);
+      }
+
+      .context-items {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+      }
+
+      .context-item strong,
+      .metric-card strong,
+      .surface-head h2,
+      .surface-head h3,
+      .right-head h3,
+      .feature-title,
+      .score-value,
+      .resume-file,
+      .priority-title {
+        letter-spacing: -0.03em;
+      }
+
+      .context-item strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .context-item span {
+        display: block;
+        margin-top: 4px;
+        color: var(--text-soft);
+        font-size: 13px;
+      }
+
+      .context-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .btn {
+        appearance: none;
+        border: 1px solid transparent;
+        border-radius: 14px;
+        padding: 12px 15px;
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .btn.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+
+      .btn.primary:hover {
+        background: var(--accent-strong);
+        border-color: var(--accent-strong);
+      }
+
+      .btn.secondary {
+        background: var(--surface);
+        border-color: var(--line);
+        color: var(--text);
+      }
+
+      .btn.quiet {
+        background: transparent;
+        border-color: var(--line-soft);
+        color: var(--text-soft);
+      }
+
+      .pages {
+        margin-top: 18px;
+      }
+
+      .page {
+        display: none;
+      }
+
+      .page.active {
+        display: block;
+      }
+
+      .page-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 18px;
+        padding: 8px 2px 18px;
+      }
+
+      .eyebrow {
+        color: var(--accent);
+        margin-bottom: 10px;
+      }
+
+      .page-head h1 {
+        margin: 0;
+        font-size: clamp(30px, 4vw, 44px);
+        line-height: 1.02;
+        letter-spacing: -0.06em;
+        max-width: 840px;
+      }
+
+      .page-head p {
+        margin: 12px 0 0;
+        color: var(--text-soft);
+        font-size: 15px;
+        line-height: 1.7;
+        max-width: 760px;
+      }
+
+      .page-meta {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .metric-card,
+      .surface,
+      .right-surface,
+      .group,
+      .list-row,
+      .driver-row,
+      .priority-row,
+      .change-row,
+      .action-row,
+      .resume-card {
+        border: 1px solid var(--line-soft);
+        background: var(--surface);
+        box-shadow: var(--shadow-panel);
+      }
+
+      .metric-card {
+        padding: 14px 16px;
+        border-radius: var(--radius-lg);
+        min-width: 148px;
+      }
+
+      .meta-label {
+        color: var(--text-dim);
+        margin-bottom: 8px;
+      }
+
+      .metric-card strong {
+        display: block;
+        font-size: 28px;
+        line-height: 0.95;
+      }
+
+      .metric-card span {
+        display: block;
+        margin-top: 6px;
+        color: var(--text-soft);
+        font-size: 12px;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.82fr);
+        gap: 18px;
+      }
+
+      .surface {
+        padding: 22px;
+        border-radius: var(--radius-xl);
+      }
+
+      .right-rail {
+        display: grid;
+        gap: 14px;
+      }
+
+      .right-surface {
+        padding: 18px;
+        border-radius: var(--radius-lg);
+      }
+
+      .surface-head,
+      .right-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .surface-head h2,
+      .right-head h3 {
+        margin: 6px 0 0;
+        font-size: 21px;
+        line-height: 1.15;
+      }
+
+      .surface-head p,
+      .right-head p,
+      .body-copy,
+      .row-copy,
+      .resume-card p,
+      .resume-card li {
+        margin: 8px 0 0;
+        color: var(--text-soft);
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      .tag-row,
+      .button-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        border-radius: var(--radius-pill);
+        padding: 8px 10px;
+        background: var(--surface-raised);
+        border: 1px solid var(--line-soft);
+        color: var(--text-soft);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .tag.accent {
+        background: var(--accent-soft);
+        border-color: transparent;
+        color: var(--accent);
+      }
+
+      .tag.good {
+        color: var(--success);
+      }
+
+      .tag.warn {
+        color: var(--warn);
+      }
+
+      .tag.danger {
+        color: var(--danger);
+      }
+
+      .group {
+        padding: 16px;
+        border-radius: var(--radius-lg);
+      }
+
+      .group-grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .group-grid.two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .group-grid.three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .group-title {
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+
+      .group-subtitle {
+        margin-top: 6px;
+        color: var(--text-soft);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .list-stack,
+      .driver-stack,
+      .priority-stack,
+      .change-stack,
+      .action-stack,
+      .note-stack {
+        display: grid;
+        gap: 10px;
+      }
+
+      .list-row,
+      .driver-row,
+      .priority-row,
+      .change-row,
+      .action-row {
+        padding: 14px 16px;
+        border-radius: 16px;
+      }
+
+      .list-row,
+      .change-row,
+      .action-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .list-row strong,
+      .change-row strong,
+      .action-row strong,
+      .note-row strong {
+        display: block;
+        font-size: 15px;
+        letter-spacing: -0.02em;
+      }
+
+      .pill-score {
+        font-size: 12px;
+        font-weight: 800;
+        color: var(--text-soft);
+        white-space: nowrap;
+      }
+
+      .editor-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .editor-box,
+      .upload-box,
+      .score-panel,
+      .resume-shell {
+        border: 1px solid var(--line-soft);
+        background: var(--surface-raised);
+        border-radius: var(--radius-lg);
+      }
+
+      .editor-box,
+      .upload-box,
+      .score-panel {
+        padding: 18px;
+      }
+
+      .segmented {
+        display: inline-flex;
+        gap: 6px;
+        padding: 5px;
+        border-radius: var(--radius-pill);
+        background: var(--surface-raised);
+        border: 1px solid var(--line-soft);
+      }
+
+      .segmented button {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--text-soft);
+        padding: 8px 11px;
+        border-radius: var(--radius-pill);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .segmented button.active {
+        background: var(--surface);
+        color: var(--text);
+        box-shadow: inset 0 0 0 1px var(--line-soft);
+      }
+
+      textarea,
+      input {
+        width: 100%;
+        padding: 14px 15px;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--text);
+      }
+
+      textarea {
+        min-height: 240px;
+        resize: vertical;
+      }
+
+      .field-label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--text-dim);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .field-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .upload-box {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .upload-zone {
+        display: grid;
+        place-items: center;
+        text-align: center;
+        min-height: 240px;
+        padding: 18px;
+        border-radius: 16px;
+        border: 1px dashed var(--line);
+        background: var(--surface);
+      }
+
+      .upload-icon {
+        width: 58px;
+        height: 58px;
+        display: grid;
+        place-items: center;
+        border-radius: 18px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 18px;
+        font-weight: 800;
+        margin-bottom: 14px;
+      }
+
+      .feature-block {
+        margin-top: 18px;
+        padding: 18px;
+        border-radius: var(--radius-lg);
+        background: var(--surface-raised);
+        border: 1px solid var(--line);
+      }
+
+      .feature-top {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 14px;
+        align-items: start;
+      }
+
+      .feature-title {
+        font-size: 34px;
+        font-weight: 800;
+        line-height: 1.02;
+      }
+
+      .feature-meta {
+        margin-top: 8px;
+        color: var(--text-soft);
+        font-size: 14px;
+      }
+
+      .score-box {
+        text-align: right;
+      }
+
+      .score-value {
+        font-size: 46px;
+        font-weight: 800;
+        line-height: 0.9;
+      }
+
+      .score-label {
+        margin-top: 6px;
+        color: var(--text-soft);
+        font-size: 12px;
+      }
+
+      .score-panel {
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr);
+        gap: 18px;
+        margin-top: 18px;
+      }
+
+      .score-hero {
+        padding-right: 8px;
+        border-right: 1px solid var(--line-soft);
+      }
+
+      .score-hero .score-value {
+        font-size: 92px;
+      }
+
+      .score-hero p {
+        margin: 12px 0 0;
+        color: var(--text-soft);
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      .driver-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 52px;
+        gap: 14px;
+        align-items: start;
+      }
+
+      .driver-score {
+        text-align: right;
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--text-soft);
+      }
+
+      .bar {
+        height: 8px;
+        margin-top: 10px;
+        border-radius: var(--radius-pill);
+        background: var(--surface);
+        overflow: hidden;
+      }
+
+      .bar > span {
+        display: block;
+        height: 100%;
+        width: var(--value, 50%);
+        background: var(--accent);
+      }
+
+      .priority-row {
+        display: grid;
+        grid-template-columns: 42px minmax(0, 1fr) auto;
+        gap: 14px;
+        align-items: start;
+      }
+
+      .priority-index {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        background: var(--surface-raised);
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .priority-title {
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      .resume-shell {
+        overflow: hidden;
+        margin-top: 18px;
+      }
+
+      .resume-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line-soft);
+        background: var(--surface-muted);
+      }
+
+      .resume-file {
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .resume-content {
+        padding: 20px;
+      }
+
+      .resume-grid {
+        display: grid;
+        grid-template-columns: 0.82fr 1.18fr;
+        gap: 14px;
+      }
+
+      .resume-column {
+        display: grid;
+        gap: 14px;
+      }
+
+      .resume-card {
+        padding: 16px;
+        border-radius: 16px;
+      }
+
+      .resume-card h4 {
+        margin: 8px 0 0;
+        font-size: 15px;
+      }
+
+      .resume-card ul {
+        margin: 10px 0 0;
+        padding-left: 18px;
+      }
+
+      mark {
+        background: var(--accent-soft);
+        color: inherit;
+        padding: 0 4px;
+        border-radius: 6px;
+      }
+
+      .note-row {
+        padding-top: 12px;
+        border-top: 1px solid var(--line-soft);
+      }
+
+      .note-row:first-child {
+        padding-top: 0;
+        border-top: 0;
+      }
+
+      @media (max-width: 1180px) {
+        .topbar,
+        .context-strip,
+        .page-head,
+        .layout,
+        .editor-shell,
+        .score-panel,
+        .resume-grid,
+        .group-grid.two,
+        .group-grid.three {
+          grid-template-columns: 1fr;
+        }
+
+        .score-hero {
+          border-right: 0;
+          padding-right: 0;
+          border-bottom: 1px solid var(--line-soft);
+          padding-bottom: 14px;
+        }
+
+        .page-meta,
+        .context-actions {
+          justify-content: flex-start;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .app-shell {
+          width: min(100% - 12px, 100%);
+          margin: 6px auto;
+          padding: 12px;
+          border-radius: 22px;
+        }
+
+        .topbar {
+          padding-bottom: 14px;
+        }
+
+        .feature-top,
+        .list-row,
+        .change-row,
+        .action-row {
+          grid-template-columns: 1fr;
+          display: grid;
+        }
+
+        .stepper {
+          justify-content: flex-start;
+        }
+
+        .stepper button {
+          width: calc(50% - 4px);
+          justify-content: flex-start;
+        }
+
+        .stepper button:last-child {
+          width: 100%;
+        }
+
+        .feature-title {
+          font-size: 28px;
+        }
+
+        .score-hero .score-value {
+          font-size: 72px;
+        }
+      }
+    </style>
+  </head>
+  <body data-theme="dark">
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">RT</div>
+          <div class="brand-copy">
+            <small>Resume Tailor Pro</small>
+            <strong>Final Product Direction</strong>
+          </div>
+        </div>
+
+        <nav class="stepper" aria-label="Workflow">
+          <button class="active" data-phase-target="discovery">
+            <span class="step-index">01</span>
+            <span class="step-name">Discovery</span>
+          </button>
+          <button data-phase-target="intake">
+            <span class="step-index">02</span>
+            <span class="step-name">Intake</span>
+          </button>
+          <button data-phase-target="match">
+            <span class="step-index">03</span>
+            <span class="step-name">Match</span>
+          </button>
+          <button data-phase-target="diagnosis">
+            <span class="step-index">04</span>
+            <span class="step-name">Diagnosis</span>
+          </button>
+          <button data-phase-target="output">
+            <span class="step-index">05</span>
+            <span class="step-name">Output</span>
+          </button>
+        </nav>
+
+        <div class="topbar-actions">
+          <div class="theme-switch">
+            <button class="active" data-theme-target="dark">Dark</button>
+            <button data-theme-target="light">Light</button>
+          </div>
+        </div>
+      </header>
+
+      <section class="context-strip">
+        <div class="context-items">
+          <div class="context-item">
+            <span class="kicker">Candidate</span>
+            <strong>Senior Product Designer</strong>
+            <span>Systems, growth, onboarding, enterprise workflows</span>
+          </div>
+          <div class="context-item">
+            <span class="kicker">Selected role</span>
+            <strong>Staff Product Designer, Growth Systems</strong>
+            <span>Northstar · Remote (US) · Discovery anchor role</span>
+          </div>
+          <div class="context-item">
+            <span class="kicker">Current score</span>
+            <strong>84% aligned</strong>
+            <span>Projected 91% after rewrite</span>
+          </div>
+        </div>
+        <div class="context-actions">
+          <button class="btn primary">Continue workflow</button>
+          <button class="btn secondary">Open selected role</button>
+        </div>
+      </section>
+
+      <main class="pages">
+        <section class="page active" data-phase="discovery">
+          <div class="page-head">
+            <div>
+              <span class="eyebrow">Phase 01 · Discovery</span>
+              <h1>Discovery should feel like choosing a direction, not browsing a job board.</h1>
+              <p>
+                The screen needs one clear recommendation, a compact shortlist, and just enough candidate context to support the decision.
+                Anything beyond that is noise.
+              </p>
+            </div>
+            <div class="page-meta">
+              <div class="metric-card">
+                <span class="meta-label">Live roles</span>
+                <strong>12</strong>
+                <span>filtered and ranked</span>
+              </div>
+              <div class="metric-card">
+                <span class="meta-label">Best fit</span>
+                <strong>91%</strong>
+                <span>for selected role</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="layout">
+            <section class="surface">
+              <div class="surface-head">
+                <div>
+                  <span class="section-label">Selected opportunity</span>
+                  <h2>Featured role</h2>
+                  <p>One strong opportunity should dominate the screen. The rest of the list supports, but does not compete.</p>
+                </div>
+                <div class="tag-row">
+                  <span class="tag accent">Most aligned</span>
+                  <span class="tag">Remote</span>
+                  <span class="tag">Worth tailoring</span>
+                </div>
+              </div>
+
+              <div class="group-grid three" style="margin-top: 18px;">
+                <div class="group">
+                  <div class="group-title">Location bias</div>
+                  <div class="group-subtitle">US remote, Austin, New York</div>
+                </div>
+                <div class="group">
+                  <div class="group-title">Role focus</div>
+                  <div class="group-subtitle">Design systems, growth, activation, platform tooling</div>
+                </div>
+                <div class="group">
+                  <div class="group-title">Search logic</div>
+                  <div class="group-subtitle">Shortlisted for quality and fit, not feed volume</div>
+                </div>
+              </div>
+
+              <div class="feature-block">
+                <div class="feature-top">
+                  <div>
+                    <div class="feature-title">Staff Product Designer, Growth Systems</div>
+                    <div class="feature-meta">Northstar · Remote (US) · Posted 2 days ago</div>
+                  </div>
+                  <div class="score-box">
+                    <div class="score-value">91%</div>
+                    <div class="score-label">fit estimate</div>
+                  </div>
+                </div>
+
+                <div class="tag-row" style="margin-top: 14px;">
+                  <span class="tag accent">Design systems</span>
+                  <span class="tag accent">Funnel optimization</span>
+                  <span class="tag accent">Cross-functional leadership</span>
+                </div>
+
+                <div class="group-grid three" style="margin-top: 16px;">
+                  <div class="group">
+                    <div class="group-title">Why it wins</div>
+                    <div class="group-subtitle">The role lines up with actual platform and growth work already visible in the candidate profile.</div>
+                  </div>
+                  <div class="group">
+                    <div class="group-title">Main risk</div>
+                    <div class="group-subtitle">The resume still underplays quantified experiment outcomes.</div>
+                  </div>
+                  <div class="group">
+                    <div class="group-title">Decision</div>
+                    <div class="group-subtitle">High-value target with a credible interview story after tailoring.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="list-stack" style="margin-top: 14px;">
+                <div class="list-row">
+                  <div>
+                    <strong>Lead Product Designer, Activation</strong>
+                    <div class="row-copy">Mercury Labs · 86% fit · Better compensation, slightly weaker systems relevance</div>
+                  </div>
+                  <span class="pill-score">Hold</span>
+                </div>
+                <div class="list-row">
+                  <div>
+                    <strong>Principal UX Designer, Platform</strong>
+                    <div class="row-copy">Atlas Cloud · 83% fit · Strong platform match, weaker growth signal</div>
+                  </div>
+                  <span class="pill-score">Backup</span>
+                </div>
+                <div class="list-row">
+                  <div>
+                    <strong>Senior Product Designer, Monetization</strong>
+                    <div class="row-copy">Foundry OS · 78% fit · Closer to experimentation, less leadership scope</div>
+                  </div>
+                  <span class="pill-score">Optional</span>
+                </div>
+              </div>
+            </section>
+
+            <aside class="right-rail">
+              <section class="right-surface">
+                <div class="right-head">
+                  <div>
+                    <span class="section-label">Candidate summary</span>
+                    <h3>What matters here</h3>
+                  </div>
+                </div>
+                <p class="body-copy">
+                  The candidate has enough real signal to support a discovery step, but not enough to justify a dense search dashboard.
+                  This needs to stay recommendation-led.
+                </p>
+                <div class="note-stack" style="margin-top: 14px;">
+                  <div class="note-row">
+                    <strong>Resume parsed once</strong>
+                    <div class="row-copy">No repeated upload ceremony later in the flow.</div>
+                  </div>
+                  <div class="note-row">
+                    <strong>One role selected</strong>
+                    <div class="row-copy">The UI makes the next move obvious instead of scattering attention.</div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="right-surface">
+                <div class="right-head">
+                  <div>
+                    <span class="section-label">Search controls</span>
+                    <h3>Kept on purpose</h3>
+                  </div>
+                </div>
+                <div class="tag-row" style="margin-top: 8px;">
+                  <span class="tag">170k+</span>
+                  <span class="tag">Hybrid okay</span>
+                  <span class="tag">B2B SaaS</span>
+                  <span class="tag">US only</span>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section class="page" data-phase="intake">
+          <div class="page-head">
+            <div>
+              <span class="eyebrow">Phase 02 · Intake</span>
+              <h1>Intake should read like a workbench, not a ceremony.</h1>
+              <p>
+                The user is confirming material for the selected role. This phase should be quiet, practical, and free of duplicated visual metaphors.
+              </p>
+            </div>
+            <div class="page-meta">
+              <div class="metric-card">
+                <span class="meta-label">Sources</span>
+                <strong>2</strong>
+                <span>role + resume locked</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="layout">
+            <section class="surface">
+              <div class="surface-head">
+                <div>
+                  <span class="section-label">Role and resume input</span>
+                  <h2>Structured intake</h2>
+                  <p>The selected role remains pinned. The user edits details, not the overall direction.</p>
+                </div>
+                <div class="segmented">
+                  <button class="active">Selected role</button>
+                  <button>Paste text</button>
+                  <button>Upload file</button>
+                </div>
+              </div>
+
+              <div class="editor-shell">
+                <div class="editor-box">
+                  <label class="field-label">Job description</label>
+                  <textarea>Staff Product Designer, Growth Systems
+
+Own the end-to-end experience for growth and activation flows. Lead design systems decisions for a product used by enterprise teams. Partner with PM, data, and engineering to test onboarding improvements, ship scalable patterns, and raise design quality across a fast-moving product organization.</textarea>
+                </div>
+
+                <div class="upload-box">
+                  <div class="upload-zone">
+                    <div>
+                      <div class="upload-icon">CV</div>
+                      <div class="group-title">senior_product_resume.docx</div>
+                      <div class="group-subtitle">Loaded once. Candidate context persists across the rest of the workflow.</div>
+                    </div>
+                  </div>
+
+                  <div class="field-grid">
+                    <div>
+                      <label class="field-label">Candidate focus</label>
+                      <input value="Design systems, onboarding, experimentation, enterprise UX" />
+                    </div>
+                    <div>
+                      <label class="field-label">Known gap</label>
+                      <input value="Only one visible metric on activation outcomes" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <aside class="right-rail">
+              <section class="right-surface">
+                <div class="right-head">
+                  <div>
+                    <span class="section-label">Parse notes</span>
+                    <h3>Candidate profile</h3>
+                  </div>
+                </div>
+                <p class="body-copy">
+                  Senior product designer with strong systems leadership, credible B2B SaaS depth, and enough growth relevance to target high-quality staff roles.
+                </p>
+              </section>
+
+              <section class="right-surface">
+                <div class="right-head">
+                  <div>
+                    <span class="section-label">Why this is cleaner</span>
+                    <h3>Less ceremony</h3>
+                  </div>
+                </div>
+                <div class="note-stack" style="margin-top: 8px;">
+                  <div class="note-row">
+                    <strong>Role context persists</strong>
+                    <div class="row-copy">Discovery is not visually thrown away.</div>
+                  </div>
+                  <div class="note-row">
+                    <strong>Resume lives once</strong>
+                    <div class="row-copy">No duplicate upload treatment in later steps.</div>
+                  </div>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section class="page" data-phase="match">
+          <div class="page-head">
+            <div>
+              <span class="eyebrow">Phase 03 · Match</span>
+              <h1>One score matters. Everything else should explain it.</h1>
+              <p>
+                The goal is not to impress with analysis widgets. The goal is to build trust in the recommendation and make the next action obvious.
+              </p>
+            </div>
+            <div class="page-meta">
+              <div class="metric-card">
+                <span class="meta-label">Projected lift</span>
+                <strong>+7</strong>
+                <span>after targeted rewrite</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="layout">
+            <section class="surface">
+              <div class="surface-head">
+                <div>
+                  <span class="section-label">Match overview</span>
+                  <h2>Compatibility signal</h2>
+                  <p>Large score, few drivers, no decorative analytics.</p>
+                </div>
+                <div class="button-row">
+                  <button class="btn primary">Generate first draft</button>
+                  <button class="btn secondary">Inspect evidence</button>
+                </div>
+              </div>
+
+              <div class="score-panel">
+                <div class="score-hero">
+                  <span class="section-label">Current alignment</span>
+                  <div class="score-value">84%</div>
+                  <p>Strong structural fit. The resume already supports this role, but it does not yet present the best story.</p>
+                </div>
+
+                <div class="driver-stack">
+                  <div class="driver-row">
+                    <div>
+                      <strong>Keywords and role language</strong>
+                      <div class="row-copy">Most high-signal language is present, but experimentation vocabulary is underplayed.</div>
+                      <div class="bar"><span style="--value: 86%;"></span></div>
+                    </div>
+                    <div class="driver-score">86</div>
+                  </div>
+                  <div class="driver-row">
+                    <div>
+                      <strong>Experience alignment</strong>
+                      <div class="row-copy">Platform quality, systems work, and seniority map cleanly to the target role.</div>
+                      <div class="bar"><span style="--value: 91%;"></span></div>
+                    </div>
+                    <div class="driver-score">91</div>
+                  </div>
+                  <div class="driver-row">
+                    <div>
+                      <strong>Skills overlap</strong>
+                      <div class="row-copy">Excellent UX systems depth, moderate analytics and growth framing.</div>
+                      <div class="bar"><span style="--value: 79%;"></span></div>
+                    </div>
+                    <div class="driver-score">79</div>
+                  </div>
+                  <div class="driver-row">
+                    <div>
+                      <strong>Evidence strength</strong>
+                      <div class="row-copy">The story is credible, but some impact claims still need clearer proof.</div>
+                      <div class="bar"><span style="--value: 71%;"></span></div>
+                    </div>
+                    <div class="driver-score">71</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <aside class="right-rail">
+              <section class="right-surface">
+                <div class="right-head">
+                  <div>
+                    <span class="section-label">Evidence summary</span>
+                    <h3>What supports the score</h3>
+                  </div>
+                </div>
+                <div class="note-stack" style="margin-top: 8px;">
+                  <div class="note-row">
+                    <strong>Best aligned experience</strong>
+                    <div class="row-copy">Design system rollout across onboarding and billing surfaces.</div>
+                  </div>
+                  <div class="note-row">
+                    <strong>Main gap</strong>
+                    <div class="row-copy">Measured experiment outcomes and stakeholder influence language.</div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="right-surface">
+                <div class="right-head">
+                  <div>
+                    <span class="section-label">Alternative role</span>
+                    <h3>Good fallback, not the lead</h3>
+                  </div>
+                </div>
+                <p class="body-copy">Lead Product Designer, Activation remains strong, but the interview story is less differentiated.</p>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section class="page" data-phase="diagnosis">
+          <div class="page-head">
+            <div>
+              <span class="eyebrow">Phase 04 · Diagnosis</span>
+              <h1>Diagnosis must produce actions, not a wall of observations.</h1>
+              <p>
+                This phase should tell the user what to rewrite first, what to prove, and what to remove. If it does more than that, it is overdesigned.
+              </p>
+            </div>
+            <div class="page-meta">
+              <div class="metric-card">
+                <span class="meta-label">Priority edits</span>
+                <strong>3</strong>
+                <span>before export</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="layout">
+            <section class="surface">
+              <div class="surface-head">
+                <div>
+                  <span class="section-label">Rewrite plan</span>
+                  <h2>Priority actions</h2>
+                  <p>Each item must be specific enough to rewrite from immediately.</p>
+                </div>
+                <div class="tag-row">
+                  <span class="tag accent">Actionable</span>
+                  <span class="tag">Truthful only</span>
+                </div>
+              </div>
+
+              <div class="priority-stack" style="margin-top: 18px;">
+                <div class="priority-row">
+                  <div class="priority-index">01</div>
+                  <div>
+                    <div class="priority-title">Rewrite the opening summary around systems leadership</div>
+                    <div class="row-copy">The current story starts too broad. Lead with platform quality, reusable patterns, and cross-functional execution.</div>
+                  </div>
+                  <span class="tag accent">Highest</span>
+                </div>
+                <div class="priority-row">
+                  <div class="priority-index">02</div>
+                  <div>
+                    <div class="priority-title">Add one quantified growth or activation outcome</div>
+                    <div class="row-copy">Without a measurable result, the role fit looks plausible but not exceptional.</div>
+                  </div>
+                  <span class="tag warn">Needed</span>
+                </div>
+                <div class="priority-row">
+                  <div class="priority-index">03</div>
+                  <div>
+                    <div class="priority-title">Remove unsupported claims and vague adjectives</div>
+                    <div class="row-copy">If the proof is not visible, the line should be softened or deleted.</div>
+                  </div>
+                  <span class="tag danger">Prune</span>
+                </div>
+              </div>
+
+              <div class="change-stack" style="margin-top: 14px;">
+                <div class="change-row">
+                  <div>
+                    <strong>Weak section: summary</strong>
+                    <div class="row-copy">Too generic for a staff-level design systems role. It needs sharper role language and clearer scope.</div>
+                  </div>
+                  <span class="pill-score">Rewrite</span>
+                </div>
+                <div class="change-row">
+                  <div>
+                    <strong>Unsupported claim: significant activation gains</strong>
+                    <div class="row-copy">Do not imply strong quantitative impact unless the source resume can defend it.</div>
+                  </div>
+                  <span class="pill-score">Verify</span>
+                </div>
+                <div class="change-row">
+                  <div>
+                    <strong>Hidden strength: enterprise workflow simplification</strong>
+                    <div class="row-copy">This is differentiated and should be more prominent in the final draft.</div>
+                  </div>
+                  <span class="pill-score">Elevate</span>
+                </div>
+              </div>
+            </section>
+
+            <aside class="right-rail">
+              <section class="right-surface">
+                <div class="right-head">
+                  <div>
+                    <span class="section-label">Expected result</span>
+                    <h3>Projected score after rewrite</h3>
+                  </div>
+                </div>
+                <p class="body-copy">A cleaner summary plus one defensible metric should move the story from credible to compelling.</p>
+                <div class="metric-card" style="margin-top: 14px;">
+                  <span class="meta-label">Projected alignment</span>
+                  <strong>91%</strong>
+                  <span>if the top 3 edits land cleanly</span>
+                </div>
+              </section>
+
+              <section class="right-surface">
+                <div class="right-head">
+                  <div>
+                    <span class="section-label">Guardrails</span>
+                    <h3>What not to do</h3>
+                  </div>
+                </div>
+                <div class="note-stack" style="margin-top: 8px;">
+                  <div class="note-row">
+                    <strong>Do not overstuff keywords</strong>
+                    <div class="row-copy">Mirroring the JD is useful only when the sentence still sounds natural.</div>
+                  </div>
+                  <div class="note-row">
+                    <strong>Do not invent metrics</strong>
+                    <div class="row-copy">Accuracy matters more than hitting a prettier score.</div>
+                  </div>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section class="page" data-phase="output">
+          <div class="page-head">
+            <div>
+              <span class="eyebrow">Phase 05 · Output</span>
+              <h1>The output screen should feel finished enough to ship.</h1>
+              <p>
+                The final asset is the main object. The UI should support review, validation, and export, not compete with the document.
+              </p>
+            </div>
+            <div class="page-meta">
+              <div class="metric-card">
+                <span class="meta-label">Score delta</span>
+                <strong>+7</strong>
+                <span>84% → 91%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="layout">
+            <section class="surface">
+              <div class="surface-head">
+                <div>
+                  <span class="section-label">Final asset</span>
+                  <h2>Tailored resume</h2>
+                  <p>The preview stays central. Auto-apply is demoted behind the final document.</p>
+                </div>
+                <div class="button-row">
+                  <button class="btn primary">Download DOCX</button>
+                  <button class="btn secondary">Open apply flow</button>
+                  <button class="btn quiet">Clean view</button>
+                </div>
+              </div>
+
+              <div class="resume-shell">
+                <div class="resume-toolbar">
+                  <div class="resume-file">northstar_staff_product_designer_v7.docx</div>
+                  <div class="tag-row">
+                    <span class="tag accent">Show edits</span>
+                    <span class="tag">Export ready</span>
+                  </div>
+                </div>
+
+                <div class="resume-content">
+                  <div class="resume-grid">
+                    <div class="resume-column">
+                      <div class="resume-card">
+                        <span class="section-label">Profile</span>
+                        <h4>Alex Morgan</h4>
+                        <p>Staff-level product designer focused on growth systems, onboarding, and design quality at scale.</p>
+                      </div>
+                      <div class="resume-card">
+                        <span class="section-label">Core themes</span>
+                        <ul>
+                          <li>Design systems leadership</li>
+                          <li>Cross-functional experimentation</li>
+                          <li>Enterprise workflow simplification</li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div class="resume-column">
+                      <div class="resume-card">
+                        <span class="section-label">Summary</span>
+                        <p>
+                          Product designer with 8+ years building <mark>growth systems</mark>, onboarding improvements,
+                          and scalable UX patterns for B2B SaaS products. Known for pairing system-level thinking with
+                          cross-functional execution across product, engineering, and analytics.
+                        </p>
+                      </div>
+                      <div class="resume-card">
+                        <span class="section-label">Selected experience</span>
+                        <p>
+                          Led redesign of activation flows and reusable UI patterns across onboarding surfaces,
+                          resulting in <mark>clearer adoption paths and faster product iteration</mark> across three teams.
+                        </p>
+                        <p>
+                          Introduced a systems-led review process that improved consistency, reduced duplicated design work,
+                          and gave PM and engineering a shared language for shipping experiments.
+                        </p>
+                      </div>
+                      <div class="resume-card">
+                        <span class="section-label">Why this version is better</span>
+                        <ul>
+                          <li>The story leads with leadership and scope, not generic adjectives.</li>
+                          <li>Role language is aligned without sounding copied from the JD.</li>
+                          <li>High-value edits remain visible for validation before export.</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <aside class="right-rail">
+              <section class="right-surface">
+                <div class="right-head">
+                  <div>
+                    <span class="section-label">Change log</span>
+                    <h3>What changed</h3>
+                  </div>
+                </div>
+                <div class="change-stack" style="margin-top: 8px;">
+                  <div class="change-row">
+                    <div>
+                      <strong>Headline rewritten</strong>
+                      <div class="row-copy">Now framed around systems leadership and role-specific scope.</div>
+                    </div>
+                    <span class="tag good">Done</span>
+                  </div>
+                  <div class="change-row">
+                    <div>
+                      <strong>Growth framing added</strong>
+                      <div class="row-copy">Relevant experimentation language now appears in the lead story.</div>
+                    </div>
+                    <span class="tag good">Done</span>
+                  </div>
+                  <div class="change-row">
+                    <div>
+                      <strong>Unsupported claims removed</strong>
+                      <div class="row-copy">The draft is stronger because it is more believable.</div>
+                    </div>
+                    <span class="tag accent">Safe</span>
+                  </div>
+                </div>
+              </section>
+
+              <section class="right-surface">
+                <div class="right-head">
+                  <div>
+                    <span class="section-label">Next actions</span>
+                    <h3>Intentional hierarchy</h3>
+                  </div>
+                </div>
+                <div class="action-stack" style="margin-top: 8px;">
+                  <div class="action-row">
+                    <div>
+                      <strong>Download and use the asset</strong>
+                      <div class="row-copy">Primary route when the user is satisfied with the tailored version.</div>
+                    </div>
+                    <span class="tag accent">Primary</span>
+                  </div>
+                  <div class="action-row">
+                    <div>
+                      <strong>Open auto-apply</strong>
+                      <div class="row-copy">Important, but intentionally secondary to the final document.</div>
+                    </div>
+                    <span class="tag">Secondary</span>
+                  </div>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const phaseButtons = document.querySelectorAll("[data-phase-target]");
+      const pages = document.querySelectorAll("[data-phase]");
+      const themeButtons = document.querySelectorAll("[data-theme-target]");
+
+      function setPhase(phase) {
+        phaseButtons.forEach((button) => {
+          button.classList.toggle("active", button.dataset.phaseTarget === phase);
+        });
+        pages.forEach((page) => {
+          page.classList.toggle("active", page.dataset.phase === phase);
+        });
+      }
+
+      function setTheme(theme) {
+        document.body.dataset.theme = theme;
+        themeButtons.forEach((button) => {
+          button.classList.toggle("active", button.dataset.themeTarget === theme);
+        });
+      }
+
+      phaseButtons.forEach((button) => {
+        button.addEventListener("click", () => setPhase(button.dataset.phaseTarget));
+      });
+
+      themeButtons.forEach((button) => {
+        button.addEventListener("click", () => setTheme(button.dataset.themeTarget));
+      });
+    </script>
+  </body>
+</html>
