@@ -1,8 +1,8 @@
 {
-  "buildCommand": "vite build",
+  "buildCommand": "vite build && npx esbuild api/_index.ts --bundle --platform=node --target=node20 --format=cjs --outfile=api/index.cjs --external:fsevents --external:@playwright/test",
   "outputDirectory": "dist",
   "functions": {
-    "api/index.ts": {
+    "api/index.cjs": {
       "maxDuration": 60
     }
   },

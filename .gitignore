@@ -8,3 +8,5 @@ playwright-report/
 .playwright-mcp/
 e2e-*.png
 *.txt
+api/index.cjs
+.vercel
