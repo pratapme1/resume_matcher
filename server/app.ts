@@ -10,6 +10,14 @@ import { buildAnalysis, buildTailoringPlan } from './analysis.ts';
 import { buildGapAnalysis } from './gap-analysis.ts';
 import { generateTailoredDocx } from './docx-render.ts';
 import {
+  createApplySession,
+  confirmApplySessionSubmit,
+  completeApplySession,
+  getApplySessionForUser,
+  planApplySnapshot,
+  recordApplySessionEvent,
+} from './apply-sessions.ts';
+import {
   badRequest,
   internalServerError,
   isAppError,
@@ -38,6 +46,8 @@ import { createJobSearchSession } from './db/queries/sessions.ts';
 import { supabase } from './db/client.ts';
 import { logger } from './logger.ts';
 import type {
+  ApplySessionEvent,
+  PageSnapshot,
   JobSearchPreferences,
   ResumeTemplateProfile,
   TailorResumeResponse,
@@ -180,6 +190,20 @@ function sendErrorResponse(res: Response, error: unknown, context: string) {
   res.status(appError.status).json(body);
 }
 
+function getExecutorToken(req: Request): string {
+  const header = req.headers.authorization;
+  if (typeof header === 'string' && header.startsWith('Bearer ')) {
+    return header.slice(7);
+  }
+  const tokenHeader = req.headers['x-executor-token'];
+  if (typeof tokenHeader === 'string' && tokenHeader.trim()) {
+    return tokenHeader.trim();
+  }
+  throw badRequest('Executor token is required.', 'INVALID_REQUEST', {
+    logMessage: 'Missing executor token for apply-session executor route.',
+  });
+}
+
 // Rate limit factories — keyed by user ID after auth, IP fallback before
 function makeRateLimit(opts: { windowMs: number; max: number; message: string }) {
   return rateLimit({
@@ -199,6 +223,7 @@ const rateLimitProfile   = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 20, me
 const rateLimitDocx      = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 20, message: 'DOCX generation limit: 20 per hour.' });
 const rateLimitSmartFill = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 30, message: 'Smart fill limit: 30 per hour.' });
 const rateLimitAutoApply = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 5,  message: 'Auto-apply limit: 5 per hour.' });
+const rateLimitApplySession = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 3600, message: 'Apply session limit: 3600 per hour.' });
 
 export function createApp(deps: AppDependencies): Express {
   const app = express();
@@ -563,6 +588,117 @@ Instructions:
       res.json({ mapping });
     } catch (error) {
       sendErrorResponse(res, error, 'smart-fill');
+    }
+  });
+
+  app.post('/api/apply/sessions', auth, rateLimitApplySession, async (req, res) => {
+    try {
+      const body = z.object({
+        applyUrl: z.string().url(),
+        tailoredResume: z.any(),
+        templateProfile: z.any(),
+        validation: z.any(),
+      }).parse(req.body);
+
+      const response = await createApplySession({
+        applyUrl: body.applyUrl,
+        userId: req.internalUserId ?? req.userId,
+        tailoredResume: body.tailoredResume as TailoredResumeDocument,
+        templateProfile: body.templateProfile as ResumeTemplateProfile,
+        validation: body.validation as ValidationReport,
+      });
+
+      res.json(response);
+    } catch (error) {
+      sendErrorResponse(res, error, 'apply-sessions-create');
+    }
+  });
+
+  app.get('/api/apply/sessions/:id', auth, rateLimitApplySession, async (req, res) => {
+    try {
+      const session = getApplySessionForUser(req.params.id, req.internalUserId ?? req.userId);
+      res.json(session);
+    } catch (error) {
+      sendErrorResponse(res, error, 'apply-sessions-get');
+    }
+  });
+
+  app.post('/api/apply/sessions/:id/snapshot', rateLimitApplySession, async (req, res) => {
+    try {
+      const snapshot = z.object({
+        url: z.string().url(),
+        title: z.string(),
+        portalType: z.enum(['greenhouse', 'lever', 'ashby', 'generic', 'protected', 'unknown']),
+        fields: z.array(z.object({
+          id: z.string(),
+          name: z.string(),
+          label: z.string(),
+          placeholder: z.string(),
+          inputType: z.string(),
+          tagName: z.string(),
+          required: z.boolean(),
+          visible: z.boolean(),
+          value: z.string().optional(),
+          checked: z.boolean().optional(),
+          hasValue: z.boolean().optional(),
+          options: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
+        })),
+        controls: z.array(z.object({
+          id: z.string(),
+          label: z.string(),
+          kind: z.enum(['next', 'review', 'submit', 'unknown']),
+        })),
+      }).parse(req.body) as PageSnapshot;
+
+      const plan = planApplySnapshot(req.params.id, getExecutorToken(req), snapshot);
+      res.json(plan);
+    } catch (error) {
+      sendErrorResponse(res, error, 'apply-sessions-snapshot');
+    }
+  });
+
+  app.post('/api/apply/sessions/:id/events', rateLimitApplySession, async (req, res) => {
+    try {
+      const event = z.object({
+        status: z.enum(['created', 'queued', 'starting', 'filling', 'review_required', 'ready_to_submit', 'submitting', 'submitted', 'protected', 'unsupported', 'manual_required', 'failed']).optional(),
+        message: z.string().optional(),
+        screenshot: z.string().nullable().optional(),
+        filledCount: z.number().int().nonnegative().optional(),
+        reviewItems: z.array(z.object({
+          fieldId: z.string(),
+          label: z.string(),
+          reason: z.string(),
+          required: z.boolean(),
+        })).optional(),
+        pageUrl: z.string().url().optional(),
+      }).parse(req.body) as ApplySessionEvent;
+
+      const session = recordApplySessionEvent(req.params.id, getExecutorToken(req), event);
+      res.json(session);
+    } catch (error) {
+      sendErrorResponse(res, error, 'apply-sessions-events');
+    }
+  });
+
+  app.post('/api/apply/sessions/:id/confirm-submit', auth, rateLimitApplySession, async (req, res) => {
+    try {
+      const session = confirmApplySessionSubmit(req.params.id, req.internalUserId ?? req.userId);
+      res.json(session);
+    } catch (error) {
+      sendErrorResponse(res, error, 'apply-sessions-confirm-submit');
+    }
+  });
+
+  app.post('/api/apply/sessions/:id/complete', rateLimitApplySession, async (req, res) => {
+    try {
+      const { outcome, message } = z.object({
+        outcome: z.enum(['submitted', 'protected', 'unsupported', 'manual_required', 'failed']),
+        message: z.string().optional(),
+      }).parse(req.body);
+      const session = completeApplySession(req.params.id, getExecutorToken(req), outcome, message);
+      res.json(session);
+    } catch (error) {
+      sendErrorResponse(res, error, 'apply-sessions-complete');
     }
   });
 

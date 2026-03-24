@@ -16,18 +16,18 @@ function getAI(): GoogleGenAI {
 // createApp is called at module load (cold start). Wrap so any init crash
 // returns JSON instead of FUNCTION_INVOCATION_FAILED with no details.
 let handler: ReturnType<typeof createApp> | null = null;
-let initError: string | null = null;
+let initFailed = false;
 
 try {
   handler = createApp({ getAI, disablePlaywrightJdFallback: true });
 } catch (err) {
-  initError = err instanceof Error ? `${err.message}\n${err.stack}` : String(err);
-  console.error('[api/index] createApp failed:', initError);
+  initFailed = true;
+  console.error('[api/index] createApp failed:', err);
 }
 
 export default function (req: Request, res: Response) {
-  if (initError || !handler) {
-    res.status(500).json({ error: 'Server initialization failed', details: initError });
+  if (initFailed || !handler) {
+    res.status(500).json({ error: 'Server initialization failed' });
     return;
   }
   handler(req, res);

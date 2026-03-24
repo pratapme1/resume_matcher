@@ -341,3 +341,160 @@ export interface JobSearchResponse {
   candidateProfile: CandidateProfile;
   totalFound: number;
 }
+
+/* ─────────────────────────────────────────
+   Apply Sessions
+───────────────────────────────────────── */
+
+export type ExecutorMode = 'extension' | 'cloud';
+
+export type PortalType = 'greenhouse' | 'lever' | 'ashby' | 'generic' | 'protected' | 'unknown';
+
+export type ApplySessionStatus =
+  | 'created'
+  | 'queued'
+  | 'starting'
+  | 'filling'
+  | 'review_required'
+  | 'ready_to_submit'
+  | 'submitting'
+  | 'submitted'
+  | 'protected'
+  | 'unsupported'
+  | 'manual_required'
+  | 'failed';
+
+export type FieldSemanticType =
+  | 'full_name'
+  | 'first_name'
+  | 'last_name'
+  | 'email'
+  | 'phone'
+  | 'linkedin'
+  | 'location'
+  | 'city'
+  | 'portfolio'
+  | 'website'
+  | 'resume_upload'
+  | 'cover_letter_upload'
+  | 'unknown';
+
+export type FieldSupportStatus = 'supported' | 'needs_review' | 'unsupported';
+
+export interface ApplicantProfile {
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  linkedin?: string;
+  location?: string;
+  website?: string;
+}
+
+export interface DetectedFieldOption {
+  label: string;
+  value: string;
+}
+
+export interface DetectedField {
+  id: string;
+  name: string;
+  label: string;
+  placeholder: string;
+  inputType: string;
+  tagName: string;
+  required: boolean;
+  visible: boolean;
+  value?: string;
+  checked?: boolean;
+  hasValue?: boolean;
+  options?: DetectedFieldOption[];
+}
+
+export interface DetectedControl {
+  id: string;
+  label: string;
+  kind: 'next' | 'review' | 'submit' | 'unknown';
+}
+
+export interface PageSnapshot {
+  url: string;
+  title: string;
+  portalType: PortalType;
+  fields: DetectedField[];
+  controls: DetectedControl[];
+}
+
+export interface ReviewItem {
+  fieldId: string;
+  label: string;
+  reason: string;
+  required: boolean;
+}
+
+export type PlannedAction =
+  | {
+      type: 'fill';
+      fieldId: string;
+      value: string;
+      semanticType: FieldSemanticType;
+    }
+  | {
+      type: 'toggle';
+      fieldId: string;
+      checked: boolean;
+      semanticType: FieldSemanticType;
+    }
+  | {
+      type: 'select';
+      fieldId: string;
+      value: string;
+      semanticType: FieldSemanticType;
+    }
+  | {
+      type: 'upload';
+      fieldId: string;
+      filename: string;
+      mimeType: string;
+      base64: string;
+      semanticType: FieldSemanticType;
+    };
+
+export interface ApplyPlanResponse {
+  portalType: PortalType;
+  status: ApplySessionStatus;
+  actions: PlannedAction[];
+  reviewItems: ReviewItem[];
+  nextControlId?: string;
+  submitControlId?: string;
+}
+
+export interface ApplySessionSummary {
+  id: string;
+  applyUrl: string;
+  executorMode: ExecutorMode;
+  portalType: PortalType;
+  status: ApplySessionStatus;
+  latestMessage?: string;
+  latestScreenshot?: string | null;
+  filledCount: number;
+  reviewCount: number;
+  submitConfirmed: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateApplySessionResponse {
+  session: ApplySessionSummary;
+  executorToken: string;
+}
+
+export interface ApplySessionEvent {
+  status?: ApplySessionStatus;
+  message?: string;
+  screenshot?: string | null;
+  filledCount?: number;
+  reviewItems?: ReviewItem[];
+  pageUrl?: string;
+}

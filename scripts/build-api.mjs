@@ -15,6 +15,7 @@ execSync(
     '--outfile=api/index.mjs',
     '--external:fsevents',
     '--external:@playwright/test',
+    '--define:process.env.RTP_BUNDLED_API=\\"true\\"',
     `--banner:js="${banner}"`,
   ].join(' '),
   { stdio: 'inherit' }

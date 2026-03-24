@@ -271,4 +271,114 @@ describe('api integration', () => {
       });
     expect(response.status).toBe(400);
   });
+
+  it('creates and fetches an apply session for Stage 5 orchestration', async () => {
+    const applyApp = createTestApp();
+    const tailoringResponse = await request(applyApp)
+      .post('/api/tailor-resume')
+      .attach('resume', sampleResumePath())
+      .field('jdText', await readFile(fixturePath('jd-valid.txt'), 'utf8'))
+      .field('preferences', JSON.stringify({ targetRole: 'Senior Frontend Engineer' }));
+
+    const createResponse = await request(applyApp)
+      .post('/api/apply/sessions')
+      .send({
+        applyUrl: 'https://boards.greenhouse.io/acme/jobs/123',
+        tailoredResume: tailoringResponse.body.tailoredResume,
+        templateProfile: tailoringResponse.body.templateProfile,
+        validation: tailoringResponse.body.validation,
+      });
+
+    expect(createResponse.status).toBe(200);
+    expect(createResponse.body.session.executorMode).toBe('extension');
+    expect(createResponse.body.session.portalType).toBe('greenhouse');
+    expect(createResponse.body.executorToken).toEqual(expect.any(String));
+
+    const getResponse = await request(applyApp)
+      .get(`/api/apply/sessions/${createResponse.body.session.id}`);
+
+    expect(getResponse.status).toBe(200);
+    expect(getResponse.body.id).toBe(createResponse.body.session.id);
+    expect(getResponse.body.status).toBe('created');
+  });
+
+  it('plans, updates, confirms, and completes an apply session', async () => {
+    const applyApp = createTestApp();
+    const tailoringResponse = await request(applyApp)
+      .post('/api/tailor-resume')
+      .attach('resume', sampleResumePath())
+      .field('jdText', await readFile(fixturePath('jd-valid.txt'), 'utf8'))
+      .field('preferences', JSON.stringify({ targetRole: 'Senior Frontend Engineer' }));
+
+    const createResponse = await request(applyApp)
+      .post('/api/apply/sessions')
+      .send({
+        applyUrl: 'https://jobs.lever.co/acme/123',
+        tailoredResume: tailoringResponse.body.tailoredResume,
+        templateProfile: tailoringResponse.body.templateProfile,
+        validation: tailoringResponse.body.validation,
+      });
+
+    const sessionId = createResponse.body.session.id;
+    const executorToken = createResponse.body.executorToken;
+
+    const snapshotResponse = await request(applyApp)
+      .post(`/api/apply/sessions/${sessionId}/snapshot`)
+      .set('Authorization', `Bearer ${executorToken}`)
+      .send({
+        url: 'https://jobs.lever.co/acme/123',
+        title: 'Apply for Senior Frontend Engineer',
+        portalType: 'lever',
+        fields: [
+          { id: 'name', name: 'name', label: 'Full Name', placeholder: '', inputType: 'text', tagName: 'input', required: true, visible: true, value: '', hasValue: false },
+          { id: 'email', name: 'email', label: 'Email', placeholder: '', inputType: 'email', tagName: 'input', required: true, visible: true, value: '', hasValue: false },
+          { id: 'resume', name: 'resume', label: 'Resume', placeholder: '', inputType: 'file', tagName: 'input', required: true, visible: true, hasValue: false },
+        ],
+        controls: [
+          { id: 'submit', label: 'Submit Application', kind: 'submit' },
+        ],
+      });
+
+    expect(snapshotResponse.status).toBe(200);
+    expect(snapshotResponse.body.status).toBe('ready_to_submit');
+    expect(snapshotResponse.body.actions.map((action: { type: string }) => action.type)).toEqual(expect.arrayContaining(['fill', 'upload']));
+
+    const eventResponse = await request(applyApp)
+      .post(`/api/apply/sessions/${sessionId}/events`)
+      .set('Authorization', `Bearer ${executorToken}`)
+      .send({
+        status: 'ready_to_submit',
+        message: 'Ready for confirmation',
+        filledCount: 3,
+        reviewItems: [],
+      });
+
+    expect(eventResponse.status).toBe(200);
+    expect(eventResponse.body.filledCount).toBe(3);
+
+    const confirmResponse = await request(applyApp)
+      .post(`/api/apply/sessions/${sessionId}/confirm-submit`);
+
+    expect(confirmResponse.status).toBe(200);
+    expect(confirmResponse.body.submitConfirmed).toBe(true);
+    expect(confirmResponse.body.status).toBe('submitting');
+
+    const completeResponse = await request(applyApp)
+      .post(`/api/apply/sessions/${sessionId}/complete`)
+      .set('Authorization', `Bearer ${executorToken}`)
+      .send({
+        outcome: 'submitted',
+        message: 'Application submitted from extension',
+      });
+
+    expect(completeResponse.status).toBe(200);
+    expect(completeResponse.body.status).toBe('submitted');
+
+    const getResponse = await request(applyApp)
+      .get(`/api/apply/sessions/${sessionId}`);
+
+    expect(getResponse.status).toBe(200);
+    expect(getResponse.body.status).toBe('submitted');
+    expect(getResponse.body.latestMessage).toBe('Application submitted from extension');
+  });
 });

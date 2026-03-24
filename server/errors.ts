@@ -6,8 +6,10 @@ export type ApiErrorCode =
   | 'INTERNAL_ERROR'
   | 'INVALID_REQUEST'
   | 'INVALID_UPLOAD'
+  | 'NOT_FOUND'
   | 'RENDER_BLOCKED'
   | 'RESUME_PARSE_FAILED'
+  | 'UNAUTHENTICATED'
   | 'UNSUPPORTED_FILE_TYPE'
   | 'UPLOAD_TOO_LARGE'
   | 'URL_FETCH_FAILED'
@@ -46,6 +48,10 @@ export function gatewayTimeout(message: string, code: ApiErrorCode, options?: Ap
   return new AppError(504, code, message, options);
 }
 
+export function notFound(message: string, code: ApiErrorCode = 'NOT_FOUND', options?: AppErrorOptions): AppError {
+  return new AppError(404, code, message, options);
+}
+
 export function internalServerError(
   message = 'An internal server error occurred.',
   code: ApiErrorCode = 'INTERNAL_ERROR',
@@ -60,6 +66,10 @@ export function isAppError(error: unknown): error is AppError {
 
 export function payloadTooLarge(message: string, code: ApiErrorCode, options?: AppErrorOptions): AppError {
   return new AppError(413, code, message, options);
+}
+
+export function unauthorized(message: string, code: ApiErrorCode = 'UNAUTHENTICATED', options?: AppErrorOptions): AppError {
+  return new AppError(401, code, message, options);
 }
 
 export function toApiError(error: unknown): {
