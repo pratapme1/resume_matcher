@@ -369,7 +369,7 @@ export function createApp(deps: AppDependencies): Express {
   app.post('/api/tailor-resume', auth, rateLimitTailor, async (req, res) => {
     try {
       // Monthly quota check
-      if (!deps.skipAuth && req.userId && await isOverQuota(req.internalUserId ?? req.userId, 'tailor')) {
+      if (!deps.skipAuth && req.userId && await isOverQuota(req.internalUserId ?? req.userId, 'tailor', req.userEmail)) {
         res.status(402).json({ error: 'Monthly tailor limit reached. Upgrade to Pro for more.', code: 'QUOTA_EXCEEDED' });
         return;
       }
@@ -551,7 +551,7 @@ export function createApp(deps: AppDependencies): Express {
   app.post('/api/search-jobs', auth, rateLimitSearch, async (req, res) => {
     try {
       // Monthly quota check
-      if (!deps.skipAuth && req.userId && await isOverQuota(req.internalUserId ?? req.userId, 'search')) {
+      if (!deps.skipAuth && req.userId && await isOverQuota(req.internalUserId ?? req.userId, 'search', req.userEmail)) {
         res.status(402).json({ error: 'Monthly search limit reached. Upgrade to Pro for more.', code: 'QUOTA_EXCEEDED' });
         return;
       }

@@ -199,6 +199,6 @@ describe('monthly quota enforcement', () => {
       .attach('resume', resumeBuffer, 'resume.docx')
       .field('jdText', 'Senior Engineer needed. Must have TypeScript.');
     expect(res.status).toBe(402);
-    expect(mockUsage.isOverQuota).toHaveBeenCalledWith(TEST_USER, 'tailor');
+    expect(mockUsage.isOverQuota).toHaveBeenCalledWith(TEST_USER, 'tailor', `${TEST_USER}@test.com`);
   });
 });
