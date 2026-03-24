@@ -90,7 +90,7 @@ function buildApplicantProfile(tailoredResume: TailoredResumeDocument): Applican
     phone: tailoredResume.contactInfo?.phone?.trim() || undefined,
     linkedin,
     location: tailoredResume.contactInfo?.location?.trim() || undefined,
-    website: linkedin?.startsWith('http') ? linkedin : undefined,
+    website: undefined,
   };
 }
 
@@ -121,6 +121,8 @@ function inferSemanticType(field: DetectedField): FieldSemanticType {
     if (/cover\s*letter/.test(text)) return 'cover_letter_upload';
     return 'resume_upload';
   }
+  if (field.inputType === 'email') return 'email';
+  if (field.inputType === 'tel') return 'phone';
   if (/first\s*name|given\s*name|fname/.test(text)) return 'first_name';
   if (/last\s*name|surname|family\s*name|lname/.test(text)) return 'last_name';
   if (/full\s*name|your\s*name|applicant\s*name/.test(text) || /^name$/.test(text.trim())) return 'full_name';

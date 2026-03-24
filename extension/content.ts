@@ -305,7 +305,30 @@ function setNativeValue(el: HTMLInputElement | HTMLTextAreaElement, value: strin
   el.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
+function hasVisibleUploadAffordance(el: HTMLInputElement): boolean {
+  if (el.type !== 'file') return false;
+
+  const directLabel = el.closest('label');
+  if (directLabel && ((directLabel as HTMLElement).offsetParent !== null || directLabel.textContent?.trim())) {
+    return true;
+  }
+
+  if (el.id) {
+    const forLabel = document.querySelector<HTMLLabelElement>(`label[for="${CSS.escape(el.id)}"]`);
+    if (forLabel && ((forLabel as HTMLElement).offsetParent !== null || forLabel.textContent?.trim())) {
+      return true;
+    }
+  }
+
+  const parent = el.parentElement;
+  return Boolean(parent && (parent.offsetParent !== null || parent.textContent?.trim()));
+}
+
 function isHiddenOrReadonly(el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): boolean {
+  if (el instanceof HTMLInputElement && el.type === 'file') {
+    return el.disabled || !hasVisibleUploadAffordance(el);
+  }
+
   return (
     el instanceof HTMLInputElement &&
     el.type === 'hidden'
@@ -394,7 +417,7 @@ function collectApplySnapshot(sessionId: string) {
       inputType: el instanceof HTMLInputElement ? (el.type || 'text') : el instanceof HTMLSelectElement ? 'select-one' : 'textarea',
       tagName: el.tagName.toLowerCase(),
       required: el.required,
-      visible: true,
+      visible: el instanceof HTMLInputElement && el.type === 'file' ? hasVisibleUploadAffordance(el) : el.offsetParent !== null,
       value: el instanceof HTMLInputElement && el.type === 'file' ? undefined : ('value' in el ? el.value : undefined),
       checked: el instanceof HTMLInputElement ? el.checked : undefined,
       hasValue: el instanceof HTMLInputElement && el.type === 'file' ? (el.files?.length ?? 0) > 0 : Boolean(('value' in el ? el.value : '').trim()),

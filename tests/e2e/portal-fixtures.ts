@@ -50,7 +50,7 @@ export function basicPortalHtml(successUrl: string) {
         <div class="field"><label for="full_name">Full Name</label><input id="full_name" name="full_name" type="text" required /></div>
         <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required /></div>
         <div class="field"><label for="phone">Phone</label><input id="phone" name="phone" type="tel" required /></div>
-        <div class="field"><label for="resume">Resume</label><input id="resume" name="resume" type="file" required /></div>
+        <div class="field"><p>Resume</p><label for="resume">Click to upload your resume<input id="resume" name="resume" type="file" style="display:none" required /></label></div>
         <button type="submit">Submit Application</button>
       </form>
     `,
@@ -73,7 +73,7 @@ export function multiStepPortalHtml(successUrl: string) {
         <section id="step-2" class="step">
           <div class="field"><label for="location">Location</label><input id="location" name="location" type="text" required /></div>
           <div class="field"><label for="phone">Phone</label><input id="phone" name="phone" type="tel" required /></div>
-          <div class="field"><label for="resume">Resume</label><input id="resume" name="resume" type="file" required /></div>
+          <div class="field"><p>Resume</p><label for="resume">Click to upload your resume<input id="resume" name="resume" type="file" style="display:none" required /></label></div>
           <button type="submit">Submit Application</button>
         </section>
       </form>
@@ -98,7 +98,7 @@ export function reviewRequiredPortalHtml(successUrl: string) {
         <div class="field"><label for="full_name">Full Name</label><input id="full_name" name="full_name" type="text" required /></div>
         <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required /></div>
         <div class="field"><label for="work_auth">Work Authorization Status</label><input id="work_auth" name="work_auth" type="text" required /></div>
-        <div class="field"><label for="resume">Resume</label><input id="resume" name="resume" type="file" required /></div>
+        <div class="field"><p>Resume</p><label for="resume">Click to upload your resume<input id="resume" name="resume" type="file" style="display:none" required /></label></div>
         <button type="submit">Submit Application</button>
       </form>
     `,
