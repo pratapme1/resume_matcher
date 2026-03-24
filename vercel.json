@@ -1,8 +1,8 @@
 {
-  "buildCommand": "vite build && npx esbuild api/_index.ts --bundle --platform=node --target=node20 --format=cjs --outfile=api/index.cjs --external:fsevents --external:@playwright/test",
+  "buildCommand": "vite build && npx esbuild api/_index.ts --bundle --platform=node --target=node20 --format=esm --outfile=api/index.mjs --external:fsevents --external:@playwright/test --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
   "outputDirectory": "dist",
   "functions": {
-    "api/index.cjs": {
+    "api/index.mjs": {
       "maxDuration": 60
     }
   },
