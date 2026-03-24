@@ -13,9 +13,12 @@ function defaultGetAI(req?: Request) {
   const tailorFixture = body?.jdText?.includes('[blocked]')
     ? 'mock-ai-blocked.json'
     : 'mock-ai-success.json';
+  const gapFixture = body?.jdText?.includes('[missing-fit]')
+    ? 'mock-ai-gap-missing-fit.json'
+    : 'mock-ai-gap.json';
   return new MockAIClient([
     'mock-ai-jd.json',
-    'mock-ai-gap.json',
+    gapFixture,
     tailorFixture,
   ]);
 }

@@ -77,6 +77,12 @@ describe('validation edge cases', () => {
     expect(Array.isArray(validation.warnings)).toBe(true);
   });
 
+  it('does not warn when a rewritten summary stays grounded in source facts', async () => {
+    const { resume, templateProfile, success } = await loadBaseParts();
+    const validation = validateTailoredResume(resume, success, templateProfile);
+    expect(validation.warnings.find((warning) => warning.field === 'summary')).toBeUndefined();
+  });
+
   it('isValid is true when success fixture passes validation', async () => {
     const { resume, templateProfile, success } = await loadBaseParts();
     const validation = validateTailoredResume(resume, success, templateProfile);

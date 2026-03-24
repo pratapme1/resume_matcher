@@ -434,6 +434,17 @@ export function createApp(deps: AppDependencies): Express {
         buildTailoredCorpus(tailoredResume),
       );
 
+      if (tailoringPlan.gapAnalysis) {
+        tailoringPlan.gapAnalysis = {
+          ...tailoringPlan.gapAnalysis,
+          fitScore:
+            typeof tailoringPlan.gapAnalysis.fitScore === 'number' &&
+            Number.isFinite(tailoringPlan.gapAnalysis.fitScore)
+              ? tailoringPlan.gapAnalysis.fitScore
+              : analysis.preAlignmentScore,
+        };
+      }
+
       const validation = validateTailoredResume(resume, tailoredResume, templateProfile);
       const response: TailorResumeResponse = validation.isValid
         ? {

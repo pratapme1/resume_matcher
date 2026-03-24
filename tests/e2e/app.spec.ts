@@ -132,6 +132,26 @@ test('alignment score shows a descriptive label', async ({ page }) => {
   expect(['Strong match', 'Moderate match', 'Fair match', 'Weak match']).toContain(text?.trim());
 });
 
+test('output stage still shows role fit when the gap model omits fitScore', async ({ page }) => {
+  await page.goto('/');
+  await skipToJDStep(page);
+  await page.getByRole('button', { name: 'Paste' }).click();
+  await page.locator('textarea').fill(`Senior Frontend Engineer
+[missing-fit]
+Required qualifications:
+- React
+- TypeScript
+- Testing
+- Leadership`);
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.setInputFiles('input[accept=".docx"]', resumePath);
+  await page.getByRole('button', { name: 'Tailor Resume' }).click();
+  await expect(page.getByText('Resume Tailored Successfully')).toBeVisible({ timeout: 30000 });
+  await expect(page.getByText('Semantic fit score')).toBeVisible();
+  await expect(page.getByText('ATS Score')).toBeVisible();
+  await expect(page.getByText('Role fit analysis unavailable for this run.')).toHaveCount(0);
+});
+
 test('JD preview card visible on step 3 with quality score', async ({ page }) => {
   await page.goto('/');
   await skipToJDStep(page);

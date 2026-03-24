@@ -101,6 +101,18 @@ describe('api integration', () => {
     expect(response.body.validation.isValid).toBe(false);
   });
 
+  it('falls back to a stable fit score when gap analysis omits fitScore', async () => {
+    const response = await request(app)
+      .post('/api/tailor-resume')
+      .attach('resume', sampleResumePath())
+      .field('jdText', `${await readFile(fixturePath('jd-valid.txt'), 'utf8')}\n[missing-fit]`)
+      .field('preferences', JSON.stringify({ targetRole: 'Senior Frontend Engineer' }));
+
+    expect(response.status).toBe(200);
+    expect(response.body.blocked).toBe(false);
+    expect(response.body.tailoringPlan?.gapAnalysis?.fitScore).toBe(response.body.analysis.preAlignmentScore);
+  });
+
   it('returns 400 for malformed preferences JSON', async () => {
     const response = await request(app)
       .post('/api/tailor-resume')

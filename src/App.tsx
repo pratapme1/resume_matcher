@@ -941,6 +941,10 @@ export default function App() {
   const handleRetryResume = () => { setResumeFile(null); setResult(null); setShowAllRecs(false); setStep(3); };
 
   /* ── helpers ── */
+  const normalizeScore = (value: unknown, fallback = 0) => {
+    const candidate = typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+    return Math.max(0, Math.min(100, Math.round(candidate)));
+  };
   const alignmentLabel = (s: number) => s >= 80 ? 'Strong match' : s >= 60 ? 'Moderate match' : s >= 40 ? 'Fair match' : 'Weak match';
   const alignmentColor = (s: number) => s >= 80 ? 'text-emerald-500 dark:text-emerald-400' : s >= 60 ? 'text-violet-600 dark:text-violet-400' : s >= 40 ? 'text-amber-500 dark:text-amber-400' : 'text-red-500 dark:text-red-400';
   const wordCount = (t: string) => t.trim().split(/\s+/).filter(Boolean).length;
@@ -1796,7 +1800,16 @@ export default function App() {
                 const validation = result.validation;
                 const tailoredResume = 'tailoredResume' in result ? result.tailoredResume : null;
                 const canProceedToApply = Boolean(tailoredResume);
-                const scoreBreakdown = result.analysis.scoreBreakdown;
+                const safePreScore = normalizeScore(result.analysis.preAlignmentScore);
+                const safePostScore = normalizeScore(result.analysis.alignmentScore, safePreScore);
+                const safeFitScore = normalizeScore(result.tailoringPlan?.gapAnalysis?.fitScore, safePreScore);
+                const scoreBreakdown = result.analysis.scoreBreakdown ?? {
+                  keywordCoverage: 0,
+                  niceCoverage: 0,
+                  titleMatch: false,
+                  seniorityMatch: false,
+                  structureScore: 0,
+                };
 
                 return (
                   <motion.div key="s4"
@@ -1839,13 +1852,14 @@ export default function App() {
                         {/* Fit Assessment + ATS Score — left */}
                         {(() => {
                           const gapAnalysis = result.tailoringPlan?.gapAnalysis;
-                          const hasFitData = gapAnalysis && (
-                            gapAnalysis.fitScore !== undefined ||
-                            gapAnalysis.topStrengths.length > 0 ||
-                            gapAnalysis.repositioningAngle
+                          const hasFitNarrative = Boolean(
+                            gapAnalysis &&
+                            (gapAnalysis.topStrengths.length > 0 ||
+                              gapAnalysis.repositioningAngle ||
+                              gapAnalysis.keyGaps.length > 0)
                           );
-                          const preScore = result.analysis.preAlignmentScore;
-                          const postScore = result.analysis.alignmentScore;
+                          const preScore = safePreScore;
+                          const postScore = safePostScore;
                           const scoreDelta = postScore - preScore;
 
                           return (
@@ -1854,23 +1868,19 @@ export default function App() {
                               {/* ── Section 1: Fit Assessment ── always visible */}
                               <div className="flex flex-col gap-3">
                                   <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Role Fit</p>
-                                  {!hasFitData && (
-                                    <p className="text-[11px] text-zinc-400 dark:text-zinc-600 italic">Role fit analysis unavailable for this run.</p>
-                                  )}
-                                  {hasFitData && (<>
-
-                                  {/* fitScore badge */}
-                                  {gapAnalysis.fitScore !== undefined && (
-                                    <div className="flex items-center gap-3">
-                                      <ScoreRing score={gapAnalysis.fitScore} active={step === 4} size={76} />
-                                      <div>
-                                        <p className={`text-sm font-semibold ${alignmentColor(gapAnalysis.fitScore)}`}>
-                                          {alignmentLabel(gapAnalysis.fitScore)}
-                                        </p>
-                                        <p className="text-[11px] text-zinc-400 dark:text-zinc-600 mt-0.5">Semantic fit score</p>
-                                      </div>
+                                  <div className="flex items-center gap-3">
+                                    <ScoreRing score={safeFitScore} active={step === 4} size={76} />
+                                    <div>
+                                      <p className={`text-sm font-semibold ${alignmentColor(safeFitScore)}`}>
+                                        {alignmentLabel(safeFitScore)}
+                                      </p>
+                                      <p className="text-[11px] text-zinc-400 dark:text-zinc-600 mt-0.5">Semantic fit score</p>
                                     </div>
+                                  </div>
+                                  {!hasFitNarrative && (
+                                    <p className="text-[11px] text-zinc-400 dark:text-zinc-600 italic">Using a verified fallback estimate from the resume-to-role analysis.</p>
                                   )}
+                                  {hasFitNarrative && (<>
 
                                   {/* Repositioning angle */}
                                   {gapAnalysis.repositioningAngle && (
@@ -1916,7 +1926,7 @@ export default function App() {
                                 </div>
 
                               {/* ── Section 2: ATS Score ── */}
-                              <div className={`flex flex-col gap-4 ${hasFitData ? 'pt-4 border-t border-zinc-100 dark:border-zinc-800' : 'pt-2'}`}>
+                              <div className={`flex flex-col gap-4 ${hasFitNarrative ? 'pt-4 border-t border-zinc-100 dark:border-zinc-800' : 'pt-2'}`}>
                                 <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">ATS Score</p>
 
                                 <div className="flex flex-col items-center text-center">

@@ -98,6 +98,15 @@ function buildSourceCorpus(sourceClaims: Set<string>): string {
   return Array.from(sourceClaims).join(' ');
 }
 
+function textSupportedByCorpus(text: string, sourceCorpus: string, threshold = 0.6): boolean {
+  const normalized = sanitizeKeyword(normalizeWhitespace(text));
+  if (!normalized) return true;
+  const tokens = normalized.split(/\s+/).filter((token) => token.length > 3);
+  if (tokens.length === 0) return true;
+  const matchedCount = tokens.filter((token) => sourceCorpus.includes(token)).length;
+  return matchedCount / tokens.length >= threshold;
+}
+
 function bulletSupported(sourceClaims: Set<string>, bullet: string, sourceCorpus: string): boolean {
   const normalized = sanitizeKeyword(normalizeWhitespace(bullet));
   if (!normalized) return true;
@@ -153,13 +162,20 @@ export function validateTailoredResume(
   validateExactField(source.certifications, tailored.certifications, 'certification', blockingIssues, unsupportedClaims);
   validateSupportedField(source.skills, tailored.skills, 'skill', warnings, unsupportedClaims, 'warning');
 
-  if (tailored.summary && source.summary) {
-    const normalizedSummary = sanitizeKeyword(tailored.summary);
-    const sourceSummary = sanitizeKeyword(source.summary);
-    if (normalizedSummary && sourceSummary && !normalizedSummary.includes(sourceSummary.slice(0, Math.min(40, sourceSummary.length)))) {
+  if (tailored.summary) {
+    const summaryProvenanceClaims = (tailored.summarySourceProvenanceIds ?? [])
+      .map((id) => sourceProvenanceById.get(id) ?? '')
+      .filter(Boolean);
+    const summarySupported = textSupportedByCorpus(
+      tailored.summary,
+      sanitizeKeyword(normalizeWhitespace(summaryProvenanceClaims.join(' ') || sourceCorpus)),
+      summaryProvenanceClaims.length > 0 ? 0.45 : 0.6,
+    ) || textSupportedByCorpus(tailored.summary, sourceCorpus, 0.6);
+
+    if (!summarySupported) {
       warnings.push({
-        code: 'SUMMARY_REWRITE_REVIEW',
-        message: 'The summary was significantly rewritten. Review for factual fidelity.',
+        code: 'SUMMARY_GROUNDING_REVIEW',
+        message: 'The tailored summary could not be grounded confidently to the source resume.',
         severity: 'warning',
         field: 'summary',
       });
