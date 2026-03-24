@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+declare const __SUPABASE_URL__: string;
+declare const __SUPABASE_ANON_KEY__: string;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(__SUPABASE_URL__, __SUPABASE_ANON_KEY__);
 
 export async function getAuthHeader(): Promise<Record<string, string>> {
   const { data } = await supabase.auth.getSession();
