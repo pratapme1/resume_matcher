@@ -2,13 +2,17 @@ import { supabase } from '../client.ts';
 
 export type UsageEventType = 'tailor' | 'search' | 'extract_url' | 'extract_file' | 'docx_generate' | 'build_profile';
 
+function readEnv(name: string): string | undefined {
+  return process.env[name] ?? process.env[`VITE_${name}`];
+}
+
 function parseBooleanEnv(name: string): boolean {
-  return /^(1|true|yes|on)$/i.test(process.env[name] ?? '');
+  return /^(1|true|yes|on)$/i.test(readEnv(name) ?? '');
 }
 
 function parseCsvEnv(name: string): Set<string> {
   return new Set(
-    (process.env[name] ?? '')
+    (readEnv(name) ?? '')
       .split(',')
       .map((value) => value.trim().toLowerCase())
       .filter(Boolean),
@@ -16,7 +20,7 @@ function parseCsvEnv(name: string): Set<string> {
 }
 
 function parseQuotaLimitEnv(name: string, fallback: number): number | null {
-  const raw = process.env[name];
+  const raw = readEnv(name);
   if (raw === undefined || raw === null || raw.trim() === '') return fallback;
 
   const normalized = raw.trim().toLowerCase();
