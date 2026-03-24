@@ -5,3 +5,6 @@ dist/
 test-results/
 playwright-report/
 *.docx
+.playwright-mcp/
+e2e-*.png
+*.txt

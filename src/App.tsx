@@ -213,8 +213,8 @@ function ResumePreview({ resume }: { resume: TailoredResumeDocument }) {
 /* ─────────────────────────────────────────
    Sidebar — fixed left nav
 ───────────────────────────────────────── */
-function Sidebar({ step, isDark, onToggleDark, onSignOut, userEmail }: {
-  step: number; isDark: boolean; onToggleDark: () => void; onSignOut: () => void; userEmail?: string;
+function Sidebar({ step, isDark, onToggleDark, onSignOut, userEmail, onStepClick }: {
+  step: number; isDark: boolean; onToggleDark: () => void; onSignOut: () => void; userEmail?: string; onStepClick: (n: number) => void;
 }) {
   const steps = [
     { n: 1, label: 'Discover',   sublabel: 'Find opportunities' },
@@ -255,12 +255,15 @@ function Sidebar({ step, isDark, onToggleDark, onSignOut, userEmail }: {
               key={n}
               data-testid={`step-indicator-${n}`}
               aria-current={isCurrent ? 'step' : undefined}
+              onClick={isDone ? () => onStepClick(n) : undefined}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${
                 isCurrent
                   ? 'bg-violet-50 dark:bg-violet-500/10'
                   : isLocked
                   ? 'opacity-35'
-                  : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-default'
+                  : isDone
+                  ? 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer'
+                  : 'cursor-default'
               }`}
             >
               <motion.div
@@ -324,18 +327,24 @@ const preservationLabels = {
    Main App
 ───────────────────────────────────────── */
 export default function App() {
-  const [session, setSession] = useState<Session | null | undefined>(undefined); // undefined = loading
+  // VITE_SKIP_AUTH=true bypasses the auth gate — used by E2E tests only
+  const skipAuth = import.meta.env.VITE_SKIP_AUTH === 'true';
+  const [session, setSession] = useState<Session | null | undefined>(
+    skipAuth ? ({ user: { id: 'test-user-e2e' } } as unknown as Session) : undefined
+  );
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
+    if (skipAuth) return;
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
     return () => subscription.unsubscribe();
-  }, []);
+  }, [skipAuth]);
 
   async function handleAuth(e: React.FormEvent) {
     e.preventDefault();
@@ -346,15 +355,37 @@ export default function App() {
       : supabase.auth.signInWithPassword({ email: authEmail, password: authPassword });
     const { error } = await fn;
     setAuthLoading(false);
-    if (error) setAuthError(error.message);
+    if (error) { setAuthError(error.message); return; }
+    setSessionExpired(false);
+  }
+
+  async function apiFetch(url: string, options?: RequestInit): Promise<Response> {
+    const r = await fetch(url, options);
+    if (r.status === 401) {
+      const body = await r.clone().json().catch(() => null);
+      if (body?.code === 'UNAUTHENTICATED') {
+        setSessionExpired(true);
+        setAuthError(null);
+        throw new Error('Session expired. Please sign in again.');
+      }
+    }
+    return r;
   }
 
   const [step, setStep] = useState(1);
-  const [isDark, setIsDark] = useState(
-    () => window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark') return true;
+    if (saved === 'light') return false;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+  const toggleDark = () => {
+    const next = !isDark;
+    localStorage.setItem('theme', next ? 'dark' : 'light');
+    setIsDark(next);
+  };
 
-  const [jdType, setJdType] = useState<'url' | 'file' | 'paste'>('url');
+  const [jdType, setJdType] = useState<'url' | 'file' | 'paste'>('paste');
   const [jdUrl, setJdUrl] = useState('');
   const [jdText, setJdText] = useState('');
   const [jdFile, setJdFile] = useState<File | null>(null);
@@ -378,6 +409,7 @@ export default function App() {
   const [agentSessionId, setAgentSessionId] = useState<string | null>(null);
   const [agentScreenshot, setAgentScreenshot] = useState<string | null>(null);
   const [agentStats, setAgentStats] = useState<{ filled: number; highlighted: number } | null>(null);
+  const [showBlockedConfirm, setShowBlockedConfirm] = useState(false);
 
   // Job search (step 1)
   const [searchResumeFile, setSearchResumeFile] = useState<File | null>(null);
@@ -491,7 +523,7 @@ export default function App() {
     setProfilePreviewLoading(true);
     try {
       const fd = new FormData(); fd.append('resume', file);
-      const r = await fetch('/api/build-profile', { method: 'POST', headers: await getAuthHeader(), body: fd });
+      const r = await apiFetch('/api/build-profile', { method: 'POST', headers: await getAuthHeader(), body: fd });
       if (r.ok) {
         const profile = await r.json();
         setProfilePreview(profile);
@@ -508,7 +540,7 @@ export default function App() {
       const fd = new FormData();
       fd.append('resume', searchResumeFile);
       fd.append('preferences', JSON.stringify(searchPreferences));
-      const r = await fetch('/api/search-jobs', { method: 'POST', headers: await getAuthHeader(), body: fd });
+      const r = await apiFetch('/api/search-jobs', { method: 'POST', headers: await getAuthHeader(), body: fd });
       if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Search failed');
       const data = await r.json();
       setJobSearchResults(data.results ?? []);
@@ -528,6 +560,7 @@ export default function App() {
       (job.niceToHaveSkills.length ? `Nice to Have: ${job.niceToHaveSkills.join(', ')}\n` : '') +
       (job.estimatedSalary ? `Salary: ${job.estimatedSalary}\n` : '')
     );
+    setPreferences(p => ({ ...p, targetRole: p.targetRole || job.title }));
     setStep(2);
   };
 
@@ -536,12 +569,12 @@ export default function App() {
     try {
       let normalized: NormalizedJobDescription | null = null;
       if (jdType === 'url') {
-        const r = await fetch('/api/extract-jd-url', { method: 'POST', headers: { 'Content-Type': 'application/json', ...await getAuthHeader() }, body: JSON.stringify({ url: jdUrl }) });
+        const r = await apiFetch('/api/extract-jd-url', { method: 'POST', headers: { 'Content-Type': 'application/json', ...await getAuthHeader() }, body: JSON.stringify({ url: jdUrl }) });
         if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to extract from URL');
         normalized = await r.json();
       } else if (jdType === 'file' && jdFile) {
         const fd = new FormData(); fd.append('file', jdFile);
-        const r = await fetch('/api/extract-jd-file', { method: 'POST', headers: await getAuthHeader(), body: fd });
+        const r = await apiFetch('/api/extract-jd-file', { method: 'POST', headers: await getAuthHeader(), body: fd });
         if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to extract from file');
         normalized = await r.json();
       } else if (jdType === 'paste') {
@@ -576,7 +609,7 @@ export default function App() {
       fd.append('preferences', JSON.stringify(
         Object.fromEntries(Object.entries(preferences).filter(([, v]) => (v as string).trim() !== ''))
       ));
-      const r = await fetch('/api/tailor-resume', { method: 'POST', headers: await getAuthHeader(), body: fd });
+      const r = await apiFetch('/api/tailor-resume', { method: 'POST', headers: await getAuthHeader(), body: fd });
       if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to tailor resume');
       const data = (await r.json()) as TailorResumeResponse;
       clearInterval(iv); setProgress(100);
@@ -587,9 +620,9 @@ export default function App() {
   };
 
   const handleDownload = async () => {
-    if (!result || result.blocked) return;
+    if (!result) return;
     try {
-      const r = await fetch('/api/generate-docx', { method: 'POST', headers: { 'Content-Type': 'application/json', ...await getAuthHeader() }, body: JSON.stringify({ tailoredResume: result.tailoredResume, templateProfile: result.templateProfile, validation: result.validation }) });
+      const r = await apiFetch('/api/generate-docx', { method: 'POST', headers: { 'Content-Type': 'application/json', ...await getAuthHeader() }, body: JSON.stringify({ tailoredResume: result.tailoredResume, templateProfile: result.templateProfile, validation: result.validation }) });
       if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to generate DOCX');
       const blob = await r.blob();
       const url = window.URL.createObjectURL(blob);
@@ -629,7 +662,7 @@ export default function App() {
     if (!applyUrl.trim() || !result) return;
     setAgentStatus('running');
     try {
-      const r = await fetch('/api/auto-apply', {
+      const r = await apiFetch('/api/auto-apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...await getAuthHeader() },
         body: JSON.stringify({
@@ -653,7 +686,7 @@ export default function App() {
     if (!agentSessionId) return;
     setAgentStatus('running');
     try {
-      const r = await fetch('/api/auto-apply/submit', {
+      const r = await apiFetch('/api/auto-apply/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...await getAuthHeader() },
         body: JSON.stringify({ sessionId: agentSessionId }),
@@ -762,7 +795,7 @@ export default function App() {
         </div>
 
         {/* ── Sidebar (desktop) ── */}
-        <Sidebar step={step} isDark={isDark} onToggleDark={() => setIsDark(d => !d)} onSignOut={() => supabase.auth.signOut()} userEmail={session?.user?.email} />
+        <Sidebar step={step} isDark={isDark} onToggleDark={toggleDark} onSignOut={() => supabase.auth.signOut()} userEmail={session?.user?.email} onStepClick={n => setStep(n)} />
 
         {/* ── Mobile header ── */}
         <header className="lg:hidden fixed inset-x-0 top-0 z-30 h-13 border-b border-zinc-200/60 dark:border-zinc-800/60 bg-white/80 dark:bg-[#09090b]/90 backdrop-blur-xl">
@@ -790,7 +823,7 @@ export default function App() {
                   </React.Fragment>
                 ))}
               </div>
-              <button onClick={() => setIsDark(d => !d)} className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+              <button onClick={toggleDark} className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
                 {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
               </button>
             </div>
@@ -869,13 +902,12 @@ export default function App() {
                       {/* Resume upload */}
                       <div className={`${card} p-6 flex flex-col gap-4`}>
                         <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Your Resume</p>
-                        <label
-                          htmlFor="search-resume-input"
+                        <div
                           onDragEnter={e => { e.preventDefault(); setIsDraggingSearch(true); }}
                           onDragLeave={e => { e.preventDefault(); setIsDraggingSearch(false); }}
                           onDrop={e => { e.preventDefault(); setIsDraggingSearch(false); const f = e.dataTransfer.files?.[0]; if (f) handleSearchResumeChange(f); }}
                           onDragOver={e => e.preventDefault()}
-                          className={`relative rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-all duration-300 flex flex-col items-center justify-center min-h-[160px] ${
+                          className={`relative rounded-xl border-2 border-dashed p-8 text-center transition-all duration-300 flex flex-col items-center justify-center min-h-[160px] ${
                             isDraggingSearch
                               ? 'border-violet-500 bg-violet-500/5'
                               : searchResumeFile
@@ -883,19 +915,29 @@ export default function App() {
                               : 'border-zinc-200 dark:border-zinc-800 hover:border-violet-400/60 dark:hover:border-violet-700'
                           }`}
                         >
-                          <input id="search-resume-input" type="file" accept=".docx"
-                            onChange={e => { const f = e.target.files?.[0]; if (f) handleSearchResumeChange(f); }}
-                            className="sr-only" />
+                          {!searchResumeFile && (
+                            <input type="file" accept=".docx"
+                              onChange={e => { const f = e.target.files?.[0]; if (f) handleSearchResumeChange(f); }}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                          )}
                           {searchResumeFile ? (
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center shrink-0">
-                                <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                            <>
+                              <button
+                                onClick={e => { e.stopPropagation(); handleSearchResumeChange(null); }}
+                                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors z-20"
+                              >
+                                <X className="w-3 h-3 text-zinc-500" />
+                              </button>
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center shrink-0">
+                                  <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                                </div>
+                                <div className="text-left">
+                                  <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200 max-w-[200px] truncate">{searchResumeFile.name}</p>
+                                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Ready to analyze</p>
+                                </div>
                               </div>
-                              <div className="text-left">
-                                <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200 max-w-[200px] truncate">{searchResumeFile.name}</p>
-                                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Ready to analyze</p>
-                              </div>
-                            </div>
+                            </>
                           ) : (
                             <>
                               <div className={`w-11 h-11 rounded-2xl mb-3 flex items-center justify-center transition-all ${isDraggingSearch ? 'bg-violet-100 dark:bg-violet-500/20 rotate-3' : 'bg-zinc-100 dark:bg-zinc-800'}`}>
@@ -905,7 +947,7 @@ export default function App() {
                               <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1">DOCX only</p>
                             </>
                           )}
-                        </label>
+                        </div>
                       </div>
 
                       {/* Search preferences */}
@@ -923,10 +965,16 @@ export default function App() {
                         {showSearchPrefs && (
                           <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
                             <div>
-                              <label className="block text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-1">Location</label>
+                              <label className="block text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-1">City / Region</label>
                               <input type="text" value={searchPreferences.location ?? ''}
                                 onChange={e => setSearchPreferences(p => ({ ...p, location: e.target.value || undefined }))}
-                                placeholder="City, State or leave blank" className={`${inputCls} py-2`} />
+                                placeholder="e.g. Bengaluru, Maharashtra" className={`${inputCls} py-2`} />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-1">Country</label>
+                              <input type="text" value={searchPreferences.country ?? ''}
+                                onChange={e => setSearchPreferences(p => ({ ...p, country: e.target.value || undefined }))}
+                                placeholder="e.g. India" className={`${inputCls} py-2`} />
                             </div>
                             <div>
                               <label className="block text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-1.5">Remote Preference</label>
@@ -1169,7 +1217,11 @@ export default function App() {
                   <div className="w-full max-w-md">
 
                     {/* Phase label */}
-                    <div className="flex items-center gap-2 mb-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <button onClick={() => setStep(1)}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                        <ArrowLeft className="w-3.5 h-3.5 text-zinc-500" />
+                      </button>
                       <span className="text-[10px] font-black text-violet-500 dark:text-violet-400 uppercase tracking-[0.25em]">Phase 02</span>
                       <span className="w-8 h-px bg-violet-400/40" />
                       <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Data Acquisition</span>
@@ -1203,7 +1255,7 @@ export default function App() {
 
                     {/* Source type selector */}
                     <div className="flex gap-1 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 mb-5">
-                      {(['url', 'file', 'paste'] as const).map(t => (
+                      {(['paste', 'url', 'file'] as const).map(t => (
                         <button key={t} onClick={() => setJdType(t)}
                           className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all duration-200 ${
                             jdType === t
@@ -1288,7 +1340,11 @@ export default function App() {
                   <div className="w-full max-w-4xl">
 
                     {/* Phase label */}
-                    <div className="flex items-center gap-2 mb-5">
+                    <div className="flex items-center gap-3 mb-5">
+                      <button onClick={() => setStep(2)}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                        <ArrowLeft className="w-3.5 h-3.5 text-zinc-500" />
+                      </button>
                       <span className="text-[10px] font-black text-violet-500 dark:text-violet-400 uppercase tracking-[0.25em]">Phase 03</span>
                       <span className="w-8 h-px bg-violet-400/40" />
                       <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Profile Deposit</span>
@@ -1342,8 +1398,9 @@ export default function App() {
                         <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
                           <div className="flex items-center gap-2">
                             <Settings className="w-3.5 h-3.5 text-zinc-400" />
-                            <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Optional Preferences</span>
+                            <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Tailoring Hints</span>
                           </div>
+                          <p className="text-[10px] text-zinc-400 dark:text-zinc-600">Help the AI frame the right emphasis</p>
                           <div className="space-y-2.5">
                             {([
                               { k: 'targetRole', label: 'Target Role', ph: 'e.g. Senior Product Manager' },
@@ -1374,7 +1431,7 @@ export default function App() {
                               <p className="text-[10px] text-emerald-500/70 dark:text-emerald-400/60">Carried over from job search</p>
                             </div>
                             <button onClick={() => setSearchResumeFile(null)}
-                              className="text-emerald-400 hover:text-emerald-600 transition-colors shrink-0 text-[10px] font-semibold">
+                              className="px-3 py-1.5 rounded-lg text-xs font-bold text-violet-600 bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors border border-violet-200 dark:border-violet-500/20 shrink-0">
                               Change
                             </button>
                           </motion.div>
@@ -1453,10 +1510,6 @@ export default function App() {
                           className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-violet-500/20">
                           {isLoading ? <><Loader2 className="w-4 h-4 animate-spin" />Preparing...</> : 'Tailor Resume →'}
                         </button>
-                        <button onClick={() => setStep(2)} disabled={isLoading}
-                          className="w-full py-2.5 text-sm text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400 transition-colors">
-                          ← Back
-                        </button>
                       </div>
                     )}
                   </div>
@@ -1481,20 +1534,26 @@ export default function App() {
 
                       {/* ── Page header ── */}
                       <div className="mb-8">
-                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border mb-3 ${
-                          blocked
-                            ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'
-                            : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
-                        }`}>
-                          {blocked ? <ShieldAlert className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />}
-                          {blocked ? 'Validation blocked output' : 'Validation passed'}
+                        <div className="flex items-center gap-3 mb-3">
+                          <button onClick={() => setStep(3)}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                            <ArrowLeft className="w-3.5 h-3.5 text-zinc-500" />
+                          </button>
+                          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border ${
+                            blocked
+                              ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
+                          }`}>
+                            {blocked ? <ShieldAlert className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                            {blocked ? 'Validation warnings detected' : 'Validation passed'}
+                          </div>
                         </div>
                         <h2 className="text-4xl font-black tracking-tight">
-                          {blocked ? 'Validation Blocked Output' : 'Resume Tailored Successfully'}
+                          {blocked ? 'Validation Warnings Detected' : 'Resume Tailored Successfully'}
                         </h2>
                         <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-1.5">
                           {blocked
-                            ? 'Unsupported claims detected. Download is disabled until resolved.'
+                            ? 'Ambiguous claims detected. Review before downloading.'
                             : 'All claims validated against your source resume.'}
                         </p>
                       </div>
@@ -1708,7 +1767,7 @@ export default function App() {
                             ) : (
                               <div>
                                 <p className="text-sm text-amber-600 dark:text-amber-400 mb-3 leading-relaxed">
-                                  Unsupported or ambiguous claims were detected. Download is blocked.
+                                  Ambiguous claims detected. Review before downloading.
                                 </p>
                                 <ul className="space-y-2">
                                   {validation.blockingIssues.map((issue, i) => (
@@ -1753,11 +1812,30 @@ export default function App() {
 
                           {/* Actions */}
                           <div className="space-y-2.5 mt-auto pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                            <button onClick={handleDownload} disabled={blocked}
-                              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-violet-500/20">
+                            <button
+                              onClick={blocked ? () => setShowBlockedConfirm(true) : handleDownload}
+                              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-violet-500/20">
                               <Download className="w-4 h-4" />
-                              {blocked ? 'Download Blocked by Validation' : 'Download Tailored Resume (DOCX)'}
+                              {blocked ? 'Download with Warnings ↓' : 'Download Tailored Resume (DOCX)'}
                             </button>
+
+                            {showBlockedConfirm && (
+                              <div className="rounded-xl border border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 p-4 space-y-3">
+                                <p className="text-sm text-amber-700 dark:text-amber-400 font-medium">
+                                  This resume has validation warnings. The AI flagged some claims as ambiguous — they may still be accurate. Download and review?
+                                </p>
+                                <div className="flex gap-2">
+                                  <button onClick={() => { setShowBlockedConfirm(false); handleDownload(); }}
+                                    className="flex-1 py-2 rounded-lg text-xs font-bold text-white bg-amber-500 hover:bg-amber-400 transition-colors">
+                                    Download Anyway
+                                  </button>
+                                  <button onClick={() => setShowBlockedConfirm(false)}
+                                    className="flex-1 py-2 rounded-lg text-xs font-bold text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 transition-colors">
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            )}
 
                             {/* Auto-apply hint — shown after download or always when not blocked */}
                             {!blocked && (
@@ -1782,8 +1860,8 @@ export default function App() {
 
                             {blocked && (
                               <button data-testid="retry-resume" onClick={handleRetryResume}
-                                className="w-full py-3 text-sm font-bold text-violet-600 dark:text-violet-400 hover:text-violet-500 border border-violet-200 dark:border-violet-500/20 rounded-xl transition-colors">
-                                Try a different resume
+                                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-violet-500/20">
+                                Try a Different Resume →
                               </button>
                             )}
 
@@ -1853,8 +1931,12 @@ export default function App() {
                     <div className="w-full max-w-2xl">
 
                       {/* Phase label */}
-                      <div className="flex items-center gap-2 mb-6">
-                        <span className="text-[10px] font-black text-violet-500 dark:text-violet-400 uppercase tracking-[0.25em]">Phase 04</span>
+                      <div className="flex items-center gap-3 mb-6">
+                        <button onClick={() => setStep(4)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                          <ArrowLeft className="w-3.5 h-3.5 text-zinc-500" />
+                        </button>
+                        <span className="text-[10px] font-black text-violet-500 dark:text-violet-400 uppercase tracking-[0.25em]">Phase 05</span>
                         <span className="w-8 h-px bg-violet-400/40" />
                         <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Submit Application</span>
                       </div>
@@ -1975,7 +2057,7 @@ export default function App() {
 
                       {/* Nav buttons */}
                       <div className="space-y-2">
-                        <button onClick={() => setStep(3)}
+                        <button onClick={() => setStep(4)}
                           className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 border border-zinc-200 dark:border-zinc-800 rounded-xl transition-colors">
                           <ArrowLeft className="w-3.5 h-3.5" />Back to Results
                         </button>
@@ -1994,6 +2076,53 @@ export default function App() {
             })()}
           </AnimatePresence>
         </main>
+
+        {/* ── Session-expired re-login modal ── */}
+        {sessionExpired && (
+          <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
+            <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-8 shadow-2xl">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
+                  <LogOut className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                </div>
+                <h2 className="text-lg font-semibold">Session Expired</h2>
+              </div>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">Your session has expired. Sign in again to continue — your current work is preserved.</p>
+              <form onSubmit={handleAuth} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">Email</label>
+                  <input
+                    type="email" required value={authEmail}
+                    onChange={e => setAuthEmail(e.target.value)}
+                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/25 focus:border-violet-500 transition-all"
+                    placeholder="you@example.com"
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">Password</label>
+                  <input
+                    type="password" required value={authPassword}
+                    onChange={e => setAuthPassword(e.target.value)}
+                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/25 focus:border-violet-500 transition-all"
+                    placeholder="••••••••"
+                  />
+                </div>
+                {authError && (
+                  <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2">{authError}</p>
+                )}
+                <button
+                  type="submit" disabled={authLoading}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {authLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Sign In & Continue
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

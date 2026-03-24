@@ -283,8 +283,9 @@ export function buildCandidateProfile(resume: SourceResumeDocument): CandidatePr
 // ─────────────────────────────────────────
 
 function buildSearchPrompt(profile: CandidateProfile, prefs?: JobSearchPreferences): string {
-  const locationHint = prefs?.location
-    ? `Preferred location: ${prefs.location}`
+  const locationParts = [prefs?.location, prefs?.country].filter(Boolean).join(', ');
+  const locationHint = locationParts
+    ? `Preferred location: ${locationParts}`
     : profile.location
     ? `Candidate is based in: ${profile.location}`
     : 'No location preference specified (consider remote-friendly roles)';
@@ -413,8 +414,8 @@ interface RawJob {
 
 async function searchJobsWithGemini(prompt: string, ai: AIClient): Promise<RawJob[]> {
   let responseText = '';
+  const model = process.env.GEMINI_SEARCH_MODEL ?? 'gemini-2.0-flash';
   try {
-    const model = process.env.GEMINI_TAILOR_MODEL ?? 'gemini-3-flash-preview';
     const result = await (ai.models as any).generateContent({
       model,
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -425,8 +426,9 @@ async function searchJobsWithGemini(prompt: string, ai: AIClient): Promise<RawJo
     });
     responseText = result.text ?? '';
   } catch (err) {
-    console.warn('[job-search] Gemini call failed:', err);
-    return [];
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[job-search] Gemini grounded search failed:', message);
+    throw new Error(`Job search failed: ${message}`);
   }
 
   // Extract JSON block

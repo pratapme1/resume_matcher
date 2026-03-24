@@ -5,6 +5,7 @@ import type { Request } from 'express';
 import { MAX_UPLOAD_BYTES } from '../../server/app.ts';
 import { createTestApp } from '../helpers/test-app.ts';
 import { fixturePath, sampleResumePath } from '../helpers/fixture-path.ts';
+import { MockAIClient } from '../helpers/mock-ai.ts';
 
 describe('api integration', () => {
   const app = createTestApp();
@@ -178,7 +179,7 @@ describe('api integration', () => {
     expect(response.body.code).toBe('INVALID_REQUEST');
   });
 
-  it('returns 422 when DOCX generation is blocked by validation', async () => {
+  it('generates DOCX even when validation.isValid is false (soft validation — warnings only)', async () => {
     const tailoringResponse = await request(app)
       .post('/api/tailor-resume')
       .attach('resume', sampleResumePath())
@@ -196,7 +197,78 @@ describe('api integration', () => {
         },
       });
 
-    expect(response.status).toBe(422);
-    expect(response.body.code).toBe('RENDER_BLOCKED');
+    expect(response.status).toBe(200);
+    expect(response.headers['content-type']).toContain('wordprocessingml');
+  });
+
+  it('extracts JD from pasted text — /api/extract-jd-text returns NormalizedJobDescription', async () => {
+    const response = await request(app)
+      .post('/api/extract-jd-text')
+      .send({ text: 'Senior Software Engineer at TechCorp. Required: TypeScript, React, Node.js. Must have cloud platform and microservices experience. Nice to have: GraphQL, Kubernetes.' });
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('cleanText');
+    expect(response.body).toHaveProperty('sourceType', 'paste');
+    expect(typeof response.body.qualityScore).toBe('number');
+  });
+
+  it('returns 400 for empty text in /api/extract-jd-text', async () => {
+    const response = await request(app)
+      .post('/api/extract-jd-text')
+      .send({ text: '' });
+    expect(response.status).toBe(400);
+  });
+
+  it('/api/smart-fill returns mapping object with field values', async () => {
+    const smartFillApp = createTestApp({
+      getAI: () => new MockAIClient(['mock-ai-smart-fill.json']),
+    });
+    const response = await request(smartFillApp)
+      .post('/api/smart-fill')
+      .send({
+        fields: [
+          { name: 'first_name', label: 'First Name', placeholder: 'Enter first name', type: 'text' },
+          { name: 'email', label: 'Email', placeholder: 'your@email.com', type: 'email' },
+        ],
+        prefill: {
+          name: 'Vishnu Pratap Kumar',
+          email: 'vishnupratapkumar@gmail.com',
+          phone: '9148969183',
+        },
+      });
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('mapping');
+    expect(typeof response.body.mapping).toBe('object');
+  });
+
+  it('/api/generate-docx returns binary DOCX with correct Content-Type', async () => {
+    // First tailor to get a valid result
+    const tailoringResponse = await request(app)
+      .post('/api/tailor-resume')
+      .attach('resume', sampleResumePath())
+      .field('jdText', await readFile(fixturePath('jd-valid.txt'), 'utf8'));
+    expect(tailoringResponse.status).toBe(200);
+    expect(tailoringResponse.body.blocked).toBe(false);
+
+    const response = await request(app)
+      .post('/api/generate-docx')
+      .send({
+        tailoredResume: tailoringResponse.body.tailoredResume,
+        templateProfile: tailoringResponse.body.templateProfile,
+        validation: tailoringResponse.body.validation,
+      });
+    expect(response.status).toBe(200);
+    expect(response.headers['content-type']).toMatch(/wordprocessingml/);
+  });
+
+  it('/api/auto-apply returns 400 for missing applyUrl', async () => {
+    const response = await request(app)
+      .post('/api/auto-apply')
+      .send({
+        contactInfo: { name: 'Test User', email: 'test@example.com' },
+        tailoredResume: {},
+        templateProfile: {},
+        validation: { isValid: true },
+      });
+    expect(response.status).toBe(400);
   });
 });

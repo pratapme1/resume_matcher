@@ -1,4 +1,4 @@
-import { chromium, type Browser, type Page } from '@playwright/test';
+import type { Browser, Page } from '@playwright/test';
 import type { AIClient } from './app.ts';
 import type { TailoredResumeDocument, ResumeTemplateProfile, ValidationReport } from '../src/shared/types.ts';
 import { generateTailoredDocx } from './docx-render.ts';
@@ -106,6 +106,9 @@ export async function startAutoApply(
   _validation: ValidationReport,
   ai: AIClient,
 ): Promise<AutoApplyResult> {
+  const { chromium } = await import('@playwright/test').catch(() => {
+    throw new Error('Auto-apply requires Playwright, which is not available in this environment');
+  });
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
 

@@ -1,8 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.VITE_SUPABASE_URL!;
-const anonKey = process.env.VITE_SUPABASE_ANON_KEY!;
+import { upsertUser } from '../db/queries/users.ts';
 
 // Extend Request to carry user info
 declare global {
@@ -11,6 +9,7 @@ declare global {
     interface Request {
       userId?: string;
       userEmail?: string;
+      internalUserId?: string;
     }
   }
 }
@@ -19,6 +18,13 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     res.status(401).json({ error: 'Authentication required.', code: 'UNAUTHENTICATED' });
+    return;
+  }
+
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !anonKey) {
+    res.status(500).json({ error: 'Auth service not configured.', code: 'INTERNAL_ERROR' });
     return;
   }
 
@@ -38,5 +44,14 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
   req.userId = data.user.id;
   req.userEmail = data.user.email;
+
+  // Upsert into app users table to satisfy FK constraints on all other tables.
+  // Falls back to the raw Supabase UID so non-DB routes still work if this fails.
+  try {
+    req.internalUserId = await upsertUser(data.user.id, data.user.email ?? '');
+  } catch {
+    req.internalUserId = req.userId;
+  }
+
   next();
 }

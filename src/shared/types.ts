@@ -273,6 +273,7 @@ export interface TailorResumeBlockedResponse {
   blocked: true;
   analysis: ResumeAnalysis;
   validation: ValidationReport;
+  tailoredResume: TailoredResumeDocument;
   templateProfile: ResumeTemplateProfile;
   tailoringPlan: TailoringPlan;
   renderReadiness: 'blocked';
@@ -330,6 +331,7 @@ export interface JobSearchResult {
 
 export interface JobSearchPreferences {
   location?: string;
+  country?: string;
   remotePreference?: 'remote' | 'hybrid' | 'onsite' | 'any';
   roleType?: string;
 }

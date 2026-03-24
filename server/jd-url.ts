@@ -1,11 +1,13 @@
 import * as cheerio from 'cheerio';
-import { chromium } from '@playwright/test';
 import { badGateway, badRequest, gatewayTimeout, isAppError, unprocessable } from './errors.ts';
 import { normalizeWhitespace } from './utils.ts';
 
 const FETCH_TIMEOUT_MS = 8_000;
 
 async function fetchWithPlaywright(url: URL): Promise<string> {
+  const { chromium } = await import('@playwright/test').catch(() => {
+    throw new Error('Playwright is not available in this environment');
+  });
   const browser = await chromium.launch({ headless: true });
   try {
     const page = await browser.newPage();

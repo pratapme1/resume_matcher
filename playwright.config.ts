@@ -10,9 +10,10 @@ export default defineConfig({
     headless: true,
   },
   webServer: {
-    command: 'tsx tests/e2e/server.ts',
+    command: 'VITE_SKIP_AUTH=true tsx tests/e2e/server.ts',
     port: 3100,
     reuseExistingServer: !process.env.CI,
+    env: { VITE_SKIP_AUTH: 'true' },
   },
   projects: [
     {

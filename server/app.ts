@@ -35,6 +35,7 @@ import { searchJobs, buildCandidateProfile } from './job-search.ts';
 import { requireAuth } from './middleware/auth.ts';
 import { writeUsageEvent, isOverQuota } from './db/queries/usage.ts';
 import { createJobSearchSession } from './db/queries/sessions.ts';
+import { supabase } from './db/client.ts';
 import { logger } from './logger.ts';
 import type {
   JobSearchPreferences,
@@ -231,6 +232,17 @@ export function createApp(deps: AppDependencies): Express {
         deps.disablePlaywrightJdFallback ? null : undefined,
       );
       const normalized = buildNormalizedJobDescription(rawText, 'url');
+      if (!deps.skipAuth && req.internalUserId) {
+        try {
+          void Promise.resolve(supabase.from('job_descriptions').insert({
+            user_id: req.internalUserId,
+            source_type: 'url',
+            source_url: url,
+            raw_text: normalized.rawText,
+            normalized_json: normalized,
+          })).catch(() => {});
+        } catch { /* ignore — fire-and-forget */ }
+      }
       res.json(normalized);
     } catch (error) {
       sendErrorResponse(res, error, 'extract-jd-url');
@@ -257,6 +269,16 @@ export function createApp(deps: AppDependencies): Express {
     try {
       const { text } = z.object({ text: z.string().min(1) }).parse(req.body);
       const normalized = buildNormalizedJobDescription(text, 'paste');
+      if (!deps.skipAuth && req.internalUserId) {
+        try {
+          void Promise.resolve(supabase.from('job_descriptions').insert({
+            user_id: req.internalUserId,
+            source_type: 'paste',
+            raw_text: normalized.rawText,
+            normalized_json: normalized,
+          })).catch(() => {});
+        } catch { /* ignore — fire-and-forget */ }
+      }
       res.json(normalized);
     } catch (error) {
       sendErrorResponse(res, error, 'extract-jd-text');
@@ -266,7 +288,7 @@ export function createApp(deps: AppDependencies): Express {
   app.post('/api/tailor-resume', auth, rateLimitTailor, async (req, res) => {
     try {
       // Monthly quota check
-      if (!deps.skipAuth && req.userId && await isOverQuota(req.userId, 'tailor')) {
+      if (!deps.skipAuth && req.userId && await isOverQuota(req.internalUserId ?? req.userId, 'tailor')) {
         res.status(402).json({ error: 'Monthly tailor limit reached. Upgrade to Pro for more.', code: 'QUOTA_EXCEEDED' });
         return;
       }
@@ -340,6 +362,7 @@ export function createApp(deps: AppDependencies): Express {
             blocked: true,
             analysis,
             validation,
+            tailoredResume,
             templateProfile,
             tailoringPlan,
             renderReadiness: 'blocked',
@@ -349,13 +372,13 @@ export function createApp(deps: AppDependencies): Express {
           };
 
       if (!deps.skipAuth && req.userId) {
-        writeUsageEvent({ userId: req.userId, eventType: 'tailor', status: validation.isValid ? 'success' : 'blocked' })
+        writeUsageEvent({ userId: req.internalUserId ?? req.userId, eventType: 'tailor', status: validation.isValid ? 'success' : 'blocked' })
           .catch(err => logger.error({ err }, 'Failed to write tailor usage event'));
       }
       res.json(response);
     } catch (error) {
       if (!deps.skipAuth && req.userId) {
-        writeUsageEvent({ userId: req.userId, eventType: 'tailor', status: 'error' })
+        writeUsageEvent({ userId: req.internalUserId ?? req.userId, eventType: 'tailor', status: 'error' })
           .catch(err => logger.error({ err }, 'Failed to write tailor error event'));
       }
       sendErrorResponse(res, error, 'tailor-resume');
@@ -364,12 +387,7 @@ export function createApp(deps: AppDependencies): Express {
 
   app.post('/api/generate-docx', auth, rateLimitDocx, async (req, res) => {
     try {
-      const { tailoredResume, templateProfile, validation } = generateDocxRequestSchema.parse(req.body);
-      if (!validation.isValid) {
-        throw unprocessable('DOCX generation is blocked until validation issues are resolved.', 'RENDER_BLOCKED', {
-          logMessage: 'DOCX generation blocked because validation was not successful.',
-        });
-      }
+      const { tailoredResume, templateProfile } = generateDocxRequestSchema.parse(req.body);
 
       let buffer: Buffer;
       try {
@@ -409,6 +427,18 @@ export function createApp(deps: AppDependencies): Express {
         throw unprocessable('The uploaded resume could not be parsed.', 'RESUME_PARSE_FAILED', { cause: error, logMessage: `Failed to parse resume for build-profile.` });
       }
       const profile = buildCandidateProfile(parsedResume.resume);
+      if (!deps.skipAuth && req.internalUserId) {
+        try {
+          void Promise.resolve(supabase.from('uploaded_resumes').insert({
+            user_id: req.internalUserId,
+            filename: req.file.originalname,
+            storage_path: `${req.internalUserId}/${Date.now()}_${req.file.originalname}`,
+            file_size_bytes: req.file.size,
+            candidate_profile_json: profile,
+            parsed_json: null,
+          })).catch(() => {});
+        } catch { /* ignore — fire-and-forget */ }
+      }
       res.json(profile);
     } catch (error) {
       sendErrorResponse(res, error, 'build-profile');
@@ -419,7 +449,7 @@ export function createApp(deps: AppDependencies): Express {
   app.post('/api/search-jobs', auth, rateLimitSearch, async (req, res) => {
     try {
       // Monthly quota check
-      if (!deps.skipAuth && req.userId && await isOverQuota(req.userId, 'search')) {
+      if (!deps.skipAuth && req.userId && await isOverQuota(req.internalUserId ?? req.userId, 'search')) {
         res.status(402).json({ error: 'Monthly search limit reached. Upgrade to Pro for more.', code: 'QUOTA_EXCEEDED' });
         return;
       }
@@ -460,10 +490,11 @@ export function createApp(deps: AppDependencies): Express {
       const response = await searchJobs(parsedResume.resume, preferences, ai);
 
       if (!deps.skipAuth && req.userId) {
-        writeUsageEvent({ userId: req.userId, eventType: 'search', status: 'success', durationMs: Date.now() - t0 })
+        const effectiveUserId = req.internalUserId ?? req.userId;
+        writeUsageEvent({ userId: effectiveUserId, eventType: 'search', status: 'success', durationMs: Date.now() - t0 })
           .catch(err => logger.error({ err }, 'Failed to write search usage event'));
         createJobSearchSession({
-          userId: req.userId,
+          userId: effectiveUserId,
           preferencesJson: preferences,
           candidateProfileJson: response.candidateProfile,
           resultsJson: response.results,
@@ -473,7 +504,7 @@ export function createApp(deps: AppDependencies): Express {
       res.json(response);
     } catch (error) {
       if (!deps.skipAuth && req.userId) {
-        writeUsageEvent({ userId: req.userId, eventType: 'search', status: 'error' })
+        writeUsageEvent({ userId: req.internalUserId ?? req.userId, eventType: 'search', status: 'error' })
           .catch(err => logger.error({ err }, 'Failed to write search error event'));
       }
       sendErrorResponse(res, error, 'search-jobs');
