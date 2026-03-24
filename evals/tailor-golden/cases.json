@@ -1,0 +1,9 @@
+[
+  {
+    "id": "sample-frontend",
+    "label": "Sample resume against frontend JD fixture",
+    "resumePath": "Vishnu_Resume_HPE_IoT.docx",
+    "jdPath": "tests/fixtures/jd-valid.txt",
+    "repeats": 5
+  }
+]

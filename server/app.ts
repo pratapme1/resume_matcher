@@ -42,22 +42,37 @@ import {
   tailorResumeFormSchema,
   type ResumePreferences,
 } from './schemas.ts';
-import { tailorResumeWithAI } from './tailor.ts';
+import { TAILOR_PIPELINE_VERSION, TAILOR_PROMPT_VERSION, tailorResumeWithAI } from './tailor.ts';
 import { validateTailoredResume } from './validate.ts';
 import { startAutoApply, submitAutoApply } from './auto-apply.ts';
 import { searchJobs, buildCandidateProfile } from './job-search.ts';
 import { requireAuth } from './middleware/auth.ts';
 import { writeUsageEvent, isOverQuota } from './db/queries/usage.ts';
 import { getStoredApplicationProfile, upsertStoredApplicationProfile } from './db/queries/application-profiles.ts';
+import {
+  getMemoryDefaultResume,
+  getStoredDefaultResume,
+  getStoredResumeById,
+  setMemoryDefaultResume,
+  toStoredResumeSummary,
+  upsertDefaultResume,
+  type StoredResumeRecord,
+} from './db/queries/uploaded-resumes.ts';
 import { createJobSearchSession } from './db/queries/sessions.ts';
 import { supabase } from './db/client.ts';
 import { logger } from './logger.ts';
 import type {
   ApplicantProfile,
   ApplySessionEvent,
+  CandidateProfile,
+  DefaultResumeResponse,
+  ExtractionWarning,
   PageSnapshot,
   JobSearchPreferences,
+  ResumeSource,
   ResumeTemplateProfile,
+  SourceResumeDocument,
+  StoredResumeSummary,
   TailorResumeResponse,
   TailoredResumeDocument,
   ValidationReport,
@@ -77,6 +92,18 @@ function buildTailoredCorpus(tailored: TailoredResumeDocument): string {
     .join(' ');
 }
 import { normalizeWhitespace } from './utils.ts';
+
+type ResolvedResumeInput = {
+  resume: SourceResumeDocument;
+  templateProfile: ResumeTemplateProfile;
+  candidateProfile: CandidateProfile;
+  parseWarnings: ExtractionWarning[];
+  resumeSource: ResumeSource;
+  resumeId?: string;
+  filename?: string;
+  fileSizeBytes?: number;
+  buffer?: Buffer;
+};
 
 export interface AIClient {
   models: {
@@ -308,8 +335,173 @@ export function createApp(deps: AppDependencies): Express {
     return upsertStoredApplicationProfile(userKey, sanitized);
   };
 
+  const loadDefaultResumeForRequest = async (req: Request): Promise<StoredResumeRecord | null> => {
+    const userKey = getProfileUserKey(req);
+    if (deps.skipAuth) {
+      return getMemoryDefaultResume(userKey);
+    }
+    return getStoredDefaultResume(userKey);
+  };
+
+  const getStoredResumeForRequest = async (req: Request, resumeId: string): Promise<StoredResumeRecord | null> => {
+    const userKey = getProfileUserKey(req);
+    if (deps.skipAuth) {
+      const record = getMemoryDefaultResume(userKey);
+      return record?.id === resumeId ? record : null;
+    }
+    return getStoredResumeById(userKey, resumeId);
+  };
+
+  const saveDefaultResumeForRequest = async (
+    req: Request,
+    input: {
+      filename: string;
+      fileSizeBytes: number;
+      buffer: Buffer;
+      candidateProfile: CandidateProfile;
+      resume: SourceResumeDocument;
+      templateProfile: ResumeTemplateProfile;
+      parseWarnings: ExtractionWarning[];
+    },
+  ): Promise<StoredResumeRecord> => {
+    const userKey = getProfileUserKey(req);
+    const parsedPayload = {
+      resume: input.resume,
+      templateProfile: input.templateProfile,
+      parseWarnings: input.parseWarnings,
+    };
+
+    if (deps.skipAuth) {
+      return setMemoryDefaultResume(userKey, {
+        filename: input.filename,
+        fileSizeBytes: input.fileSizeBytes,
+        candidateProfile: input.candidateProfile,
+        parsed: parsedPayload,
+      });
+    }
+
+    return upsertDefaultResume({
+      userId: userKey,
+      filename: input.filename,
+      fileSizeBytes: input.fileSizeBytes,
+      buffer: input.buffer,
+      candidateProfile: input.candidateProfile,
+      parsed: parsedPayload,
+    });
+  };
+
+  const resolveResumeInputForRequest = async (req: Request): Promise<ResolvedResumeInput> => {
+    const resumeId =
+      typeof req.body?.resumeId === 'string' && req.body.resumeId.trim()
+        ? req.body.resumeId.trim()
+        : undefined;
+
+    if (req.file && resumeId) {
+      throw badRequest('Provide either a resume upload or resumeId, not both.', 'INVALID_REQUEST', {
+        logMessage: 'Received both multipart resume upload and resumeId on the same request.',
+      });
+    }
+
+    if (resumeId) {
+      const stored = await getStoredResumeForRequest(req, resumeId);
+      if (!stored) {
+        throw badRequest('Saved resume not found.', 'INVALID_REQUEST', {
+          logMessage: `Requested saved resume ${resumeId} was not found for the current user.`,
+        });
+      }
+      return {
+        resume: stored.parsed.resume,
+        templateProfile: stored.parsed.templateProfile,
+        candidateProfile: stored.candidateProfile ?? buildCandidateProfile(stored.parsed.resume),
+        parseWarnings: stored.parsed.parseWarnings,
+        resumeSource: 'default',
+        resumeId: stored.id,
+        filename: stored.filename,
+        fileSizeBytes: stored.fileSizeBytes,
+      };
+    }
+
+    if (!req.file) {
+      throw badRequest('Resume file is required.', 'INVALID_REQUEST', {
+        logMessage: 'Missing resume upload or resumeId.',
+      });
+    }
+    if (!isDocxUpload(req.file.mimetype, req.file.originalname, req.file.buffer)) {
+      throw badRequest('Resume must be a DOCX file.', 'UNSUPPORTED_FILE_TYPE', {
+        logMessage: `Rejected non-DOCX resume upload: ${req.file.originalname}`,
+      });
+    }
+
+    let parsedResume: Awaited<ReturnType<typeof parseResumeDocx>>;
+    try {
+      parsedResume = await parseResumeDocx(req.file.buffer);
+    } catch (error) {
+      throw unprocessable('The uploaded resume could not be parsed.', 'RESUME_PARSE_FAILED', {
+        cause: error,
+        logMessage: `Failed to parse uploaded resume ${req.file.originalname}.`,
+      });
+    }
+
+    return {
+      resume: parsedResume.resume,
+      templateProfile: parsedResume.templateProfile,
+      candidateProfile: buildCandidateProfile(parsedResume.resume),
+      parseWarnings: parsedResume.resume.parseWarnings,
+      resumeSource: 'upload',
+      filename: req.file.originalname,
+      fileSizeBytes: req.file.size,
+      buffer: req.file.buffer,
+    };
+  };
+
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok' });
+  });
+
+  app.get('/api/resumes/default', auth, limitProfile, async (req, res) => {
+    try {
+      const record = await loadDefaultResumeForRequest(req);
+      const body: DefaultResumeResponse = {
+        resume: toStoredResumeSummary(record),
+      };
+      res.json(body);
+    } catch (error) {
+      sendErrorResponse(res, error, 'default-resume-get');
+    }
+  });
+
+  app.post('/api/resumes/default', auth, limitProfile, async (req, res) => {
+    try {
+      await runSingleUpload(upload, req, res, 'resume');
+      if (!req.file) {
+        throw badRequest('Resume file is required.', 'INVALID_REQUEST', {
+          logMessage: 'Missing resume upload for default-resume save.',
+        });
+      }
+
+      const resolved = await resolveResumeInputForRequest(req);
+      if (resolved.resumeSource !== 'upload' || !resolved.buffer || !resolved.filename || !resolved.fileSizeBytes) {
+        throw badRequest('A new DOCX upload is required to save the default resume.', 'INVALID_REQUEST', {
+          logMessage: 'Default resume save attempted without an uploaded DOCX.',
+        });
+      }
+
+      const stored = await saveDefaultResumeForRequest(req, {
+        filename: resolved.filename,
+        fileSizeBytes: resolved.fileSizeBytes,
+        buffer: resolved.buffer,
+        candidateProfile: resolved.candidateProfile,
+        resume: resolved.resume,
+        templateProfile: resolved.templateProfile,
+        parseWarnings: resolved.parseWarnings,
+      });
+      const body: DefaultResumeResponse = {
+        resume: toStoredResumeSummary(stored),
+      };
+      res.json(body);
+    } catch (error) {
+      sendErrorResponse(res, error, 'default-resume-post');
+    }
   });
 
   app.post('/api/extract-jd-url', auth, limitExtract, async (req, res) => {
@@ -384,33 +576,12 @@ export function createApp(deps: AppDependencies): Express {
       }
 
       await runSingleUpload(upload, req, res, 'resume');
-      if (!req.file) {
-        throw badRequest('Resume file is required.', 'INVALID_REQUEST', {
-          logMessage: 'Missing resume upload for tailoring request.',
-        });
-      }
-      if (!isDocxUpload(req.file.mimetype, req.file.originalname, req.file.buffer)) {
-        throw badRequest('Reference resume must be a DOCX file for high-fidelity tailoring.', 'UNSUPPORTED_FILE_TYPE', {
-          logMessage: `Rejected non-DOCX resume upload: ${req.file.originalname}`,
-        });
-      }
-
       const { jdText } = tailorResumeFormSchema.parse(req.body);
       const preferences = parsePreferencesField(req.body.preferences);
 
       const normalizedJobDescription = buildNormalizedJobDescription(jdText, 'paste');
-
-      let parsedResume: Awaited<ReturnType<typeof parseResumeDocx>>;
-      try {
-        parsedResume = await parseResumeDocx(req.file.buffer);
-      } catch (error) {
-        throw unprocessable('The uploaded resume could not be parsed.', 'RESUME_PARSE_FAILED', {
-          cause: error,
-          logMessage: `Failed to parse uploaded resume ${req.file.originalname}.`,
-        });
-      }
-
-      const { resume, templateProfile } = parsedResume;
+      const resolvedResume = await resolveResumeInputForRequest(req);
+      const { resume, templateProfile, resumeId, resumeSource } = resolvedResume;
       const ai = deps.getAI(req);
 
       const jdRequirements = await buildJDRequirementModel(normalizedJobDescription, ai);
@@ -456,8 +627,12 @@ export function createApp(deps: AppDependencies): Express {
             tailoringPlan,
             renderReadiness: 'ready',
             normalizedJobDescription,
-            parseWarnings: [...normalizedJobDescription.extractionWarnings, ...resume.parseWarnings],
+            parseWarnings: [...normalizedJobDescription.extractionWarnings, ...resolvedResume.parseWarnings],
             jdCompanyName: jdRequirements.companyName,
+            resumeSource,
+            resumeId,
+            promptVersion: TAILOR_PROMPT_VERSION,
+            pipelineVersion: TAILOR_PIPELINE_VERSION,
           }
         : {
             blocked: true,
@@ -468,8 +643,12 @@ export function createApp(deps: AppDependencies): Express {
             tailoringPlan,
             renderReadiness: 'blocked',
             normalizedJobDescription,
-            parseWarnings: [...normalizedJobDescription.extractionWarnings, ...resume.parseWarnings],
+            parseWarnings: [...normalizedJobDescription.extractionWarnings, ...resolvedResume.parseWarnings],
             jdCompanyName: jdRequirements.companyName,
+            resumeSource,
+            resumeId,
+            promptVersion: TAILOR_PROMPT_VERSION,
+            pipelineVersion: TAILOR_PIPELINE_VERSION,
           };
 
       if (!deps.skipAuth && req.userId) {
@@ -515,32 +694,8 @@ export function createApp(deps: AppDependencies): Express {
   app.post('/api/build-profile', auth, limitProfile, async (req, res) => {
     try {
       await runSingleUpload(upload, req, res, 'resume');
-      if (!req.file) {
-        throw badRequest('Resume file is required.', 'INVALID_REQUEST', { logMessage: 'Missing resume for build-profile.' });
-      }
-      if (!isDocxUpload(req.file.mimetype, req.file.originalname, req.file.buffer)) {
-        throw badRequest('Resume must be a DOCX file.', 'UNSUPPORTED_FILE_TYPE', { logMessage: `Rejected non-DOCX for build-profile: ${req.file.originalname}` });
-      }
-      let parsedResume: Awaited<ReturnType<typeof parseResumeDocx>>;
-      try {
-        parsedResume = await parseResumeDocx(req.file.buffer);
-      } catch (error) {
-        throw unprocessable('The uploaded resume could not be parsed.', 'RESUME_PARSE_FAILED', { cause: error, logMessage: `Failed to parse resume for build-profile.` });
-      }
-      const profile = buildCandidateProfile(parsedResume.resume);
-      if (!deps.skipAuth && req.internalUserId) {
-        try {
-          void Promise.resolve(supabase.from('uploaded_resumes').insert({
-            user_id: req.internalUserId,
-            filename: req.file.originalname,
-            storage_path: `${req.internalUserId}/${Date.now()}_${req.file.originalname}`,
-            file_size_bytes: req.file.size,
-            candidate_profile_json: profile,
-            parsed_json: null,
-          })).catch(() => {});
-        } catch { /* ignore — fire-and-forget */ }
-      }
-      res.json(profile);
+      const resolvedResume = await resolveResumeInputForRequest(req);
+      res.json(resolvedResume.candidateProfile);
     } catch (error) {
       sendErrorResponse(res, error, 'build-profile');
     }
@@ -577,17 +732,6 @@ export function createApp(deps: AppDependencies): Express {
       }
 
       await runSingleUpload(upload, req, res, 'resume');
-      if (!req.file) {
-        throw badRequest('Resume file is required.', 'INVALID_REQUEST', {
-          logMessage: 'Missing resume upload for job search.',
-        });
-      }
-      if (!isDocxUpload(req.file.mimetype, req.file.originalname, req.file.buffer)) {
-        throw badRequest('Resume must be a DOCX file.', 'UNSUPPORTED_FILE_TYPE', {
-          logMessage: `Rejected non-DOCX resume for job search: ${req.file.originalname}`,
-        });
-      }
-
       let preferences: JobSearchPreferences = {};
       if (req.body.preferences) {
         try {
@@ -597,19 +741,13 @@ export function createApp(deps: AppDependencies): Express {
         }
       }
 
-      let parsedResume: Awaited<ReturnType<typeof parseResumeDocx>>;
-      try {
-        parsedResume = await parseResumeDocx(req.file.buffer);
-      } catch (error) {
-        throw unprocessable('The uploaded resume could not be parsed.', 'RESUME_PARSE_FAILED', {
-          cause: error,
-          logMessage: `Failed to parse resume for job search: ${req.file.originalname}`,
-        });
-      }
+      const resolvedResume = await resolveResumeInputForRequest(req);
 
       const ai = deps.getAI(req);
       const t0 = Date.now();
-      const response = await searchJobs(parsedResume.resume, preferences, ai);
+      const response = await searchJobs(resolvedResume.resume, preferences, ai);
+      response.resumeSource = resolvedResume.resumeSource;
+      response.resumeId = resolvedResume.resumeId;
 
       if (!deps.skipAuth && req.userId) {
         const effectiveUserId = req.internalUserId ?? req.userId;

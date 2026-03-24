@@ -17,7 +17,8 @@
     "test:e2e:headed": "playwright test --headed",
     "test:all": "npm run lint && npm run test && npm run test:e2e",
     "test:live-ai": "npm run lint && npm run build",
-    "build:ext": "node scripts/build-ext.mjs"
+    "build:ext": "node scripts/build-ext.mjs",
+    "eval:tailor": "tsx scripts/run-tailor-evals.ts"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

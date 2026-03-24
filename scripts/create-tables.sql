@@ -21,12 +21,23 @@ CREATE TABLE IF NOT EXISTS uploaded_resumes (
   filename               TEXT NOT NULL,
   storage_path           TEXT NOT NULL,
   file_size_bytes        INT NOT NULL,
+  file_hash              TEXT,
+  is_default             BOOLEAN NOT NULL DEFAULT false,
   parsed_json            JSONB,
   candidate_profile_json JSONB,
   created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
-  expires_at             TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '90 days')
+  updated_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at             TIMESTAMPTZ DEFAULT (now() + interval '90 days')
 );
+ALTER TABLE uploaded_resumes ADD COLUMN IF NOT EXISTS file_hash TEXT;
+ALTER TABLE uploaded_resumes ADD COLUMN IF NOT EXISTS is_default BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE uploaded_resumes ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE uploaded_resumes ALTER COLUMN expires_at DROP NOT NULL;
 CREATE INDEX IF NOT EXISTS uploaded_resumes_user_id_idx ON uploaded_resumes(user_id);
+CREATE INDEX IF NOT EXISTS uploaded_resumes_user_id_hash_idx ON uploaded_resumes(user_id, file_hash);
+CREATE UNIQUE INDEX IF NOT EXISTS uploaded_resumes_one_default_per_user_idx
+  ON uploaded_resumes(user_id)
+  WHERE is_default = true;
 
 -- ── job_descriptions ──────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS job_descriptions (

@@ -84,6 +84,31 @@ export const tailoredResumeSchema = z.object({
   summarySourceProvenanceIds: z.array(z.string()),
 });
 
+const tailoredMutableExperienceItemSchema = z.object({
+  id: z.string(),
+  bullets: z.array(tailoredBulletSchema),
+  sourceProvenanceIds: z.array(z.string()).optional(),
+});
+
+const tailoredMutableProjectItemSchema = z.object({
+  id: z.string(),
+  bullets: z.array(tailoredBulletSchema),
+  sourceProvenanceIds: z.array(z.string()).optional(),
+});
+
+export const tailoredResumeMutableSchema = z.object({
+  headline: z.string().optional(),
+  headlineSourceProvenanceIds: z.array(z.string()).optional(),
+  highlightMetrics: z.array(tailoredHighlightMetricSchema).optional(),
+  summary: z.string(),
+  summarySourceProvenanceIds: z.array(z.string()),
+  experience: z.array(tailoredMutableExperienceItemSchema),
+  projects: z.array(tailoredMutableProjectItemSchema).optional(),
+  skillCategories: z.array(tailoredSkillCategorySchema).optional(),
+  skills: z.array(z.string()).optional(),
+  skillSourceProvenanceIds: z.array(z.string()).optional(),
+});
+
 export const resumeTemplateProfileSchema = z.object({
   bulletStyle: z.object({
     indent: z.number().optional(),

@@ -1,15 +1,47 @@
 import { Type } from '@google/genai';
 import type {
   JDRequirementModel,
+  ResumeSkillCategory,
+  SourceProvenance,
   SourceResumeDocument,
+  TailoredBullet,
+  TailoredExperienceItem,
+  TailoredHighlightMetric,
+  TailoredProjectItem,
   TailoredResumeDocument,
+  TailoredSkillCategory,
   TailoringPlan,
 } from '../src/shared/types.ts';
 import type { AIClient } from './app.ts';
 import { badGateway } from './errors.ts';
-import { tailoredResumeSchema } from './schemas.ts';
+import { tailoredResumeMutableSchema, tailoredResumeSchema } from './schemas.ts';
+import { unique } from './utils.ts';
 
 const DEFAULT_TAILOR_MODEL = 'gemini-3-flash-preview';
+
+export const TAILOR_PROMPT_VERSION = '2026-03-24.partial-generation-v1';
+export const TAILOR_PIPELINE_VERSION = 'server-merge-v1';
+
+type MutableTailoredResume = {
+  headline?: string;
+  headlineSourceProvenanceIds?: string[];
+  highlightMetrics?: TailoredHighlightMetric[];
+  summary: string;
+  summarySourceProvenanceIds: string[];
+  experience: Array<{
+    id: string;
+    bullets: TailoredBullet[];
+    sourceProvenanceIds?: string[];
+  }>;
+  projects?: Array<{
+    id: string;
+    bullets: TailoredBullet[];
+    sourceProvenanceIds?: string[];
+  }>;
+  skillCategories?: TailoredSkillCategory[];
+  skills?: string[];
+  skillSourceProvenanceIds?: string[];
+};
 
 function buildCandidateAnalysisSection(plan: TailoringPlan): string {
   const gap = plan.gapAnalysis;
@@ -68,6 +100,211 @@ function buildSourceFacts(resume: SourceResumeDocument) {
   };
 }
 
+function provenanceIdsForText(sourceProvenance: SourceProvenance[], text: string): string[] {
+  if (!text) return [];
+  return sourceProvenance
+    .filter((item) => item.text === text)
+    .map((item) => item.id);
+}
+
+function filterKnownProvenance(ids: string[] | undefined, known: Set<string>): string[] {
+  return unique((ids ?? []).filter((id) => known.has(id)));
+}
+
+function defaultHighlightMetrics(resume: SourceResumeDocument): TailoredHighlightMetric[] {
+  return (resume.highlightMetrics ?? []).slice(0, 4).map((metric) => ({
+    value: metric.value,
+    label: metric.label,
+    sourceProvenanceIds: metric.provenanceIds,
+  }));
+}
+
+function defaultSkillSourceIds(resume: SourceResumeDocument): string[] {
+  return unique([
+    ...resume.skillCategories.flatMap((category) => category.provenanceIds),
+    ...resume.skills.flatMap((skill) => provenanceIdsForText(resume.sourceProvenance, skill)),
+  ]);
+}
+
+function defaultSkillCategories(resume: SourceResumeDocument): TailoredSkillCategory[] {
+  return resume.skillCategories.map((category) => ({
+    label: category.label,
+    items: [...category.items],
+    sourceProvenanceIds: [...category.provenanceIds],
+  }));
+}
+
+function flattenSkills(categories: TailoredSkillCategory[] | undefined, fallback: string[]): string[] {
+  const categoryItems = categories?.flatMap((category) => category.items) ?? [];
+  return unique([...(categoryItems.length > 0 ? categoryItems : []), ...fallback].filter(Boolean));
+}
+
+function buildMergedExperienceItem(
+  source: SourceResumeDocument['experience'][number],
+  mutable: MutableTailoredResume['experience'][number] | undefined,
+  knownProvenanceIds: Set<string>,
+  sourceProvenance: SourceProvenance[],
+): TailoredExperienceItem {
+  const bullets = (mutable?.bullets?.length ? mutable.bullets : source.bullets.map((text) => ({
+    text,
+    sourceProvenanceIds: provenanceIdsForText(sourceProvenance, text),
+  }))).map((bullet) => ({
+    text: bullet.text,
+    sourceProvenanceIds: filterKnownProvenance(
+      bullet.sourceProvenanceIds?.length ? bullet.sourceProvenanceIds : provenanceIdsForText(sourceProvenance, bullet.text),
+      knownProvenanceIds,
+    ),
+  }));
+
+  return {
+    id: source.id,
+    company: source.company,
+    title: source.title,
+    dates: source.dates,
+    location: source.location,
+    bullets,
+    sourceProvenanceIds: filterKnownProvenance(
+      mutable?.sourceProvenanceIds?.length ? mutable.sourceProvenanceIds : source.provenanceIds,
+      knownProvenanceIds,
+    ),
+  };
+}
+
+function buildMergedProjectItem(
+  source: SourceResumeDocument['projects'][number],
+  mutable: MutableTailoredResume['projects'][number] | undefined,
+  knownProvenanceIds: Set<string>,
+  sourceProvenance: SourceProvenance[],
+): TailoredProjectItem {
+  const bullets = (mutable?.bullets?.length ? mutable.bullets : source.bullets.map((text) => ({
+    text,
+    sourceProvenanceIds: provenanceIdsForText(sourceProvenance, text),
+  }))).map((bullet) => ({
+    text: bullet.text,
+    sourceProvenanceIds: filterKnownProvenance(
+      bullet.sourceProvenanceIds?.length ? bullet.sourceProvenanceIds : provenanceIdsForText(sourceProvenance, bullet.text),
+      knownProvenanceIds,
+    ),
+  }));
+
+  return {
+    id: source.id,
+    name: source.name,
+    description: source.description,
+    bullets,
+    sourceProvenanceIds: filterKnownProvenance(
+      mutable?.sourceProvenanceIds?.length ? mutable.sourceProvenanceIds : source.provenanceIds,
+      knownProvenanceIds,
+    ),
+  };
+}
+
+function coerceSkillCategories(
+  categories: TailoredSkillCategory[] | undefined,
+  knownProvenanceIds: Set<string>,
+): TailoredSkillCategory[] | undefined {
+  if (!categories?.length) return undefined;
+  return categories.map((category) => ({
+    label: category.label,
+    items: unique(category.items.filter(Boolean)),
+    sourceProvenanceIds: filterKnownProvenance(category.sourceProvenanceIds, knownProvenanceIds),
+  }));
+}
+
+function mergeTailoredResume(resume: SourceResumeDocument, mutable: MutableTailoredResume): TailoredResumeDocument {
+  const knownProvenanceIds = new Set(resume.sourceProvenance.map((item) => item.id));
+  const experienceById = new Map(mutable.experience.map((item) => [item.id, item]));
+  const projectById = new Map((mutable.projects ?? []).map((item) => [item.id, item]));
+  const skillCategories = coerceSkillCategories(mutable.skillCategories, knownProvenanceIds) ?? defaultSkillCategories(resume);
+  const skills = unique(
+    (mutable.skills?.length ? mutable.skills : flattenSkills(skillCategories, resume.skills))
+      .map((skill) => skill.trim())
+      .filter(Boolean),
+  );
+
+  return {
+    contactInfo: { ...resume.contactInfo },
+    headline: mutable.headline?.trim() || resume.headline,
+    headlineSourceProvenanceIds: filterKnownProvenance(
+      mutable.headlineSourceProvenanceIds?.length ? mutable.headlineSourceProvenanceIds : resume.headlineProvenanceIds,
+      knownProvenanceIds,
+    ),
+    highlightMetrics: (mutable.highlightMetrics?.length ? mutable.highlightMetrics : defaultHighlightMetrics(resume))
+      .slice(0, 4)
+      .map((metric) => ({
+        value: metric.value,
+        label: metric.label,
+        sourceProvenanceIds: filterKnownProvenance(metric.sourceProvenanceIds, knownProvenanceIds),
+      })),
+    summary: mutable.summary.trim() || resume.summary,
+    summarySourceProvenanceIds: filterKnownProvenance(
+      mutable.summarySourceProvenanceIds?.length
+        ? mutable.summarySourceProvenanceIds
+        : provenanceIdsForText(resume.sourceProvenance, resume.summary),
+      knownProvenanceIds,
+    ),
+    experience: resume.experience.map((item) =>
+      buildMergedExperienceItem(item, experienceById.get(item.id), knownProvenanceIds, resume.sourceProvenance),
+    ),
+    education: resume.education.map((item) => ({
+      id: item.id,
+      institution: item.institution,
+      degree: item.degree,
+      dates: item.dates,
+      location: item.location,
+      sourceProvenanceIds: [...item.provenanceIds],
+    })),
+    skills,
+    skillCategories,
+    skillSourceProvenanceIds: filterKnownProvenance(
+      mutable.skillSourceProvenanceIds?.length ? mutable.skillSourceProvenanceIds : defaultSkillSourceIds(resume),
+      knownProvenanceIds,
+    ),
+    projects: resume.projects.map((item) =>
+      buildMergedProjectItem(item, projectById.get(item.id), knownProvenanceIds, resume.sourceProvenance),
+    ),
+    certifications: [...resume.certifications],
+    certificationSourceProvenanceIds: unique(
+      resume.certifications.flatMap((item) => provenanceIdsForText(resume.sourceProvenance, item)),
+    ),
+    sectionOrder: [...resume.sectionOrder],
+  };
+}
+
+function coerceMutableTailoredResume(payload: unknown): MutableTailoredResume {
+  const partial = tailoredResumeMutableSchema.safeParse(payload);
+  if (partial.success) {
+    return partial.data as MutableTailoredResume;
+  }
+
+  const full = tailoredResumeSchema.safeParse(payload);
+  if (full.success) {
+    const data = full.data;
+    return {
+      headline: data.headline,
+      headlineSourceProvenanceIds: data.headlineSourceProvenanceIds,
+      highlightMetrics: data.highlightMetrics,
+      summary: data.summary,
+      summarySourceProvenanceIds: data.summarySourceProvenanceIds,
+      experience: data.experience.map((item) => ({
+        id: item.id,
+        bullets: item.bullets,
+        sourceProvenanceIds: item.sourceProvenanceIds,
+      })),
+      projects: data.projects.map((item) => ({
+        id: item.id,
+        bullets: item.bullets,
+        sourceProvenanceIds: item.sourceProvenanceIds,
+      })),
+      skillCategories: data.skillCategories,
+      skills: data.skills,
+      skillSourceProvenanceIds: data.skillSourceProvenanceIds,
+    };
+  }
+
+  throw partial.error;
+}
+
 export async function tailorResumeWithAI(
   ai: AIClient,
   resume: SourceResumeDocument,
@@ -82,23 +319,26 @@ You are an elite ATS-focused resume editor.
 You are tailoring an existing resume to a target role while preserving factual accuracy and the reference resume's visual system.
 Output valid JSON only. Do not wrap it in markdown.
 
-Follow this process internally before writing JSON:
-1. Identify the target role, company, and the top job-description priorities.
-2. Rank the JD keywords that should appear naturally in the resume.
-3. Decide how to reposition the candidate without inventing experience.
-4. Select the 4 most relevant existing highlight metrics from SOURCE_FACTS.
-5. Reorder skills so the most role-relevant categories lead.
+You do NOT own the entire resume document. The server will merge your response into locked source facts.
+Only rewrite mutable sections.
 
 Non-negotiable rules (CRITICAL — never violate):
 - Use only facts already present in SOURCE_FACTS.
 - Never invent experience, tools, metrics, employers, titles, dates, institutions, clients, or certifications.
-- Never change employers, job titles, dates, locations, education entries, or certification names.
-- Copy job titles VERBATIM from SOURCE_FACTS — never shorten, abbreviate, or paraphrase them (e.g. "Senior Product Manager" must stay "Senior Product Manager", not "Product Manager").
-- Never create new metrics. Prefer SOURCE_FACTS.highlightMetrics, but you may also elevate strong numeric proof points from sourced experience or project bullets when they are directly backed by provenance.
+- Never change contact info, employers, job titles, dates, locations, education entries, project names, project descriptions, certification names, or section order.
+- Copy job titles VERBATIM from SOURCE_FACTS — never shorten, abbreviate, or paraphrase them.
+- Never create new metrics. Prefer SOURCE_FACTS.highlightMetrics, but you may elevate strong numeric proof points from sourced experience bullets when directly backed by provenance.
 - Do not add a tool or skill unless it already appears in SOURCE_FACTS.skills or SOURCE_FACTS.skillCategories.
-- You may translate verified skills into closer JD terminology only when the mapping is legitimate. Example: "n8n" can become "n8n (workflow automation)".
 - Every generated summary sentence or bullet must remain grounded in the cited provenance ids.
-- Keep sectionOrder aligned to SOURCE_FACTS.sectionOrder. Do not invent new sections.
+- Return only the mutable fields listed below. Do not echo locked resume fields.
+
+Mutable fields you may return:
+- headline + headlineSourceProvenanceIds
+- highlightMetrics
+- summary + summarySourceProvenanceIds
+- experience[].bullets for existing experience ids only
+- projects[].bullets for existing project ids only
+- reordered skillCategories, skills, skillSourceProvenanceIds
 
 Content objectives:
 - Headline: crisp, premium, ATS-aligned, and matched to the JD's product/domain language.
@@ -136,9 +376,8 @@ ${JSON.stringify(preferences, null, 2)}
 SOURCE_FACTS:
 ${JSON.stringify(buildSourceFacts(resume), null, 2)}
 
-Return this shape:
+Return this shape only:
 {
-  "contactInfo": { "name": "", "email": "", "phone": "", "linkedin": "", "location": "" },
   "headline": "",
   "headlineSourceProvenanceIds": ["..."],
   "highlightMetrics": [
@@ -153,27 +392,21 @@ Return this shape:
   "experience": [
     {
       "id": "",
-      "company": "",
-      "title": "",
-      "dates": "",
-      "location": "",
       "bullets": [
         { "text": "", "sourceProvenanceIds": ["..."] }
       ],
       "sourceProvenanceIds": ["..."]
     }
   ],
-  "education": [
+  "projects": [
     {
       "id": "",
-      "institution": "",
-      "degree": "",
-      "dates": "",
-      "location": "",
+      "bullets": [
+        { "text": "", "sourceProvenanceIds": ["..."] }
+      ],
       "sourceProvenanceIds": ["..."]
     }
   ],
-  "skills": ["..."],
   "skillCategories": [
     {
       "label": "",
@@ -181,30 +414,9 @@ Return this shape:
       "sourceProvenanceIds": ["..."]
     }
   ],
-  "skillSourceProvenanceIds": ["..."],
-  "projects": [
-    {
-      "id": "",
-      "name": "",
-      "description": "",
-      "bullets": [
-        { "text": "", "sourceProvenanceIds": ["..."] }
-      ],
-      "sourceProvenanceIds": ["..."]
-    }
-  ],
-  "certifications": ["..."],
-  "certificationSourceProvenanceIds": ["..."],
-  "sectionOrder": ["summary", "experience", "skills", "education"]
+  "skills": ["..."],
+  "skillSourceProvenanceIds": ["..."]
 }
-
-Field guidance:
-- headline: tailor the existing headline for the target role. Keep it compact and premium.
-- headlineSourceProvenanceIds: cite the original headline and any supporting source facts used to justify the new positioning.
-- highlightMetrics: return exactly 4 entries when enough sourced metrics exist. Metric values may be compact sourced variants such as "100K+" from "100K+ Users", but they must remain traceable to the cited provenance.
-- summary: 4-6 sentences total, optimized for ATS and executive skim-reading. Use "\\n\\n" between the two paragraphs when possible.
-- skills: return a flat ATS keyword list derived from skillCategories.
-- skillCategories: keep the section believable and recruiter-friendly. Reorder categories by JD relevance, rename categories only when justified by source facts, and keep item wording tightly aligned to the job description.
 `;
 
   let response: { text?: string | null };
@@ -214,21 +426,11 @@ Field guidance:
       model: modelName,
       contents: prompt,
       config: {
+        temperature: 0,
         responseMimeType: 'application/json',
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            contactInfo: {
-              type: Type.OBJECT,
-              properties: {
-                name: { type: Type.STRING },
-                email: { type: Type.STRING },
-                phone: { type: Type.STRING },
-                linkedin: { type: Type.STRING },
-                location: { type: Type.STRING },
-              },
-              required: ['name', 'email', 'phone', 'linkedin', 'location'],
-            },
             headline: { type: Type.STRING },
             headlineSourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
             highlightMetrics: {
@@ -251,10 +453,6 @@ Field guidance:
                 type: Type.OBJECT,
                 properties: {
                   id: { type: Type.STRING },
-                  company: { type: Type.STRING },
-                  title: { type: Type.STRING },
-                  dates: { type: Type.STRING },
-                  location: { type: Type.STRING },
                   bullets: {
                     type: Type.ARRAY,
                     items: {
@@ -268,25 +466,31 @@ Field guidance:
                   },
                   sourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
                 },
-                required: ['id', 'company', 'title', 'dates', 'location', 'bullets', 'sourceProvenanceIds'],
+                required: ['id', 'bullets'],
               },
             },
-            education: {
+            projects: {
               type: Type.ARRAY,
               items: {
                 type: Type.OBJECT,
                 properties: {
                   id: { type: Type.STRING },
-                  institution: { type: Type.STRING },
-                  degree: { type: Type.STRING },
-                  dates: { type: Type.STRING },
-                  location: { type: Type.STRING },
+                  bullets: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        text: { type: Type.STRING },
+                        sourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
+                      },
+                      required: ['text', 'sourceProvenanceIds'],
+                    },
+                  },
                   sourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
                 },
-                required: ['id', 'institution', 'degree', 'dates', 'location', 'sourceProvenanceIds'],
+                required: ['id', 'bullets'],
               },
             },
-            skills: { type: Type.ARRAY, items: { type: Type.STRING } },
             skillCategories: {
               type: Type.ARRAY,
               items: {
@@ -299,48 +503,10 @@ Field guidance:
                 required: ['label', 'items', 'sourceProvenanceIds'],
               },
             },
+            skills: { type: Type.ARRAY, items: { type: Type.STRING } },
             skillSourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-            projects: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  id: { type: Type.STRING },
-                  name: { type: Type.STRING },
-                  description: { type: Type.STRING },
-                  bullets: {
-                    type: Type.ARRAY,
-                    items: {
-                      type: Type.OBJECT,
-                      properties: {
-                        text: { type: Type.STRING },
-                        sourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-                      },
-                      required: ['text', 'sourceProvenanceIds'],
-                    },
-                  },
-                  sourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-                },
-                required: ['id', 'name', 'description', 'bullets', 'sourceProvenanceIds'],
-              },
-            },
-            certifications: { type: Type.ARRAY, items: { type: Type.STRING } },
-            certificationSourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-            sectionOrder: { type: Type.ARRAY, items: { type: Type.STRING } },
           },
-          required: [
-            'contactInfo',
-            'summary',
-            'summarySourceProvenanceIds',
-            'experience',
-            'education',
-            'skills',
-            'skillSourceProvenanceIds',
-            'projects',
-            'certifications',
-            'certificationSourceProvenanceIds',
-            'sectionOrder',
-          ],
+          required: ['summary', 'summarySourceProvenanceIds', 'experience'],
         },
       },
     });
@@ -360,7 +526,9 @@ Field guidance:
   }
 
   try {
-    return tailoredResumeSchema.parse(JSON.parse(response.text || '{}')) as TailoredResumeDocument;
+    const payload = JSON.parse(response.text || '{}');
+    const mutable = coerceMutableTailoredResume(payload);
+    return mergeTailoredResume(resume, mutable);
   } catch (error) {
     throw badGateway('The AI tailoring service returned invalid data.', 'AI_INVALID_RESPONSE', {
       cause: error,

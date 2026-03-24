@@ -94,6 +94,23 @@ function validateSupportedField(
   });
 }
 
+function validateExactObjectField(
+  source: unknown,
+  output: unknown,
+  field: string,
+  issues: ValidationIssue[],
+): void {
+  if (JSON.stringify(source) === JSON.stringify(output)) {
+    return;
+  }
+  issues.push({
+    code: 'LOCKED_FIELD_MUTATION',
+    message: `Locked field drift detected for ${field}.`,
+    severity: 'blocking',
+    field,
+  });
+}
+
 function buildSourceCorpus(sourceClaims: Set<string>): string {
   return Array.from(sourceClaims).join(' ');
 }
@@ -134,6 +151,42 @@ export function validateTailoredResume(
   const provenanceIds = new Set(source.sourceProvenance.map((item) => item.id));
   const sourceProvenanceById = new Map(source.sourceProvenance.map((item) => [item.id, item.text]));
 
+  validateExactObjectField(source.contactInfo, tailored.contactInfo, 'contactInfo', blockingIssues);
+  validateExactObjectField(source.sectionOrder, tailored.sectionOrder, 'sectionOrder', blockingIssues);
+  validateExactObjectField(source.certifications, tailored.certifications, 'certifications', blockingIssues);
+  validateExactObjectField(
+    source.education.map((item) => ({
+      id: item.id,
+      institution: item.institution,
+      degree: item.degree,
+      dates: item.dates,
+      location: item.location,
+    })),
+    tailored.education.map((item) => ({
+      id: item.id,
+      institution: item.institution,
+      degree: item.degree,
+      dates: item.dates,
+      location: item.location,
+    })),
+    'education',
+    blockingIssues,
+  );
+  validateExactObjectField(
+    source.projects.map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+    })),
+    tailored.projects.map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+    })),
+    'projects',
+    blockingIssues,
+  );
+
   // Company and title use token-based matching to allow minor formatting variations
   // (e.g. "Dell Technologies" matches "Dell Technologies, Inc."; "Product Manager"
   // matches "Senior Product Manager"). Fabricated values still fail since their tokens
@@ -156,6 +209,13 @@ export function validateTailoredResume(
     source.experience.map((item) => item.dates).filter(Boolean),
     tailored.experience.map((item) => item.dates).filter(Boolean),
     'dates',
+    blockingIssues,
+    unsupportedClaims,
+  );
+  validateExactField(
+    source.experience.map((item) => item.location).filter(Boolean),
+    tailored.experience.map((item) => item.location).filter(Boolean),
+    'location',
     blockingIssues,
     unsupportedClaims,
   );

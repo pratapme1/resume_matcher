@@ -267,6 +267,10 @@ export interface TailorResumeSuccessResponse {
   normalizedJobDescription: NormalizedJobDescription;
   parseWarnings: ExtractionWarning[];
   jdCompanyName?: string;
+  resumeSource: ResumeSource;
+  resumeId?: string;
+  promptVersion: string;
+  pipelineVersion: string;
 }
 
 export interface TailorResumeBlockedResponse {
@@ -280,6 +284,10 @@ export interface TailorResumeBlockedResponse {
   normalizedJobDescription: NormalizedJobDescription;
   parseWarnings: ExtractionWarning[];
   jdCompanyName?: string;
+  resumeSource: ResumeSource;
+  resumeId?: string;
+  promptVersion: string;
+  pipelineVersion: string;
 }
 
 export type TailorResumeResponse =
@@ -340,6 +348,8 @@ export interface JobSearchResponse {
   results: JobSearchResult[];
   candidateProfile: CandidateProfile;
   totalFound: number;
+  resumeSource?: ResumeSource;
+  resumeId?: string;
 }
 
 /* ─────────────────────────────────────────
@@ -347,6 +357,22 @@ export interface JobSearchResponse {
 ───────────────────────────────────────── */
 
 export type ExecutorMode = 'extension' | 'cloud';
+
+export type ResumeSource = 'upload' | 'default';
+
+export interface StoredResumeSummary {
+  id: string;
+  filename: string;
+  updatedAt: string;
+  fileHash?: string;
+  hasTemplateProfile: boolean;
+  parseWarnings: ExtractionWarning[];
+  candidateProfile?: CandidateProfile;
+}
+
+export interface DefaultResumeResponse {
+  resume: StoredResumeSummary | null;
+}
 
 export type PortalType =
   | 'phenom'

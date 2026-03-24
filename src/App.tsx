@@ -12,10 +12,13 @@ import type {
   ApplicantProfile,
   ApplySessionSummary,
   CandidateProfile,
+  DefaultResumeResponse,
   ExtractionWarning,
   JobSearchPreferences,
   JobSearchResult,
   NormalizedJobDescription,
+  ResumeSource,
+  StoredResumeSummary,
   TailorResumeResponse,
   TailoredResumeDocument,
 } from './shared/types.ts';
@@ -348,6 +351,10 @@ const APPLICATION_PROFILE_FIELDS: Array<{
   { key: 'gender', label: 'Gender', placeholder: 'Prefer not to say' },
 ];
 
+function formatResumeSourceLabel(source: ResumeSource | undefined): string {
+  return source === 'default' ? 'Saved default resume' : 'Uploaded resume';
+}
+
 function splitFullName(fullName?: string) {
   const parts = (fullName ?? '').trim().split(/\s+/).filter(Boolean);
   return {
@@ -493,6 +500,11 @@ export default function App() {
   const [applicationProfileSaving, setApplicationProfileSaving] = useState(false);
   const [applicationProfileError, setApplicationProfileError] = useState<string | null>(null);
   const [applicationProfileSavedNotice, setApplicationProfileSavedNotice] = useState<string | null>(null);
+  const [defaultResume, setDefaultResume] = useState<StoredResumeSummary | null>(null);
+  const [defaultResumeLoading, setDefaultResumeLoading] = useState(false);
+  const [defaultResumeSaving, setDefaultResumeSaving] = useState(false);
+  const [defaultResumeError, setDefaultResumeError] = useState<string | null>(null);
+  const [defaultResumeSavedNotice, setDefaultResumeSavedNotice] = useState<string | null>(null);
   const [showBlockedConfirm, setShowBlockedConfirm] = useState(false);
   const [warningsDismissed, setWarningsDismissed] = useState(false);
 
@@ -561,6 +573,32 @@ export default function App() {
     if (!session) return;
 
     let cancelled = false;
+    const loadDefaultResume = async () => {
+      setDefaultResumeLoading(true);
+      try {
+        const r = await apiFetch('/api/resumes/default', {
+          headers: await getAuthHeader(),
+        });
+        if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to load saved default resume');
+        const body = await r.json() as DefaultResumeResponse;
+        if (!cancelled) {
+          setDefaultResume(body.resume ?? null);
+          setDefaultResumeError(null);
+          if (body.resume?.candidateProfile) {
+            setProfilePreview(body.resume.candidateProfile);
+            setShowProfilePreview(true);
+          }
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          setDefaultResume(null);
+          setDefaultResumeError(err.message);
+        }
+      } finally {
+        if (!cancelled) setDefaultResumeLoading(false);
+      }
+    };
+
     const loadApplicationProfile = async () => {
       setApplicationProfileLoading(true);
       try {
@@ -583,6 +621,7 @@ export default function App() {
       }
     };
 
+    void loadDefaultResume();
     void loadApplicationProfile();
     return () => {
       cancelled = true;
@@ -677,11 +716,45 @@ export default function App() {
   };
 
   /* ── handlers ── */
+  const saveResumeAsDefault = async (file: File, opts: { clearSearchOverride?: boolean; clearTailorOverride?: boolean } = {}) => {
+    setDefaultResumeSaving(true);
+    setDefaultResumeError(null);
+    setDefaultResumeSavedNotice(null);
+    try {
+      const fd = new FormData();
+      fd.append('resume', file);
+      const r = await apiFetch('/api/resumes/default', {
+        method: 'POST',
+        headers: await getAuthHeader(),
+        body: fd,
+      });
+      if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to save default resume');
+      const body = await r.json() as DefaultResumeResponse;
+      setDefaultResume(body.resume ?? null);
+      if (body.resume?.candidateProfile) {
+        setProfilePreview(body.resume.candidateProfile);
+        setShowProfilePreview(true);
+      }
+      setDefaultResumeSavedNotice('Saved as your default resume.');
+      if (opts.clearSearchOverride) setSearchResumeFile(null);
+      if (opts.clearTailorOverride) setResumeFile(null);
+    } catch (err: any) {
+      setDefaultResumeError(err.message || 'Failed to save default resume.');
+    } finally {
+      setDefaultResumeSaving(false);
+    }
+  };
+
   const handleSearchResumeChange = async (file: File | null) => {
     setSearchResumeFile(file);
+    setDefaultResumeSavedNotice(null);
+    if (!file) {
+      setProfilePreview(defaultResume?.candidateProfile ?? null);
+      setShowProfilePreview(Boolean(defaultResume?.candidateProfile));
+      return;
+    }
     setProfilePreview(null);
     setShowProfilePreview(false);
-    if (!file) return;
     setProfilePreviewLoading(true);
     try {
       const fd = new FormData(); fd.append('resume', file);
@@ -696,11 +769,15 @@ export default function App() {
   };
 
   const handleSearchJobs = async () => {
-    if (!searchResumeFile) { setError('Please upload your resume first'); return; }
+    if (!searchResumeFile && !defaultResume) { setError('Please upload or save your resume first'); return; }
     setSearchLoading(true); setError(null); setJobSearchResults([]);
     try {
       const fd = new FormData();
-      fd.append('resume', searchResumeFile);
+      if (searchResumeFile) {
+        fd.append('resume', searchResumeFile);
+      } else if (defaultResume) {
+        fd.append('resumeId', defaultResume.id);
+      }
       fd.append('preferences', JSON.stringify(searchPreferences));
       const r = await apiFetch('/api/search-jobs', { method: 'POST', headers: await getAuthHeader(), body: fd });
       if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Search failed');
@@ -760,7 +837,7 @@ export default function App() {
 
   const handleTailorResume = async () => {
     const activeResume = resumeFile ?? searchResumeFile;
-    if (!activeResume) { setError('Please upload a reference resume'); return; }
+    if (!activeResume && !defaultResume) { setError('Please upload or save a reference resume'); return; }
     if (!normalizedJd?.cleanText) { setError('Please provide a valid job description first'); return; }
     setIsLoading(true); setError(null); setProgress(0); setProgressMsg('Parsing source resume...');
     const t0 = Date.now();
@@ -775,7 +852,11 @@ export default function App() {
     }, 200);
     try {
       const fd = new FormData();
-      fd.append('resume', activeResume);
+      if (activeResume) {
+        fd.append('resume', activeResume);
+      } else if (defaultResume) {
+        fd.append('resumeId', defaultResume.id);
+      }
       fd.append('jdText', normalizedJd.cleanText);
       fd.append('preferences', JSON.stringify(
         Object.fromEntries(Object.entries(preferences).filter(([, v]) => (v as string).trim() !== ''))
@@ -936,7 +1017,31 @@ export default function App() {
     }
   };
 
-  const resetFlow = () => { setStep(1); setJdText(''); setJdFile(null); setJdUrl(''); setResumeFile(null); setResult(null); setNormalizedJd(null); setError(null); setProgress(0); setProgressMsg(''); setHasDownloaded(false); setApplyUrl(''); setApplySession(null); setApplyStarting(false); setApplyError(null); setSearchResumeFile(null); setJobSearchResults([]); setCandidateProfile(null); setSelectedJob(null); setSearchPreferences({}); setShowSearchPrefs(false); setProfilePreview(null); setShowProfilePreview(false); };
+  const resetFlow = () => {
+    setStep(1);
+    setJdText('');
+    setJdFile(null);
+    setJdUrl('');
+    setResumeFile(null);
+    setResult(null);
+    setNormalizedJd(null);
+    setError(null);
+    setProgress(0);
+    setProgressMsg('');
+    setHasDownloaded(false);
+    setApplyUrl('');
+    setApplySession(null);
+    setApplyStarting(false);
+    setApplyError(null);
+    setSearchResumeFile(null);
+    setJobSearchResults([]);
+    setCandidateProfile(null);
+    setSelectedJob(null);
+    setSearchPreferences({});
+    setShowSearchPrefs(false);
+    setProfilePreview(defaultResume?.candidateProfile ?? null);
+    setShowProfilePreview(Boolean(defaultResume?.candidateProfile));
+  };
   const handleBackToStep3 = () => { setResult(null); setShowAllRecs(false); setStep(3); };
   const handleRetryResume = () => { setResumeFile(null); setResult(null); setShowAllRecs(false); setStep(3); };
 
@@ -1150,53 +1255,103 @@ export default function App() {
                       {/* Resume upload */}
                       <div className={`${card} p-6 flex flex-col gap-4`}>
                         <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Your Resume</p>
-                        <div
-                          onDragEnter={e => { e.preventDefault(); setIsDraggingSearch(true); }}
-                          onDragLeave={e => { e.preventDefault(); setIsDraggingSearch(false); }}
-                          onDrop={e => { e.preventDefault(); setIsDraggingSearch(false); const f = e.dataTransfer.files?.[0]; if (f) handleSearchResumeChange(f); }}
-                          onDragOver={e => e.preventDefault()}
-                          onClick={() => !searchResumeFile && searchFileRef.current?.click()}
-                          className={`relative rounded-xl border-2 border-dashed p-8 text-center transition-all duration-300 flex flex-col items-center justify-center min-h-[160px] cursor-pointer ${
-                            isDraggingSearch
-                              ? 'border-violet-500 bg-violet-500/5'
-                              : searchResumeFile
-                              ? 'border-emerald-400 dark:border-emerald-600 bg-emerald-50/40 dark:bg-emerald-500/5'
-                              : 'border-zinc-200 dark:border-zinc-800 hover:border-violet-400/60 dark:hover:border-violet-700'
-                          }`}
-                        >
-                          {!searchResumeFile && (
-                            <input ref={searchFileRef} type="file" accept=".docx"
-                              onChange={e => { const f = e.target.files?.[0]; if (f) handleSearchResumeChange(f); }}
-                              className="hidden" />
-                          )}
-                          {searchResumeFile ? (
-                            <>
+                        <input ref={searchFileRef} type="file" accept=".docx"
+                          onChange={e => { const f = e.target.files?.[0]; if (f) handleSearchResumeChange(f); }}
+                          className="hidden" />
+
+                        {defaultResume && !searchResumeFile ? (
+                          <div className="rounded-xl border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50/60 dark:bg-emerald-500/10 p-4 space-y-3">
+                            <div className="flex items-start gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center shrink-0">
+                                <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Saved default resume</p>
+                                <p className="text-sm font-bold text-zinc-800 dark:text-zinc-100 truncate">{defaultResume.filename}</p>
+                                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">
+                                  Updated {new Date(defaultResume.updatedAt).toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
                               <button
-                                onClick={e => { e.stopPropagation(); handleSearchResumeChange(null); }}
-                                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors z-20"
+                                onClick={() => searchFileRef.current?.click()}
+                                className="px-3 py-2 rounded-xl text-xs font-semibold text-violet-600 bg-white dark:bg-zinc-900 border border-violet-200 dark:border-violet-500/20 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors"
                               >
-                                <X className="w-3 h-3 text-zinc-500" />
+                                Upload Override
                               </button>
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center shrink-0">
-                                  <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            onDragEnter={e => { e.preventDefault(); setIsDraggingSearch(true); }}
+                            onDragLeave={e => { e.preventDefault(); setIsDraggingSearch(false); }}
+                            onDrop={e => { e.preventDefault(); setIsDraggingSearch(false); const f = e.dataTransfer.files?.[0]; if (f) handleSearchResumeChange(f); }}
+                            onDragOver={e => e.preventDefault()}
+                            onClick={() => !searchResumeFile && searchFileRef.current?.click()}
+                            className={`relative rounded-xl border-2 border-dashed p-8 text-center transition-all duration-300 flex flex-col items-center justify-center min-h-[160px] cursor-pointer ${
+                              isDraggingSearch
+                                ? 'border-violet-500 bg-violet-500/5'
+                                : searchResumeFile
+                                ? 'border-emerald-400 dark:border-emerald-600 bg-emerald-50/40 dark:bg-emerald-500/5'
+                                : 'border-zinc-200 dark:border-zinc-800 hover:border-violet-400/60 dark:hover:border-violet-700'
+                            }`}
+                          >
+                            {searchResumeFile ? (
+                              <>
+                                <button
+                                  onClick={e => { e.stopPropagation(); handleSearchResumeChange(null); }}
+                                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors z-20"
+                                >
+                                  <X className="w-3 h-3 text-zinc-500" />
+                                </button>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center shrink-0">
+                                    <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                                  </div>
+                                  <div className="text-left">
+                                    <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200 max-w-[200px] truncate">{searchResumeFile.name}</p>
+                                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Override ready for this search</p>
+                                  </div>
                                 </div>
-                                <div className="text-left">
-                                  <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200 max-w-[200px] truncate">{searchResumeFile.name}</p>
-                                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Ready to analyze</p>
+                              </>
+                            ) : (
+                              <>
+                                <div className={`w-11 h-11 rounded-2xl mb-3 flex items-center justify-center transition-all ${isDraggingSearch ? 'bg-violet-100 dark:bg-violet-500/20 rotate-3' : 'bg-zinc-100 dark:bg-zinc-800'}`}>
+                                  <Upload className={`w-5 h-5 ${isDraggingSearch ? 'text-violet-600 dark:text-violet-400' : 'text-zinc-400'}`} />
                                 </div>
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <div className={`w-11 h-11 rounded-2xl mb-3 flex items-center justify-center transition-all ${isDraggingSearch ? 'bg-violet-100 dark:bg-violet-500/20 rotate-3' : 'bg-zinc-100 dark:bg-zinc-800'}`}>
-                                <Upload className={`w-5 h-5 ${isDraggingSearch ? 'text-violet-600 dark:text-violet-400' : 'text-zinc-400'}`} />
-                              </div>
-                              <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">Drop your resume or click to browse</p>
-                              <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1">DOCX only</p>
-                            </>
-                          )}
-                        </div>
+                                <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">Drop your resume or click to browse</p>
+                                <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1">DOCX only</p>
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {searchResumeFile && (
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              onClick={() => saveResumeAsDefault(searchResumeFile, { clearSearchOverride: true })}
+                              disabled={defaultResumeSaving}
+                              className="px-3 py-2 rounded-xl text-xs font-semibold text-zinc-700 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
+                            >
+                              {defaultResumeSaving ? 'Saving…' : 'Save as Default'}
+                            </button>
+                          </div>
+                        )}
+
+                        {(defaultResumeLoading || defaultResumeSavedNotice || defaultResumeError) && (
+                          <div className="space-y-1">
+                            {defaultResumeLoading && (
+                              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Loading saved default resume…</p>
+                            )}
+                            {defaultResumeSavedNotice && (
+                              <p className="text-[11px] text-emerald-600 dark:text-emerald-400">{defaultResumeSavedNotice}</p>
+                            )}
+                            {defaultResumeError && (
+                              <p className="text-[11px] text-red-500">{defaultResumeError}</p>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Search preferences */}
@@ -1317,7 +1472,7 @@ export default function App() {
 
                     {/* Search button */}
                     <div className="flex flex-col items-center gap-3 max-w-xs mx-auto mb-8">
-                      <button onClick={handleSearchJobs} disabled={searchLoading || !searchResumeFile}
+                      <button onClick={handleSearchJobs} disabled={searchLoading || (!searchResumeFile && !defaultResume)}
                         className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-violet-500/25">
                         {searchLoading
                           ? <><Loader2 className="w-4 h-4 animate-spin" />Searching live job boards...</>
@@ -1697,6 +1852,9 @@ export default function App() {
                       {/* Right — Resume upload */}
                       <div className={`${card} p-6 flex flex-col gap-4`}>
                         <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Your Profile</p>
+                        <input ref={resumeFileRef} type="file" accept=".docx"
+                          onChange={e => { setResumeFile(e.target.files?.[0] || null); setIsDraggingResume(false); setDefaultResumeSavedNotice(null); }}
+                          className="hidden" />
 
                         {/* Resume carried over from search step */}
                         {searchResumeFile && !resumeFile && (
@@ -1714,7 +1872,31 @@ export default function App() {
                           </motion.div>
                         )}
 
-                        {(!searchResumeFile || resumeFile) && <div
+                        {!searchResumeFile && !resumeFile && defaultResume && (
+                          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+                            className="rounded-lg border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50/60 dark:bg-emerald-500/10 p-4 space-y-3">
+                            <div className="flex items-start gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center shrink-0">
+                                <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Saved default resume</p>
+                                <p className="text-sm font-bold text-zinc-800 dark:text-zinc-100 truncate">{defaultResume.filename}</p>
+                                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">
+                                  Tailoring will use this resume by default.
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <button onClick={() => resumeFileRef.current?.click()}
+                                className="px-3 py-2 rounded-xl text-xs font-semibold text-violet-600 bg-white dark:bg-zinc-900 border border-violet-200 dark:border-violet-500/20 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors">
+                                Upload Override
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+
+                        {(!searchResumeFile || resumeFile) && !(!resumeFile && !searchResumeFile && defaultResume) && <div
                           data-testid="drag-zone-resume"
                           onDragEnter={() => setIsDraggingResume(true)}
                           onDragLeave={() => setIsDraggingResume(false)}
@@ -1729,10 +1911,6 @@ export default function App() {
                               : 'border-zinc-200 dark:border-zinc-800 hover:border-violet-400/60 dark:hover:border-violet-700'
                           }`}
                         >
-                          <input ref={resumeFileRef} type="file" accept=".docx"
-                            onChange={e => { setResumeFile(e.target.files?.[0] || null); setIsDraggingResume(false); }}
-                            className="hidden" />
-
                           {resumeFile ? (
                             <div className="flex items-center gap-4">
                               <div className="w-11 h-11 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center shrink-0">
@@ -1740,7 +1918,7 @@ export default function App() {
                               </div>
                               <div className="text-left">
                                 <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200 max-w-[180px] truncate">{resumeFile.name}</p>
-                                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Ready to tailor</p>
+                                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Override ready for this run</p>
                               </div>
                             </div>
                           ) : (
@@ -1753,6 +1931,45 @@ export default function App() {
                             </>
                           )}
                         </div>}
+
+                        {resumeFile && (
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              onClick={() => saveResumeAsDefault(resumeFile, { clearTailorOverride: true })}
+                              disabled={defaultResumeSaving}
+                              className="px-3 py-2 rounded-xl text-xs font-semibold text-zinc-700 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
+                            >
+                              {defaultResumeSaving ? 'Saving…' : 'Save as Default'}
+                            </button>
+                          </div>
+                        )}
+
+                        <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 px-3 py-2 bg-zinc-50/80 dark:bg-zinc-900/60">
+                          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Active resume source</p>
+                          <p className="text-xs text-zinc-600 dark:text-zinc-300 mt-1">
+                            {resumeFile
+                              ? 'One-off uploaded override'
+                              : searchResumeFile
+                              ? 'Resume carried over from Step 1'
+                              : defaultResume
+                              ? 'Saved default resume'
+                              : 'No resume selected yet'}
+                          </p>
+                        </div>
+
+                        {(defaultResumeLoading || defaultResumeSavedNotice || defaultResumeError) && (
+                          <div className="space-y-1">
+                            {defaultResumeLoading && (
+                              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Loading saved default resume…</p>
+                            )}
+                            {defaultResumeSavedNotice && (
+                              <p className="text-[11px] text-emerald-600 dark:text-emerald-400">{defaultResumeSavedNotice}</p>
+                            )}
+                            {defaultResumeError && (
+                              <p className="text-[11px] text-red-500">{defaultResumeError}</p>
+                            )}
+                          </div>
+                        )}
 
                         <div className="pt-2 text-center">
                           <p className="text-[11px] text-zinc-400 dark:text-zinc-600 leading-relaxed">
@@ -1784,7 +2001,7 @@ export default function App() {
                       </motion.div>
                     ) : (
                       <div className="space-y-2.5 max-w-sm mx-auto w-full">
-                        <button onClick={handleTailorResume} disabled={isLoading || (!resumeFile && !searchResumeFile)}
+                        <button onClick={handleTailorResume} disabled={isLoading || (!resumeFile && !searchResumeFile && !defaultResume)}
                           className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-violet-500/20">
                           {isLoading ? <><Loader2 className="w-4 h-4 animate-spin" />Preparing...</> : 'Tailor Resume →'}
                         </button>
@@ -1843,6 +2060,9 @@ export default function App() {
                           {blocked
                             ? 'Ambiguous claims detected. Review before downloading and submitting.'
                             : 'All claims validated against your source resume.'}
+                        </p>
+                        <p className="text-[11px] text-zinc-400 dark:text-zinc-600 mt-2">
+                          Resume source: {formatResumeSourceLabel(result.resumeSource)}
                         </p>
                       </div>
 

@@ -9,6 +9,23 @@ import { MockAIClient } from '../helpers/mock-ai.ts';
 
 describe('api integration', () => {
   const app = createTestApp();
+  const createInlineAIApp = (responses: Array<string | Record<string, unknown>>) =>
+    createTestApp({
+      getAI: (_req?: Request) => {
+        let index = 0;
+        return {
+          models: {
+            generateContent: async () => {
+              const value = responses[index] ?? responses[responses.length - 1] ?? {};
+              index++;
+              return {
+                text: typeof value === 'string' ? value : JSON.stringify(value),
+              };
+            },
+          },
+        };
+      },
+    });
 
   it('returns health', async () => {
     const response = await request(app).get('/api/health');
@@ -101,6 +118,39 @@ describe('api integration', () => {
     expect(response.body.validation.isValid).toBe(false);
   });
 
+  it('saves and reloads a default resume', async () => {
+    const saveResponse = await request(app)
+      .post('/api/resumes/default')
+      .attach('resume', sampleResumePath());
+
+    expect(saveResponse.status).toBe(200);
+    expect(saveResponse.body.resume.filename).toContain('.docx');
+
+    const loadResponse = await request(app).get('/api/resumes/default');
+    expect(loadResponse.status).toBe(200);
+    expect(loadResponse.body.resume.filename).toBe(saveResponse.body.resume.filename);
+    expect(loadResponse.body.resume.candidateProfile.primaryTitles.length).toBeGreaterThan(0);
+  });
+
+  it('searches jobs using a saved default resumeId', async () => {
+    const saveResponse = await request(app)
+      .post('/api/resumes/default')
+      .attach('resume', sampleResumePath());
+
+    const searchApp = createTestApp({
+      getAI: () => new MockAIClient(['mock-ai-job-search.json']),
+    });
+
+    const response = await request(searchApp)
+      .post('/api/search-jobs')
+      .field('resumeId', saveResponse.body.resume.id)
+      .field('preferences', JSON.stringify({ roleType: 'Frontend Engineer' }));
+
+    expect(response.status).toBe(200);
+    expect(response.body.resumeSource).toBe('default');
+    expect(Array.isArray(response.body.results)).toBe(true);
+  });
+
   it('falls back to a stable fit score when gap analysis omits fitScore', async () => {
     const response = await request(app)
       .post('/api/tailor-resume')
@@ -111,6 +161,42 @@ describe('api integration', () => {
     expect(response.status).toBe(200);
     expect(response.body.blocked).toBe(false);
     expect(response.body.tailoringPlan?.gapAnalysis?.fitScore).toBe(response.body.analysis.preAlignmentScore);
+  });
+
+  it('rebuilds the final tailored resume from locked source fields when the model drifts', async () => {
+    const saveResponse = await request(app)
+      .post('/api/resumes/default')
+      .attach('resume', sampleResumePath());
+
+    const mutatedTailorPayload = JSON.parse(await readFile(fixturePath('mock-ai-success.json'), 'utf8'));
+    mutatedTailorPayload.contactInfo.name = 'Hallucinated Person';
+    mutatedTailorPayload.contactInfo.email = 'fake@example.com';
+    mutatedTailorPayload.experience[0].company = 'Fake Corp';
+    mutatedTailorPayload.experience[0].title = 'Chief Wizard';
+    mutatedTailorPayload.experience[0].dates = '2099 - Present';
+    mutatedTailorPayload.sectionOrder = ['skills', 'summary', 'experience'];
+
+    const driftApp = createInlineAIApp([
+      JSON.parse(await readFile(fixturePath('mock-ai-jd.json'), 'utf8')),
+      JSON.parse(await readFile(fixturePath('mock-ai-gap.json'), 'utf8')),
+      mutatedTailorPayload,
+    ]);
+
+    const response = await request(driftApp)
+      .post('/api/tailor-resume')
+      .field('resumeId', saveResponse.body.resume.id)
+      .field('jdText', await readFile(fixturePath('jd-valid.txt'), 'utf8'))
+      .field('preferences', JSON.stringify({ targetRole: 'Senior Frontend Engineer' }));
+
+    expect(response.status).toBe(200);
+    expect(response.body.resumeSource).toBe('default');
+    expect(response.body.tailoredResume.contactInfo.name).toBe('VISHNU PRATAP KUMAR');
+    expect(response.body.tailoredResume.contactInfo.email).toBe('vishnupratapkumar@gmail.com');
+    expect(response.body.tailoredResume.experience[0].company).not.toBe('Fake Corp');
+    expect(response.body.tailoredResume.experience[0].title).not.toBe('Chief Wizard');
+    expect(response.body.tailoredResume.sectionOrder).not.toEqual(['skills', 'summary', 'experience']);
+    expect(response.body.promptVersion).toBeTruthy();
+    expect(response.body.pipelineVersion).toBeTruthy();
   });
 
   it('returns 400 for malformed preferences JSON', async () => {
