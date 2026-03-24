@@ -12,6 +12,7 @@ import {
   tailorResumeWithAI,
 } from '../server/tailor.ts';
 import { validateTailoredResume } from '../server/validate.ts';
+import type { TailoredResumeDocument } from '../src/shared/types.ts';
 
 type EvalCase = {
   id: string;
@@ -64,7 +65,7 @@ function computeVariance(values: number[]): number {
   return Math.max(...values) - Math.min(...values);
 }
 
-function lockedFieldsStable(source: Awaited<ReturnType<typeof parseResumeDocx>>['resume'], output: Awaited<ReturnType<typeof tailorResumeWithAI>>) {
+function lockedFieldsStable(source: Awaited<ReturnType<typeof parseResumeDocx>>['resume'], output: TailoredResumeDocument) {
   return (
     JSON.stringify(source.contactInfo) === JSON.stringify(output.contactInfo) &&
     JSON.stringify(source.sectionOrder) === JSON.stringify(output.sectionOrder) &&
@@ -119,18 +120,18 @@ async function runCase(ai: GoogleGenAI, testCase: EvalCase): Promise<EvalCaseRep
     const jdRequirements = await buildJDRequirementModel(normalizedJd, ai);
     const tailoringPlan = buildTailoringPlan(parsedResume.resume, jdRequirements);
     tailoringPlan.gapAnalysis = await buildGapAnalysis(ai, parsedResume.resume, jdRequirements, normalizedJd.cleanText);
-    const tailored = await tailorResumeWithAI(ai, parsedResume.resume, normalizedJd.cleanText, jdRequirements, tailoringPlan, {});
-    const validation = validateTailoredResume(parsedResume.resume, tailored, parsedResume.templateProfile);
+    const { tailoredResume } = await tailorResumeWithAI(ai, parsedResume.resume, normalizedJd.cleanText, jdRequirements, tailoringPlan, {});
+    const validation = validateTailoredResume(parsedResume.resume, tailoredResume, parsedResume.templateProfile);
     const analysis = buildAnalysis(
       parsedResume.resume,
       jdRequirements,
       normalizedJd.cleanText,
       [
-        tailored.headline,
-        tailored.summary,
-        ...tailored.skills,
-        ...tailored.experience.flatMap((item) => item.bullets.map((bullet) => bullet.text)),
-        ...tailored.projects.flatMap((item) => item.bullets.map((bullet) => bullet.text)),
+        tailoredResume.headline,
+        tailoredResume.summary,
+        ...tailoredResume.skills,
+        ...tailoredResume.experience.flatMap((item) => item.bullets.map((bullet) => bullet.text)),
+        ...tailoredResume.projects.flatMap((item) => item.bullets.map((bullet) => bullet.text)),
       ]
         .filter(Boolean)
         .join(' '),
@@ -144,8 +145,8 @@ async function runCase(ai: GoogleGenAI, testCase: EvalCase): Promise<EvalCaseRep
       preAlignmentScore: analysis.preAlignmentScore,
       alignmentScore: analysis.alignmentScore,
       fitScore: typeof tailoringPlan.gapAnalysis?.fitScore === 'number' ? tailoringPlan.gapAnalysis.fitScore : analysis.preAlignmentScore,
-      lockedFieldsStable: lockedFieldsStable(parsedResume.resume, tailored),
-      sectionOrderStable: JSON.stringify(parsedResume.resume.sectionOrder) === JSON.stringify(tailored.sectionOrder),
+      lockedFieldsStable: lockedFieldsStable(parsedResume.resume, tailoredResume),
+      sectionOrderStable: JSON.stringify(parsedResume.resume.sectionOrder) === JSON.stringify(tailoredResume.sectionOrder),
     });
   }
 

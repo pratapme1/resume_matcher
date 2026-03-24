@@ -269,6 +269,8 @@ export interface TailorResumeSuccessResponse {
   jdCompanyName?: string;
   resumeSource: ResumeSource;
   resumeId?: string;
+  providerUsed: 'gemini' | 'qwen';
+  fallbackUsed: boolean;
   promptVersion: string;
   pipelineVersion: string;
 }
@@ -286,6 +288,8 @@ export interface TailorResumeBlockedResponse {
   jdCompanyName?: string;
   resumeSource: ResumeSource;
   resumeId?: string;
+  providerUsed: 'gemini' | 'qwen';
+  fallbackUsed: boolean;
   promptVersion: string;
   pipelineVersion: string;
 }

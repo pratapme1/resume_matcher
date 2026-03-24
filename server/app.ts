@@ -113,6 +113,7 @@ export interface AIClient {
 
 export interface AppDependencies {
   getAI: (req?: Request) => AIClient;
+  getTailorFallbackAI?: (req?: Request) => AIClient;
   fetchImpl?: typeof fetch;
   disablePlaywrightJdFallback?: boolean;
   /** Skip auth + DB writes — for unit/integration tests */
@@ -583,19 +584,28 @@ export function createApp(deps: AppDependencies): Express {
       const resolvedResume = await resolveResumeInputForRequest(req);
       const { resume, templateProfile, resumeId, resumeSource } = resolvedResume;
       const ai = deps.getAI(req);
+      let fallbackAI: AIClient | null = null;
+      if (deps.getTailorFallbackAI) {
+        try {
+          fallbackAI = deps.getTailorFallbackAI(req);
+        } catch (error) {
+          logger.warn({ error }, 'Tailor fallback AI is not configured; continuing with Gemini only.');
+        }
+      }
 
       const jdRequirements = await buildJDRequirementModel(normalizedJobDescription, ai);
       const tailoringPlan = buildTailoringPlan(resume, jdRequirements);
       const gapAnalysis = await buildGapAnalysis(ai, resume, jdRequirements, normalizedJobDescription.cleanText);
       tailoringPlan.gapAnalysis = gapAnalysis;
 
-      const tailoredResume = await tailorResumeWithAI(
+      const { tailoredResume, providerUsed, fallbackUsed } = await tailorResumeWithAI(
         ai,
         resume,
         normalizedJobDescription.cleanText,
         jdRequirements,
         tailoringPlan,
         preferences,
+        fallbackAI,
       );
 
       const analysis = buildAnalysis(
@@ -631,6 +641,8 @@ export function createApp(deps: AppDependencies): Express {
             jdCompanyName: jdRequirements.companyName,
             resumeSource,
             resumeId,
+            providerUsed,
+            fallbackUsed,
             promptVersion: TAILOR_PROMPT_VERSION,
             pipelineVersion: TAILOR_PIPELINE_VERSION,
           }
@@ -647,6 +659,8 @@ export function createApp(deps: AppDependencies): Express {
             jdCompanyName: jdRequirements.companyName,
             resumeSource,
             resumeId,
+            providerUsed,
+            fallbackUsed,
             promptVersion: TAILOR_PROMPT_VERSION,
             pipelineVersion: TAILOR_PIPELINE_VERSION,
           };

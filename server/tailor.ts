@@ -1,7 +1,6 @@
 import { Type } from '@google/genai';
 import type {
   JDRequirementModel,
-  ResumeSkillCategory,
   SourceProvenance,
   SourceResumeDocument,
   TailoredBullet,
@@ -13,6 +12,7 @@ import type {
   TailoringPlan,
 } from '../src/shared/types.ts';
 import type { AIClient } from './app.ts';
+import type { AIProviderName } from './ai.ts';
 import { badGateway } from './errors.ts';
 import { tailoredResumeMutableSchema, tailoredResumeSchema } from './schemas.ts';
 import { unique } from './utils.ts';
@@ -21,6 +21,12 @@ const DEFAULT_TAILOR_MODEL = 'gemini-3-flash-preview';
 
 export const TAILOR_PROMPT_VERSION = '2026-03-24.partial-generation-v1';
 export const TAILOR_PIPELINE_VERSION = 'server-merge-v1';
+
+export type TailorAIResult = {
+  tailoredResume: TailoredResumeDocument;
+  providerUsed: AIProviderName;
+  fallbackUsed: boolean;
+};
 
 type MutableTailoredResume = {
   headline?: string;
@@ -42,6 +48,104 @@ type MutableTailoredResume = {
   skills?: string[];
   skillSourceProvenanceIds?: string[];
 };
+
+class AIProviderRequestError extends Error {
+  providerName: AIProviderName;
+  modelName: string;
+  status?: number;
+  unavailable: boolean;
+  cause?: unknown;
+
+  constructor(params: {
+    providerName: AIProviderName;
+    modelName: string;
+    status?: number;
+    message: string;
+    unavailable: boolean;
+    cause?: unknown;
+  }) {
+    super(params.message);
+    this.name = 'AIProviderRequestError';
+    this.providerName = params.providerName;
+    this.modelName = params.modelName;
+    this.status = params.status;
+    this.unavailable = params.unavailable;
+    this.cause = params.cause;
+  }
+}
+
+class AIProviderResponseError extends Error {
+  providerName: AIProviderName;
+  modelName: string;
+  cause?: unknown;
+
+  constructor(params: {
+    providerName: AIProviderName;
+    modelName: string;
+    message: string;
+    cause?: unknown;
+  }) {
+    super(params.message);
+    this.name = 'AIProviderResponseError';
+    this.providerName = params.providerName;
+    this.modelName = params.modelName;
+    this.cause = params.cause;
+  }
+}
+
+function getProviderName(ai: AIClient): AIProviderName {
+  return ((ai as { providerName?: AIProviderName }).providerName ?? 'gemini');
+}
+
+function isProviderUnavailableError(error: { status?: number; message?: string }): boolean {
+  if (typeof error.status === 'number') {
+    if (error.status === 408 || error.status === 409 || error.status === 425 || error.status === 429) return true;
+    if (error.status >= 500 && error.status < 600) return true;
+    if (error.status === 404) return true;
+    if (error.status === 400 && /model|provider|available|unavailable|not found/i.test(error.message ?? '')) return true;
+  }
+
+  const message = (error.message ?? '').toLowerCase();
+  return [
+    'resource_exhausted',
+    'quota',
+    'rate limit',
+    'rate-limit',
+    'timeout',
+    'timed out',
+    'fetch failed',
+    'network',
+    'connection',
+    'econnreset',
+    'enotfound',
+    'unavailable',
+    'overloaded',
+    'model not found',
+    'no such model',
+  ].some((token) => message.includes(token));
+}
+
+function buildProviderError(error: AIProviderRequestError): never {
+  const isGeminiQuota =
+    error.providerName === 'gemini' && (error.status === 429 || error.message.includes('RESOURCE_EXHAUSTED'));
+  throw badGateway(
+    isGeminiQuota
+      ? 'The configured Gemini model is out of quota. Please retry shortly or switch to a lighter model.'
+      : 'The AI tailoring service is currently unavailable.',
+    'AI_PROVIDER_ERROR',
+    {
+      cause: error.cause ?? error,
+      logMessage: `AI provider request failed during resume tailoring using ${error.providerName}:${error.modelName}.`,
+    },
+  );
+}
+
+function buildInvalidResponseError(error: AIProviderResponseError): never {
+  throw badGateway('The AI tailoring service returned invalid data.', 'AI_INVALID_RESPONSE', {
+    cause: error.cause ?? error,
+    logMessage: `AI provider returned an invalid tailoring payload for ${error.providerName}:${error.modelName}.`,
+  });
+}
 
 function buildCandidateAnalysisSection(plan: TailoringPlan): string {
   const gap = plan.gapAnalysis;
@@ -312,8 +416,10 @@ export async function tailorResumeWithAI(
   jdRequirements: JDRequirementModel,
   plan: TailoringPlan,
   preferences: { targetRole?: string; tone?: string; seniority?: string },
-): Promise<TailoredResumeDocument> {
-  const modelName = process.env.GEMINI_TAILOR_MODEL?.trim() || DEFAULT_TAILOR_MODEL;
+  fallbackAI?: AIClient | null,
+): Promise<TailorAIResult> {
+  const primaryModelName = process.env.GEMINI_TAILOR_MODEL?.trim() || DEFAULT_TAILOR_MODEL;
+  const fallbackModelName = process.env.OPENROUTER_QWEN_MODEL?.trim();
   const prompt = `
 You are an elite ATS-focused resume editor.
 You are tailoring an existing resume to a target role while preserving factual accuracy and the reference resume's visual system.
@@ -419,120 +525,166 @@ Return this shape only:
 }
 `;
 
-  let response: { text?: string | null };
-
-  try {
-    response = await ai.models.generateContent({
-      model: modelName,
-      contents: prompt,
-      config: {
-        temperature: 0,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            headline: { type: Type.STRING },
-            headlineSourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-            highlightMetrics: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  value: { type: Type.STRING },
-                  label: { type: Type.STRING },
-                  sourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-                },
-                required: ['value', 'label', 'sourceProvenanceIds'],
+  const buildRequestArgs = (modelName: string) => ({
+    model: modelName,
+    contents: prompt,
+    config: {
+      temperature: 0,
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          headline: { type: Type.STRING },
+          headlineSourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
+          highlightMetrics: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                value: { type: Type.STRING },
+                label: { type: Type.STRING },
+                sourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
               },
+              required: ['value', 'label', 'sourceProvenanceIds'],
             },
-            summary: { type: Type.STRING },
-            summarySourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-            experience: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  id: { type: Type.STRING },
-                  bullets: {
-                    type: Type.ARRAY,
-                    items: {
-                      type: Type.OBJECT,
-                      properties: {
-                        text: { type: Type.STRING },
-                        sourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-                      },
-                      required: ['text', 'sourceProvenanceIds'],
-                    },
-                  },
-                  sourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-                },
-                required: ['id', 'bullets'],
-              },
-            },
-            projects: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  id: { type: Type.STRING },
-                  bullets: {
-                    type: Type.ARRAY,
-                    items: {
-                      type: Type.OBJECT,
-                      properties: {
-                        text: { type: Type.STRING },
-                        sourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-                      },
-                      required: ['text', 'sourceProvenanceIds'],
-                    },
-                  },
-                  sourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-                },
-                required: ['id', 'bullets'],
-              },
-            },
-            skillCategories: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  label: { type: Type.STRING },
-                  items: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  sourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-                },
-                required: ['label', 'items', 'sourceProvenanceIds'],
-              },
-            },
-            skills: { type: Type.ARRAY, items: { type: Type.STRING } },
-            skillSourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
           },
-          required: ['summary', 'summarySourceProvenanceIds', 'experience'],
+          summary: { type: Type.STRING },
+          summarySourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
+          experience: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                id: { type: Type.STRING },
+                bullets: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      text: { type: Type.STRING },
+                      sourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    },
+                    required: ['text', 'sourceProvenanceIds'],
+                  },
+                },
+                sourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
+              },
+              required: ['id', 'bullets'],
+            },
+          },
+          projects: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                id: { type: Type.STRING },
+                bullets: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      text: { type: Type.STRING },
+                      sourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    },
+                    required: ['text', 'sourceProvenanceIds'],
+                  },
+                },
+                sourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
+              },
+              required: ['id', 'bullets'],
+            },
+          },
+          skillCategories: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                label: { type: Type.STRING },
+                items: { type: Type.ARRAY, items: { type: Type.STRING } },
+                sourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
+              },
+              required: ['label', 'items', 'sourceProvenanceIds'],
+            },
+          },
+          skills: { type: Type.ARRAY, items: { type: Type.STRING } },
+          skillSourceProvenanceIds: { type: Type.ARRAY, items: { type: Type.STRING } },
         },
+        required: ['summary', 'summarySourceProvenanceIds', 'experience'],
       },
-    });
-  } catch (error) {
-    const providerError = error as { status?: number; message?: string } | undefined;
-    const isQuotaError = providerError?.status === 429 || providerError?.message?.includes('RESOURCE_EXHAUSTED');
-    throw badGateway(
-      isQuotaError
-        ? 'The configured Gemini model is out of quota. Please retry shortly or switch to a lighter model.'
-        : 'The AI tailoring service is currently unavailable.',
-      'AI_PROVIDER_ERROR',
-      {
+    },
+  });
+
+  const attemptProvider = async (client: AIClient, modelName: string): Promise<TailoredResumeDocument> => {
+    const providerName = getProviderName(client);
+    let response: { text?: string | null };
+
+    try {
+      response = await client.models.generateContent(buildRequestArgs(modelName));
+    } catch (error) {
+      const providerError = error as { status?: number; message?: string } | undefined;
+      throw new AIProviderRequestError({
+        providerName,
+        modelName,
+        status: providerError?.status,
+        message: providerError?.message ?? 'AI provider request failed.',
+        unavailable: isProviderUnavailableError({
+          status: providerError?.status,
+          message: providerError?.message,
+        }),
         cause: error,
-        logMessage: `AI provider request failed during resume tailoring using model ${modelName}.`,
-      },
-    );
-  }
+      });
+    }
+
+    try {
+      const payload = JSON.parse(response.text || '{}');
+      const mutable = coerceMutableTailoredResume(payload);
+      return mergeTailoredResume(resume, mutable);
+    } catch (error) {
+      throw new AIProviderResponseError({
+        providerName,
+        modelName,
+        message: 'AI provider returned an invalid tailoring payload.',
+        cause: error,
+      });
+    }
+  };
 
   try {
-    const payload = JSON.parse(response.text || '{}');
-    const mutable = coerceMutableTailoredResume(payload);
-    return mergeTailoredResume(resume, mutable);
+    const tailoredResume = await attemptProvider(ai, primaryModelName);
+    return {
+      tailoredResume,
+      providerUsed: getProviderName(ai),
+      fallbackUsed: false,
+    };
   } catch (error) {
-    throw badGateway('The AI tailoring service returned invalid data.', 'AI_INVALID_RESPONSE', {
-      cause: error,
-      logMessage: 'AI provider returned an invalid tailoring payload.',
-    });
+    if (error instanceof AIProviderRequestError && error.unavailable && fallbackAI && fallbackModelName) {
+      try {
+        const tailoredResume = await attemptProvider(fallbackAI, fallbackModelName);
+        return {
+          tailoredResume,
+          providerUsed: getProviderName(fallbackAI),
+          fallbackUsed: true,
+        };
+      } catch (fallbackError) {
+        if (fallbackError instanceof AIProviderResponseError) {
+          buildInvalidResponseError(fallbackError);
+        }
+        if (fallbackError instanceof AIProviderRequestError) {
+          throw badGateway('The AI tailoring service is currently unavailable.', 'AI_PROVIDER_ERROR', {
+            cause: fallbackError.cause ?? fallbackError,
+            logMessage: `Primary tailoring provider ${error.providerName}:${error.modelName} failed and fallback ${fallbackError.providerName}:${fallbackError.modelName} also failed.`,
+          });
+        }
+        throw fallbackError;
+      }
+    }
+
+    if (error instanceof AIProviderResponseError) {
+      buildInvalidResponseError(error);
+    }
+    if (error instanceof AIProviderRequestError) {
+      buildProviderError(error);
+    }
+    throw error;
   }
 }

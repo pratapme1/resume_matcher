@@ -104,6 +104,8 @@ describe('api integration', () => {
     expect(response.body.blocked).toBe(false);
     expect(response.body.validation.isValid).toBe(true);
     expect(response.body.renderReadiness).toBe('ready');
+    expect(response.body.providerUsed).toBe('gemini');
+    expect(response.body.fallbackUsed).toBe(false);
   });
 
   it('returns blocked tailoring result for blocked fixture', async () => {
@@ -116,6 +118,65 @@ describe('api integration', () => {
     expect(response.status).toBe(200);
     expect(response.body.blocked).toBe(true);
     expect(response.body.validation.isValid).toBe(false);
+    expect(response.body.providerUsed).toBe('gemini');
+    expect(response.body.fallbackUsed).toBe(false);
+  });
+
+  it('falls back to Qwen when Gemini is unavailable during tailoring', async () => {
+    const previousModel = process.env.OPENROUTER_QWEN_MODEL;
+    process.env.OPENROUTER_QWEN_MODEL = 'qwen/test-model';
+    let primaryCallCount = 0;
+    let fallbackCallCount = 0;
+    const fallbackPayload = await readFile(fixturePath('mock-ai-success.json'), 'utf8');
+    const appWithFallback = createTestApp({
+      getAI: () => ({
+        providerName: 'gemini',
+        models: {
+          generateContent: async () => {
+            primaryCallCount++;
+            if (primaryCallCount === 1) {
+              return { text: JSON.stringify({ mustHaveKeywords: [], niceToHaveKeywords: [], targetTitles: [], seniorityLevel: '' }) };
+            }
+            if (primaryCallCount === 2) {
+              return { text: JSON.stringify({ repositioningAngle: '', topStrengths: [], keyGaps: [], bulletPriorities: [], summaryOpeningHint: '' }) };
+            }
+            const error = new Error('RESOURCE_EXHAUSTED: quota exceeded') as Error & { status?: number };
+            error.status = 429;
+            throw error;
+          },
+        },
+      }),
+      getTailorFallbackAI: () => ({
+        providerName: 'qwen',
+        models: {
+          generateContent: async () => {
+            fallbackCallCount++;
+            return { text: fallbackPayload };
+          },
+        },
+      }),
+    });
+
+    try {
+      const response = await request(appWithFallback)
+        .post('/api/tailor-resume')
+        .attach('resume', sampleResumePath())
+        .field('jdText', await readFile(fixturePath('jd-valid.txt'), 'utf8'))
+        .field('preferences', JSON.stringify({ targetRole: 'Senior Frontend Engineer' }));
+
+      expect(response.status).toBe(200);
+      expect(response.body.blocked).toBe(false);
+      expect(response.body.providerUsed).toBe('qwen');
+      expect(response.body.fallbackUsed).toBe(true);
+      expect(primaryCallCount).toBe(3);
+      expect(fallbackCallCount).toBe(1);
+    } finally {
+      if (previousModel === undefined) {
+        delete process.env.OPENROUTER_QWEN_MODEL;
+      } else {
+        process.env.OPENROUTER_QWEN_MODEL = previousModel;
+      }
+    }
   });
 
   it('saves and reloads a default resume', async () => {
@@ -245,9 +306,13 @@ describe('api integration', () => {
   });
 
   it('returns 502 when the AI payload is invalid', async () => {
+    const previousModel = process.env.OPENROUTER_QWEN_MODEL;
+    process.env.OPENROUTER_QWEN_MODEL = 'qwen/test-model';
     let callCount = 0;
+    let fallbackCallCount = 0;
     const invalidPayloadApp = createTestApp({
       getAI: (_req?: Request) => ({
+        providerName: 'gemini',
         models: {
           generateContent: async () => {
             callCount++;
@@ -257,15 +322,33 @@ describe('api integration', () => {
           },
         },
       }),
+      getTailorFallbackAI: () => ({
+        providerName: 'qwen',
+        models: {
+          generateContent: async () => {
+            fallbackCallCount++;
+            return { text: await readFile(fixturePath('mock-ai-success.json'), 'utf8') };
+          },
+        },
+      }),
     });
 
-    const response = await request(invalidPayloadApp)
-      .post('/api/tailor-resume')
-      .attach('resume', sampleResumePath())
-      .field('jdText', await readFile(fixturePath('jd-valid.txt'), 'utf8'));
+    try {
+      const response = await request(invalidPayloadApp)
+        .post('/api/tailor-resume')
+        .attach('resume', sampleResumePath())
+        .field('jdText', await readFile(fixturePath('jd-valid.txt'), 'utf8'));
 
-    expect(response.status).toBe(502);
-    expect(response.body.code).toBe('AI_INVALID_RESPONSE');
+      expect(response.status).toBe(502);
+      expect(response.body.code).toBe('AI_INVALID_RESPONSE');
+      expect(fallbackCallCount).toBe(0);
+    } finally {
+      if (previousModel === undefined) {
+        delete process.env.OPENROUTER_QWEN_MODEL;
+      } else {
+        process.env.OPENROUTER_QWEN_MODEL = previousModel;
+      }
+    }
   });
 
   it('returns 400 when DOCX generation payload is incomplete', async () => {

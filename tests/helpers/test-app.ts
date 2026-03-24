@@ -6,6 +6,7 @@ import { MockAIClient } from './mock-ai.ts';
 type TestAppOverrides = {
   fetchImpl?: typeof fetch;
   getAI?: (req?: Request) => AIClient;
+  getTailorFallbackAI?: (req?: Request) => AIClient;
 };
 
 function defaultGetAI(req?: Request) {
@@ -26,6 +27,7 @@ function defaultGetAI(req?: Request) {
 export function createTestApp(overrides: TestAppOverrides = {}) {
   return createApp({
     getAI: overrides.getAI ?? defaultGetAI,
+    getTailorFallbackAI: overrides.getTailorFallbackAI,
     fetchImpl: overrides.fetchImpl ?? (async (_input: RequestInfo | URL) =>
       new Response(`<html><body><main>Senior Frontend Engineer React TypeScript Testing Leadership</main></body></html>`, {
         status: 200,
