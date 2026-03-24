@@ -87,6 +87,53 @@ export function multiStepPortalHtml(successUrl: string) {
   );
 }
 
+export function phenomMultiStepPortalHtml(successUrl: string) {
+  return pageShell(
+    'Phenom Work and Education Application',
+    `
+      <div id="_PCM" data-ph-id="fixture-phenom-root"></div>
+      <h1>Apply to Acme via Phenom</h1>
+      <p>This fixture mimics a longer hosted apply flow with multiple continue steps.</p>
+      ${jobIntro('Acme is hiring a Senior Frontend Engineer through a multi-step hosted portal.')}
+      <form id="phenom-form" action="${successUrl}" method="get">
+        <section id="step-1" class="step active" data-step-name="profile">
+          <div class="field"><label for="full_name">Full Name</label><input id="full_name" name="full_name" type="text" required /></div>
+          <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required /></div>
+          <button type="button" id="continue-1">Save and Continue</button>
+        </section>
+        <section id="step-2" class="step" data-step-name="work-history">
+          <div class="field"><label for="phone">Phone</label><input id="phone" name="phone" type="tel" required /></div>
+          <div class="field"><label for="location">Current Location</label><input id="location" name="location" type="text" required /></div>
+          <button type="button" id="continue-2">Save and Continue</button>
+        </section>
+        <section id="step-3" class="step" data-step-name="work-experience">
+          <div class="field"><label for="experience">Total Experience (Years)</label><input id="experience" name="experienceYears" type="number" required /></div>
+          <div class="field"><label for="current_company">Current Company</label><input id="current_company" name="currentCompany" type="text" required /></div>
+          <button type="button" id="continue-3">Continue Application</button>
+        </section>
+        <section id="step-4" class="step" data-step-name="questionnaire">
+          <div class="field"><label for="current_title">Current Title</label><input id="current_title" name="currentTitle" type="text" required /></div>
+          <div class="field"><label for="linkedin">LinkedIn Profile</label><input id="linkedin" name="linkedin" type="url" /></div>
+          <button type="button" id="continue-4">Save and Continue</button>
+        </section>
+        <section id="step-5" class="step" data-step-name="review-submit">
+          <div class="field"><p>Resume</p><label for="resume">Upload your resume<input id="resume" name="resume" type="file" style="display:none" required /></label></div>
+          <button type="submit">Submit Application</button>
+        </section>
+      </form>
+    `,
+    `
+      for (const index of [1, 2, 3, 4]) {
+        document.getElementById('continue-' + index)?.addEventListener('click', () => {
+          document.getElementById('step-' + index)?.classList.remove('active');
+          document.getElementById('step-' + (index + 1))?.classList.add('active');
+          history.replaceState({}, '', '?step=' + (index + 1) + '&stepname=fixture-step-' + (index + 1));
+        });
+      }
+    `,
+  );
+}
+
 export function reviewRequiredPortalHtml(successUrl: string) {
   return pageShell(
     'Senior Frontend Engineer Review Required Application',
@@ -101,6 +148,26 @@ export function reviewRequiredPortalHtml(successUrl: string) {
         <div class="field"><p>Resume</p><label for="resume">Click to upload your resume<input id="resume" name="resume" type="file" style="display:none" required /></label></div>
         <button type="submit">Submit Application</button>
       </form>
+    `,
+  );
+}
+
+export function customWidgetPortalHtml() {
+  return pageShell(
+    'Custom Widget Application Portal',
+    `
+      <h1>Custom Widget Application Portal</h1>
+      <p>This fixture contains a required custom widget that the executor should surface for review.</p>
+      ${jobIntro('Acme is hiring a Senior Frontend Engineer.')}
+      <div class="field">
+        <label for="full_name">Full Name</label>
+        <input id="full_name" name="full_name" type="text" required />
+      </div>
+      <div class="field">
+        <label aria-label="Preferred Work Authorization*">Preferred Work Authorization*</label>
+        <div id="custom-work-auth" role="combobox" aria-label="Preferred Work Authorization*" aria-required="true" tabindex="0">Select an option</div>
+      </div>
+      <button type="button">Continue</button>
     `,
   );
 }

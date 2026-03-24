@@ -718,7 +718,9 @@ Instructions:
       const snapshot = z.object({
         url: z.string().url(),
         title: z.string(),
-        portalType: z.enum(['greenhouse', 'lever', 'ashby', 'generic', 'protected', 'unknown']),
+        portalType: z.enum(['phenom', 'greenhouse', 'lever', 'ashby', 'workday', 'icims', 'smartrecruiters', 'taleo', 'successfactors', 'generic', 'protected', 'unknown']),
+        stepKind: z.enum(['profile', 'work_history', 'education', 'questionnaire', 'review', 'submit', 'unknown']),
+        stepSignature: z.string(),
         fields: z.array(z.object({
           id: z.string(),
           name: z.string(),
@@ -726,6 +728,7 @@ Instructions:
           placeholder: z.string(),
           inputType: z.string(),
           tagName: z.string(),
+          widgetKind: z.enum(['text', 'textarea', 'select', 'radio_group', 'checkbox', 'file_upload', 'number', 'date', 'custom_combobox', 'custom_multiselect', 'custom_date', 'custom_number', 'unknown']),
           required: z.boolean(),
           visible: z.boolean(),
           value: z.string().optional(),
@@ -761,6 +764,9 @@ Instructions:
           required: z.boolean(),
         })).optional(),
         pageUrl: z.string().url().optional(),
+        pauseReason: z.enum(['none', 'protected_portal', 'unsupported_widget', 'missing_profile_value', 'ambiguous_required_field', 'no_progress_after_advance', 'manual_required']).optional(),
+        stepKind: z.enum(['profile', 'work_history', 'education', 'questionnaire', 'review', 'submit', 'unknown']).optional(),
+        stepSignature: z.string().optional(),
       }).parse(req.body) as ApplySessionEvent;
 
       const session = recordApplySessionEvent(req.params.id, getExecutorToken(req), event);

@@ -47,6 +47,9 @@ type RuntimeMessage =
           filledCount?: number;
           reviewItems?: unknown[];
           pageUrl?: string;
+          pauseReason?: string;
+          stepKind?: string;
+          stepSignature?: string;
           includeScreenshot?: boolean;
         };
       };

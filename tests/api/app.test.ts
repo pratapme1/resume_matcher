@@ -381,15 +381,17 @@ describe('api integration', () => {
         url: 'https://jobs.lever.co/acme/123',
         title: 'Apply for Senior Frontend Engineer',
         portalType: 'lever',
+        stepKind: 'questionnaire',
+        stepSignature: 'questionnaire:test',
         fields: [
-          { id: 'name', name: 'name', label: 'Full Name', placeholder: '', inputType: 'text', tagName: 'input', required: true, visible: true, value: '', hasValue: false },
-          { id: 'email', name: 'email', label: 'Email', placeholder: '', inputType: 'email', tagName: 'input', required: true, visible: true, value: '', hasValue: false },
-          { id: 'experience', name: 'totalExperience', label: 'Total Experience (Years)', placeholder: '5', inputType: 'text', tagName: 'input', required: true, visible: true, value: '', hasValue: false },
-          { id: 'currentCtc', name: 'currentCtc', label: 'Current CTC (LPA)', placeholder: '12.5', inputType: 'text', tagName: 'input', required: true, visible: true, value: '', hasValue: false },
-          { id: 'expectedCtc', name: 'expectedCtc', label: 'Expected CTC (LPA)', placeholder: '18.0', inputType: 'text', tagName: 'input', required: true, visible: true, value: '', hasValue: false },
-          { id: 'notice', name: 'noticePeriod', label: 'Notice Period (Days)', placeholder: '30', inputType: 'text', tagName: 'input', required: true, visible: true, value: '', hasValue: false },
-          { id: 'github', name: 'portfolio', label: 'Portfolio / GitHub', placeholder: 'github.com/yourprofile', inputType: 'text', tagName: 'input', required: false, visible: true, value: '', hasValue: false },
-          { id: 'resume', name: 'resume', label: 'Resume', placeholder: '', inputType: 'file', tagName: 'input', required: true, visible: true, hasValue: false },
+          { id: 'name', name: 'name', label: 'Full Name', placeholder: '', inputType: 'text', tagName: 'input', widgetKind: 'text', required: true, visible: true, value: '', hasValue: false },
+          { id: 'email', name: 'email', label: 'Email', placeholder: '', inputType: 'email', tagName: 'input', widgetKind: 'text', required: true, visible: true, value: '', hasValue: false },
+          { id: 'experience', name: 'totalExperience', label: 'Total Experience (Years)', placeholder: '5', inputType: 'text', tagName: 'input', widgetKind: 'text', required: true, visible: true, value: '', hasValue: false },
+          { id: 'currentCtc', name: 'currentCtc', label: 'Current CTC (LPA)', placeholder: '12.5', inputType: 'text', tagName: 'input', widgetKind: 'text', required: true, visible: true, value: '', hasValue: false },
+          { id: 'expectedCtc', name: 'expectedCtc', label: 'Expected CTC (LPA)', placeholder: '18.0', inputType: 'text', tagName: 'input', widgetKind: 'text', required: true, visible: true, value: '', hasValue: false },
+          { id: 'notice', name: 'noticePeriod', label: 'Notice Period (Days)', placeholder: '30', inputType: 'text', tagName: 'input', widgetKind: 'text', required: true, visible: true, value: '', hasValue: false },
+          { id: 'github', name: 'portfolio', label: 'Portfolio / GitHub', placeholder: 'github.com/yourprofile', inputType: 'text', tagName: 'input', widgetKind: 'text', required: false, visible: true, value: '', hasValue: false },
+          { id: 'resume', name: 'resume', label: 'Resume', placeholder: '', inputType: 'file', tagName: 'input', widgetKind: 'file_upload', required: true, visible: true, hasValue: false },
         ],
         controls: [
           { id: 'submit', label: 'Submit Application', kind: 'submit' },
@@ -415,6 +417,9 @@ describe('api integration', () => {
         message: 'Ready for confirmation',
         filledCount: 3,
         reviewItems: [],
+        pauseReason: 'none',
+        stepKind: 'submit',
+        stepSignature: 'submit:test',
       });
 
     expect(eventResponse.status).toBe(200);

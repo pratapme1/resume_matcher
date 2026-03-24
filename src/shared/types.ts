@@ -348,7 +348,19 @@ export interface JobSearchResponse {
 
 export type ExecutorMode = 'extension' | 'cloud';
 
-export type PortalType = 'greenhouse' | 'lever' | 'ashby' | 'generic' | 'protected' | 'unknown';
+export type PortalType =
+  | 'phenom'
+  | 'greenhouse'
+  | 'lever'
+  | 'ashby'
+  | 'workday'
+  | 'icims'
+  | 'smartrecruiters'
+  | 'taleo'
+  | 'successfactors'
+  | 'generic'
+  | 'protected'
+  | 'unknown';
 
 export type ApplySessionStatus =
   | 'created'
@@ -392,6 +404,39 @@ export type FieldSemanticType =
 
 export type FieldSupportStatus = 'supported' | 'needs_review' | 'unsupported';
 
+export type WidgetKind =
+  | 'text'
+  | 'textarea'
+  | 'select'
+  | 'radio_group'
+  | 'checkbox'
+  | 'file_upload'
+  | 'number'
+  | 'date'
+  | 'custom_combobox'
+  | 'custom_multiselect'
+  | 'custom_date'
+  | 'custom_number'
+  | 'unknown';
+
+export type StepKind =
+  | 'profile'
+  | 'work_history'
+  | 'education'
+  | 'questionnaire'
+  | 'review'
+  | 'submit'
+  | 'unknown';
+
+export type PauseReason =
+  | 'none'
+  | 'protected_portal'
+  | 'unsupported_widget'
+  | 'missing_profile_value'
+  | 'ambiguous_required_field'
+  | 'no_progress_after_advance'
+  | 'manual_required';
+
 export interface ApplicantProfile {
   fullName?: string;
   firstName?: string;
@@ -427,6 +472,7 @@ export interface DetectedField {
   placeholder: string;
   inputType: string;
   tagName: string;
+  widgetKind: WidgetKind;
   required: boolean;
   visible: boolean;
   value?: string;
@@ -445,6 +491,8 @@ export interface PageSnapshot {
   url: string;
   title: string;
   portalType: PortalType;
+  stepKind: StepKind;
+  stepSignature: string;
   fields: DetectedField[];
   controls: DetectedControl[];
 }
@@ -487,6 +535,7 @@ export type PlannedAction =
 export interface ApplyPlanResponse {
   portalType: PortalType;
   status: ApplySessionStatus;
+  pauseReason?: PauseReason;
   actions: PlannedAction[];
   reviewItems: ReviewItem[];
   nextControlId?: string;
@@ -501,6 +550,9 @@ export interface ApplySessionSummary {
   status: ApplySessionStatus;
   latestMessage?: string;
   latestScreenshot?: string | null;
+  latestPauseReason?: PauseReason;
+  latestStepKind?: StepKind;
+  latestStepSignature?: string;
   filledCount: number;
   reviewCount: number;
   submitConfirmed: boolean;
@@ -524,4 +576,7 @@ export interface ApplySessionEvent {
   filledCount?: number;
   reviewItems?: ReviewItem[];
   pageUrl?: string;
+  pauseReason?: PauseReason;
+  stepKind?: StepKind;
+  stepSignature?: string;
 }

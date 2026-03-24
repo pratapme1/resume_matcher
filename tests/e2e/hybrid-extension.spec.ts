@@ -63,7 +63,13 @@ async function waitForSessionStatus(
   while (Date.now() < deadline) {
     const response = await request.get(`/api/apply/sessions/${sessionId}`);
     expect(response.ok()).toBeTruthy();
-    const body = await response.json() as { status: string; latestScreenshot?: string | null; latestMessage?: string | null };
+    const body = await response.json() as {
+      status: string;
+      latestScreenshot?: string | null;
+      latestMessage?: string | null;
+      portalType?: string;
+      latestPauseReason?: string | null;
+    };
     const matchesStatus = expectedStatuses.includes(body.status);
     const matchesScreenshot = !options.requireScreenshot || Boolean(body.latestScreenshot);
     const matchesMessage = !options.messageIncludes || body.latestMessage?.includes(options.messageIncludes);
@@ -125,6 +131,21 @@ test('multi-step portal proves auto-advance between steps before submit readines
   await waitForSessionStatus(request, sessionId, ['submitted']);
 });
 
+test('phenom-like multi-step portal proves portal classification and progression beyond four steps', async ({ page, request }) => {
+  await reachStepFive(page, '/__fixtures__/apply/phenom-multi-step');
+
+  const { sessionId, portalPage } = await startHybridApply(page);
+
+  await expect(portalPage.locator('#step-5.active')).toBeVisible({ timeout: 20_000 });
+  await expect(portalPage.locator('#experience')).not.toHaveValue('');
+  await expect(portalPage.locator('#current_title')).not.toHaveValue('');
+  await expect.poll(() => uploadedFileName(portalPage, '#resume'), { timeout: 15_000 }).not.toBe('');
+
+  const ready = await waitForSessionStatus(request, sessionId, ['ready_to_submit']);
+  expect(ready.portalType).toBe('phenom');
+  await expect(page.getByRole('button', { name: /Confirm Submit/i })).toBeVisible({ timeout: 15_000 });
+});
+
 test('review-required portal proves pause, manual fix, re-check, and submit', async ({ page, request }) => {
   await reachStepFive(page, '/__fixtures__/apply/review-required');
 
@@ -173,4 +194,15 @@ test('manual-required portal proves clean stop when no supported fields are foun
 
   const manual = await waitForSessionStatus(request, sessionId, ['manual_required']);
   expect(manual.latestMessage).toMatch(/No supported fields|Manual completion/i);
+});
+
+test('custom-widget portal proves unsupported required custom widget pauses in review', async ({ page, request }) => {
+  await reachStepFive(page, '/__fixtures__/apply/custom-widget');
+
+  const { sessionId, portalPage } = await startHybridApply(page);
+  await expect(portalPage.getByRole('heading', { name: 'Custom Widget Application Portal' })).toBeVisible();
+
+  const review = await waitForSessionStatus(request, sessionId, ['review_required']);
+  expect(review.latestPauseReason).toBe('unsupported_widget');
+  await expect(page.getByRole('button', { name: /Re-check Form/i })).toBeVisible({ timeout: 15_000 });
 });

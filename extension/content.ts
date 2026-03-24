@@ -51,6 +51,9 @@ type RuntimeMessage =
           filledCount?: number;
           reviewItems?: unknown[];
           pageUrl?: string;
+          pauseReason?: string;
+          stepKind?: string;
+          stepSignature?: string;
           includeScreenshot?: boolean;
         };
       };
@@ -79,6 +82,7 @@ type ReviewItem = {
 
 type ApplyPlanResponse = {
   status: string;
+  pauseReason?: string;
   actions: PlannedAction[];
   reviewItems: ReviewItem[];
   nextControlId?: string;
@@ -87,7 +91,8 @@ type ApplyPlanResponse = {
 
 type FieldHandle =
   | { kind: 'single'; el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement }
-  | { kind: 'radio-group'; els: HTMLInputElement[] };
+  | { kind: 'radio-group'; els: HTMLInputElement[] }
+  | { kind: 'custom'; el: HTMLElement };
 
 type ApplyDomState = {
   sessionId: string;
@@ -97,6 +102,23 @@ type ApplyDomState = {
 
 let activeApplyState: ApplyDomState | null = null;
 let applyExecutionPromise: Promise<void> | null = null;
+
+type SupportedPortalType = 'phenom' | 'greenhouse' | 'lever' | 'ashby' | 'workday' | 'icims' | 'smartrecruiters' | 'taleo' | 'successfactors' | 'generic' | 'protected' | 'unknown';
+type WidgetKind =
+  | 'text'
+  | 'textarea'
+  | 'select'
+  | 'radio_group'
+  | 'checkbox'
+  | 'file_upload'
+  | 'number'
+  | 'date'
+  | 'custom_combobox'
+  | 'custom_multiselect'
+  | 'custom_date'
+  | 'custom_number'
+  | 'unknown';
+type StepKind = 'profile' | 'work_history' | 'education' | 'questionnaire' | 'review' | 'submit' | 'unknown';
 
 async function getStoredAppOrigin(): Promise<string | null> {
   const result = await chrome.storage.local.get('rtp_app_origin');
@@ -283,14 +305,15 @@ async function fillApplicationForm(data: PrefillData): Promise<{ filled: number;
   return applyMapping(fields, fallbackMapping);
 }
 
-function getFieldLabel(el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): string {
-  if (el.id) {
+function getFieldLabel(el: Element): string {
+  if (el instanceof HTMLElement && el.id) {
     const lbl = document.querySelector<HTMLLabelElement>(`label[for="${CSS.escape(el.id)}"]`);
     if (lbl?.textContent) return lbl.textContent.trim();
   }
-  const parentLbl = el.closest('label');
+  const parentLbl = el.closest?.('label');
   if (parentLbl?.textContent) return parentLbl.textContent.trim();
-  return el.getAttribute('aria-label') || el.getAttribute('placeholder') || el.getAttribute('name') || el.id || '';
+  if (el instanceof HTMLElement && el.dataset.label) return el.dataset.label.trim();
+  return el.getAttribute('aria-label') || el.getAttribute('placeholder') || el.getAttribute('name') || (el instanceof HTMLElement ? el.id : '') || '';
 }
 
 function setNativeValue(el: HTMLInputElement | HTMLTextAreaElement, value: string) {
@@ -343,11 +366,83 @@ function highlight(el: Element, color: string) {
   (el as HTMLElement).style.outlineOffset = '2px';
 }
 
-function portalTypeForLocation(): 'greenhouse' | 'lever' | 'ashby' | 'generic' | 'protected' | 'unknown' {
+function classifyWidgetKind(el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): WidgetKind {
+  if (el instanceof HTMLTextAreaElement) return 'textarea';
+  if (el instanceof HTMLSelectElement) return 'select';
+  if (el instanceof HTMLInputElement) {
+    if (el.type === 'radio') return 'radio_group';
+    if (el.type === 'checkbox') return 'checkbox';
+    if (el.type === 'file') return 'file_upload';
+    if (el.type === 'number' || el.inputMode === 'numeric' || el.inputMode === 'decimal') return 'number';
+    if (el.type === 'date' || el.type === 'month') return 'date';
+    return 'text';
+  }
+  return 'unknown';
+}
+
+function classifyCustomWidgetKind(el: HTMLElement): WidgetKind {
+  if (el.matches('.p-multiselect, [aria-multiselectable="true"]')) return 'custom_multiselect';
+  if (el.matches('.p-calendar, [data-widget-kind="date"]')) return 'custom_date';
+  if (el.matches('.p-inputnumber, [data-widget-kind="number"]')) return 'custom_number';
+  if (el.matches('.p-dropdown, [role="combobox"], [aria-haspopup="listbox"]')) return 'custom_combobox';
+  return 'unknown';
+}
+
+function inferRequired(el: Element): boolean {
+  if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
+    return el.required;
+  }
+  const ariaRequired = el.getAttribute('aria-required');
+  if (ariaRequired === 'true') return true;
+  const label = getFieldLabel(el);
+  return /\*/.test(label);
+}
+
+function getVisibleStepText() {
+  return [
+    document.title,
+    window.location.pathname,
+    window.location.search,
+    ...Array.from(document.querySelectorAll<HTMLElement>('h1, h2, [aria-current="step"], [data-step-name], .step.active')).map((el) => el.textContent || ''),
+  ].join(' ').toLowerCase();
+}
+
+function detectStepKind(): StepKind {
+  const text = getVisibleStepText();
+  if (/review|final review/.test(text)) return 'review';
+  if (/submit|application received|complete your application/.test(text)) return 'submit';
+  if (/work|employment|experience/.test(text)) return 'work_history';
+  if (/education|school|university/.test(text)) return 'education';
+  if (/questionnaire|screening|question|eligibility/.test(text)) return 'questionnaire';
+  if (/profile|contact|personal|basic info|about you/.test(text)) return 'profile';
+  return 'unknown';
+}
+
+function simpleHash(input: string) {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    hash = ((hash << 5) - hash) + input.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+function portalTypeForLocation(): SupportedPortalType {
   const host = window.location.hostname.toLowerCase();
+  if (
+    host.includes('phenompeople.com') ||
+    document.querySelector('[data-ph-id]') ||
+    document.getElementById('_PCM') ||
+    typeof (window as typeof window & { phApp?: unknown }).phApp !== 'undefined'
+  ) return 'phenom';
   if (host.includes('greenhouse')) return 'greenhouse';
   if (host.includes('lever.co')) return 'lever';
   if (host.includes('ashbyhq.com')) return 'ashby';
+  if (host.includes('myworkdayjobs.com') || host.includes('workdayjobs.com')) return 'workday';
+  if (host.includes('icims.com')) return 'icims';
+  if (host.includes('smartrecruiters.com')) return 'smartrecruiters';
+  if (host.includes('taleo.net')) return 'taleo';
+  if (host.includes('successfactors.com')) return 'successfactors';
   return 'generic';
 }
 
@@ -370,10 +465,10 @@ function buildControlId(index: number, el: HTMLElement) {
 }
 
 function classifyControl(el: HTMLElement): 'next' | 'review' | 'submit' | 'unknown' {
-  const text = (el.textContent || el.getAttribute('aria-label') || '').toLowerCase();
+  const text = ((el.textContent || (el as HTMLInputElement).value || el.getAttribute('aria-label') || '')).toLowerCase();
   if (/submit|apply now|send application/.test(text)) return 'submit';
   if (/review/.test(text)) return 'review';
-  if (/next|continue|save and continue/.test(text)) return 'next';
+  if (/next|continue|save and continue|continue application/.test(text)) return 'next';
   return 'unknown';
 }
 
@@ -387,6 +482,7 @@ function collectApplySnapshot(sessionId: string) {
     placeholder: string;
     inputType: string;
     tagName: string;
+    widgetKind: WidgetKind;
     required: boolean;
     visible: boolean;
     value?: string;
@@ -397,7 +493,7 @@ function collectApplySnapshot(sessionId: string) {
 
   const radiosByName = new Map<string, HTMLInputElement[]>();
   const candidates = Array.from(document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input, textarea, select'));
-    for (const el of candidates) {
+  for (const el of candidates) {
     if (isHiddenOrReadonly(el)) continue;
     if (el instanceof HTMLInputElement && el.type === 'radio') {
       const key = el.name || el.id || `radio-${radiosByName.size}`;
@@ -416,7 +512,8 @@ function collectApplySnapshot(sessionId: string) {
       placeholder: el.getAttribute('placeholder') || '',
       inputType: el instanceof HTMLInputElement ? (el.type || 'text') : el instanceof HTMLSelectElement ? 'select-one' : 'textarea',
       tagName: el.tagName.toLowerCase(),
-      required: el.required,
+      widgetKind: classifyWidgetKind(el),
+      required: inferRequired(el),
       visible: el instanceof HTMLInputElement && el.type === 'file' ? hasVisibleUploadAffordance(el) : el.offsetParent !== null,
       value: el instanceof HTMLInputElement && el.type === 'file' ? undefined : ('value' in el ? el.value : undefined),
       checked: el instanceof HTMLInputElement ? el.checked : undefined,
@@ -439,7 +536,8 @@ function collectApplySnapshot(sessionId: string) {
       placeholder: '',
       inputType: 'radio',
       tagName: primary.tagName.toLowerCase(),
-      required: els.some((el) => el.required),
+      widgetKind: 'radio_group',
+      required: els.some((el) => inferRequired(el)),
       visible: true,
       hasValue: els.some((el) => el.checked),
       value: els.find((el) => el.checked)?.value,
@@ -449,6 +547,31 @@ function collectApplySnapshot(sessionId: string) {
       })),
     });
   });
+
+  const customCandidates = Array.from(document.querySelectorAll<HTMLElement>('[role="combobox"], .p-dropdown, .p-multiselect'))
+    .filter((el) => el.offsetParent !== null)
+    .filter((el) => !el.matches('input, textarea, select'))
+    .filter((el) => !el.querySelector('input, textarea, select'));
+
+  for (const el of customCandidates) {
+    if (Array.from(fieldMap.values()).some((handle) => handle.kind === 'custom' && handle.el === el)) continue;
+    const widgetKind = classifyCustomWidgetKind(el);
+    const id = buildFieldId(fields.length, el);
+    fieldMap.set(id, { kind: 'custom', el });
+    fields.push({
+      id,
+      name: el.getAttribute('name') || el.id || '',
+      label: getFieldLabel(el),
+      placeholder: '',
+      inputType: 'custom',
+      tagName: el.tagName.toLowerCase(),
+      widgetKind,
+      required: inferRequired(el),
+      visible: true,
+      value: el.getAttribute('aria-valuetext') || '',
+      hasValue: Boolean((el.getAttribute('aria-valuetext') || '').trim()),
+    });
+  }
 
   const controlCandidates = Array.from(document.querySelectorAll<HTMLElement>('button, input[type="submit"], input[type="button"]'))
     .filter((el) => !el.hasAttribute('disabled') && el.offsetParent !== null);
@@ -468,10 +591,22 @@ function collectApplySnapshot(sessionId: string) {
     controls: controlMap,
   };
 
+  const stepKind = detectStepKind();
+  const signatureInput = [
+    window.location.pathname,
+    window.location.search,
+    stepKind,
+    ...fields.map((field) => `${field.name}:${field.widgetKind}:${field.required}`).sort(),
+    ...controls.map((control) => `${control.kind}:${control.label}`).sort(),
+  ].join('|');
+  const stepSignature = `${stepKind}:${simpleHash(signatureInput)}`;
+
   return {
     url: window.location.href,
     title: document.title,
     portalType: portalTypeForLocation(),
+    stepKind,
+    stepSignature,
     fields,
     controls,
   };
@@ -566,6 +701,8 @@ function highlightReviewItems(reviewItems: ReviewItem[]) {
     if (!handle) continue;
     if (handle.kind === 'single') {
       highlight(handle.el, '#fbbf24');
+    } else if (handle.kind === 'custom') {
+      highlight(handle.el, '#fbbf24');
     } else {
       handle.els.forEach((el) => highlight(el, '#fbbf24'));
     }
@@ -576,16 +713,31 @@ async function waitForSettle(ms = 1200) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function waitForProgression(sessionId: string, previousSignature: string, previousUrl: string, timeoutMs = 8000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    await waitForSettle(350);
+    const nextSnapshot = collectApplySnapshot(sessionId);
+    if (nextSnapshot.url !== previousUrl || nextSnapshot.stepSignature !== previousSignature) {
+      return nextSnapshot;
+    }
+  }
+  return null;
+}
+
 async function executeApplySession(sessionId: string) {
   if (applyExecutionPromise) {
     await applyExecutionPromise.catch(() => {});
   }
 
   const run = (async () => {
+    const initialSnapshot = collectApplySnapshot(sessionId);
     await emitApplyEvent(sessionId, {
       status: 'starting',
       message: 'Inspecting the current page.',
       pageUrl: window.location.href,
+      stepKind: initialSnapshot.stepKind,
+      stepSignature: initialSnapshot.stepSignature,
     });
 
     await waitForSettle();
@@ -595,19 +747,25 @@ async function executeApplySession(sessionId: string) {
         status: 'protected',
         message: 'Bot protection detected on this portal.',
         pageUrl: window.location.href,
+        pauseReason: 'protected_portal',
+        stepKind: initialSnapshot.stepKind,
+        stepSignature: initialSnapshot.stepSignature,
         includeScreenshot: true,
       });
       await completeApply(sessionId, 'protected', 'Bot protection detected.');
       return;
     }
 
-    for (let attempt = 0; attempt < 4; attempt++) {
+    for (let attempt = 0; attempt < 12; attempt++) {
       const snapshot = collectApplySnapshot(sessionId);
       if (snapshot.fields.length === 0) {
         await emitApplyEvent(sessionId, {
           status: 'manual_required',
           message: 'No supported fields were detected on the current page.',
           pageUrl: window.location.href,
+          pauseReason: 'manual_required',
+          stepKind: snapshot.stepKind,
+          stepSignature: snapshot.stepSignature,
           includeScreenshot: true,
         });
         await completeApply(sessionId, 'manual_required', 'No supported fields were detected.');
@@ -633,6 +791,9 @@ async function executeApplySession(sessionId: string) {
           filledCount: filled,
           reviewItems: plan.reviewItems,
           pageUrl: window.location.href,
+          pauseReason: plan.pauseReason,
+          stepKind: snapshot.stepKind,
+          stepSignature: snapshot.stepSignature,
           includeScreenshot: true,
         });
         return;
@@ -646,8 +807,24 @@ async function executeApplySession(sessionId: string) {
           message: 'Continuing to the next step.',
           filledCount: filled,
           pageUrl: window.location.href,
+          stepKind: snapshot.stepKind,
+          stepSignature: snapshot.stepSignature,
         });
-        await waitForSettle(1500);
+        const progressedSnapshot = await waitForProgression(sessionId, snapshot.stepSignature, snapshot.url);
+        if (!progressedSnapshot) {
+          await emitApplyEvent(sessionId, {
+            status: 'manual_required',
+            message: 'The form did not advance after the continue action.',
+            filledCount: filled,
+            pageUrl: window.location.href,
+            pauseReason: 'no_progress_after_advance',
+            stepKind: snapshot.stepKind,
+            stepSignature: snapshot.stepSignature,
+            includeScreenshot: true,
+          });
+          await completeApply(sessionId, 'manual_required', 'Manual completion required because the form did not advance.');
+          return;
+        }
         continue;
       }
 
@@ -658,6 +835,9 @@ async function executeApplySession(sessionId: string) {
           message: 'Application is ready for your submit confirmation.',
           filledCount: filled,
           pageUrl: window.location.href,
+          pauseReason: 'none',
+          stepKind: snapshot.stepKind,
+          stepSignature: snapshot.stepSignature,
           includeScreenshot: true,
         });
         return;
@@ -668,6 +848,7 @@ async function executeApplySession(sessionId: string) {
       status: 'manual_required',
       message: 'The form needs manual completion after several fill attempts.',
       pageUrl: window.location.href,
+      pauseReason: 'manual_required',
       includeScreenshot: true,
     });
     await completeApply(sessionId, 'manual_required', 'Manual completion required after repeated fill attempts.');

@@ -8,6 +8,7 @@ import type {
   DetectedField,
   ExecutorMode,
   FieldSemanticType,
+  PauseReason,
   PageSnapshot,
   PlannedAction,
   PortalType,
@@ -16,6 +17,7 @@ import type {
   TailoredResumeDocument,
   ValidationReport,
 } from '../src/shared/types.ts';
+import { detectPortalTypeFromUrl, isWidgetSupported } from './apply-capabilities.ts';
 import { deriveApplicantProfile, mergeApplicantProfiles } from './application-profile.ts';
 import { generateTailoredDocx } from './docx-render.ts';
 import { badRequest, internalServerError, notFound, unauthorized } from './errors.ts';
@@ -33,7 +35,10 @@ type ApplySessionRecord = {
   applicantProfile: ApplicantProfile;
   latestMessage?: string;
   latestScreenshot?: string | null;
+  latestPauseReason?: PauseReason;
   latestPageUrl?: string;
+  latestStepKind?: PageSnapshot['stepKind'];
+  latestStepSignature?: string;
   filledCount: number;
   reviewItems: ReviewItem[];
   submitConfirmed: boolean;
@@ -54,19 +59,6 @@ function sanitizeFilename(input: string) {
   return input.replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'resume';
 }
 
-function detectPortalType(applyUrl: string): PortalType {
-  try {
-    const url = new URL(applyUrl);
-    const host = url.hostname.toLowerCase();
-    if (host.includes('greenhouse')) return 'greenhouse';
-    if (host.includes('lever.co')) return 'lever';
-    if (host.includes('ashbyhq.com')) return 'ashby';
-    return 'generic';
-  } catch {
-    return 'unknown';
-  }
-}
-
 function sessionSummary(session: ApplySessionRecord): ApplySessionSummary {
   return {
     id: session.id,
@@ -76,6 +68,9 @@ function sessionSummary(session: ApplySessionRecord): ApplySessionSummary {
     status: session.status,
     latestMessage: session.latestMessage,
     latestScreenshot: session.latestScreenshot ?? null,
+    latestPauseReason: session.latestPauseReason,
+    latestStepKind: session.latestStepKind,
+    latestStepSignature: session.latestStepSignature,
     filledCount: session.filledCount,
     reviewCount: session.reviewItems.length,
     submitConfirmed: session.submitConfirmed,
@@ -208,7 +203,7 @@ export async function createApplySession(params: {
   applicationProfile?: Partial<ApplicantProfile> | null;
 }): Promise<{ session: ApplySessionSummary; executorToken: string }> {
   const createdAt = nowIso();
-  const portalType = detectPortalType(params.applyUrl);
+  const portalType = detectPortalTypeFromUrl(params.applyUrl);
   const executorMode: ExecutorMode = 'extension';
   const id = crypto.randomUUID();
   const executorToken = crypto.randomUUID();
@@ -241,7 +236,10 @@ export async function createApplySession(params: {
     ),
     latestMessage: 'Apply session created.',
     latestScreenshot: null,
+    latestPauseReason: 'none',
     latestPageUrl: params.applyUrl,
+    latestStepKind: 'unknown',
+    latestStepSignature: undefined,
     filledCount: 0,
     reviewItems: [],
     submitConfirmed: false,
@@ -278,14 +276,35 @@ function getApplySessionByToken(sessionId: string, executorToken: string): Apply
   return session;
 }
 
+function reviewReasonToPauseReason(reason: string): PauseReason {
+  if (/unsupported widget/i.test(reason)) return 'unsupported_widget';
+  if (/missing from the applicant profile/i.test(reason)) return 'missing_profile_value';
+  if (/ambiguous/i.test(reason)) return 'ambiguous_required_field';
+  return 'manual_required';
+}
+
 export function planApplySnapshot(sessionId: string, executorToken: string, snapshot: PageSnapshot): ApplyPlanResponse {
   const session = getApplySessionByToken(sessionId, executorToken);
   const actions: PlannedAction[] = [];
   const reviewItems: ReviewItem[] = [];
+  const effectivePortalType = snapshot.portalType === 'unknown' ? session.portalType : snapshot.portalType;
 
   for (const field of snapshot.fields) {
     const { semanticType, value } = getFieldValue(field, session.applicantProfile);
     const fieldAlreadySatisfied = Boolean(field.hasValue || field.checked || (field.value ?? '').trim());
+    const widgetSupported = isWidgetSupported(effectivePortalType, field.widgetKind);
+
+    if (!widgetSupported) {
+      if (!fieldAlreadySatisfied && field.required) {
+        reviewItems.push({
+          fieldId: field.id,
+          label: field.label || field.name || field.placeholder || 'Required field',
+          reason: `Unsupported widget for ${effectivePortalType} flows.`,
+          required: true,
+        });
+      }
+      continue;
+    }
 
     if (semanticType === 'resume_upload') {
       if (!field.hasValue) {
@@ -361,6 +380,9 @@ export function planApplySnapshot(sessionId: string, executorToken: string, snap
 
   const submitControl = getSubmitControl(snapshot.controls);
   const advanceControl = getAdvanceControl(snapshot.controls);
+  const pauseReason: PauseReason = reviewItems.length > 0
+    ? reviewReasonToPauseReason(reviewItems[0]?.reason ?? '')
+    : 'none';
   const status: ApplySessionStatus = reviewItems.length > 0
     ? 'review_required'
     : submitControl
@@ -376,14 +398,18 @@ export function planApplySnapshot(sessionId: string, executorToken: string, snap
       : actions.length > 0 && advanceControl
       ? 'Continuing to the next step.'
       : 'Filling application form.',
+    latestPauseReason: pauseReason,
     latestPageUrl: snapshot.url,
-    portalType: snapshot.portalType === 'unknown' ? session.portalType : snapshot.portalType,
+    latestStepKind: snapshot.stepKind,
+    latestStepSignature: snapshot.stepSignature,
+    portalType: effectivePortalType,
     reviewItems,
   });
 
   return {
-    portalType: session.portalType,
+    portalType: effectivePortalType,
     status,
+    pauseReason,
     actions,
     reviewItems,
     nextControlId: reviewItems.length === 0 ? advanceControl?.id : undefined,
@@ -397,7 +423,10 @@ export function recordApplySessionEvent(sessionId: string, executorToken: string
     status: event.status ?? session.status,
     latestMessage: event.message ?? session.latestMessage,
     latestScreenshot: event.screenshot ?? session.latestScreenshot,
+    latestPauseReason: event.pauseReason ?? session.latestPauseReason,
     latestPageUrl: event.pageUrl ?? session.latestPageUrl,
+    latestStepKind: event.stepKind ?? session.latestStepKind,
+    latestStepSignature: event.stepSignature ?? session.latestStepSignature,
     filledCount: event.filledCount ?? session.filledCount,
     reviewItems: event.reviewItems ?? session.reviewItems,
   });
@@ -413,6 +442,7 @@ export function confirmApplySessionSubmit(sessionId: string, userId?: string): A
     submitConfirmed: true,
     status: 'submitting',
     latestMessage: 'Submit confirmed. Waiting for executor.',
+    latestPauseReason: 'none',
   });
   return sessionSummary(session);
 }
@@ -425,6 +455,11 @@ export function completeApplySession(sessionId: string, executorToken: string, o
   updateSession(session, {
     status: outcome,
     latestMessage: message ?? session.latestMessage,
+    latestPauseReason: outcome === 'protected'
+      ? 'protected_portal'
+      : outcome === 'manual_required'
+      ? 'manual_required'
+      : 'none',
   });
   return sessionSummary(session);
 }
