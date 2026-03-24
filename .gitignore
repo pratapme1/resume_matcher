@@ -7,7 +7,7 @@ playwright-report/
 *.docx
 .playwright-mcp/
 e2e-*.png
+prod-*.png
 *.txt
 api/index.cjs
-api/index.mjs
 .vercel

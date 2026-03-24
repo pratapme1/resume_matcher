@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "vite build && esbuild server.ts --bundle --platform=node --target=node18 --format=esm --outfile=dist/server.js --external:fsevents",
+    "build": "vite build && esbuild server.ts --bundle --platform=node --target=node18 --format=esm --outfile=dist/server.js --external:fsevents --external:@playwright/test --external:playwright --external:playwright-core --external:chromium-bidi/*",
     "start": "node dist/server.js",
     "preview": "vite preview",
     "clean": "rm -rf dist",
@@ -32,6 +32,7 @@
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "express-rate-limit": "^8.3.1",
+    "geist": "^1.7.0",
     "helmet": "^8.1.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.546.0",

@@ -9,6 +9,7 @@ import {
 import type { Session } from '@supabase/supabase-js';
 import { supabase, getAuthHeader } from './supabaseClient.ts';
 import type {
+  ApplySessionSummary,
   CandidateProfile,
   ExtractionWarning,
   JobSearchPreferences,
@@ -128,7 +129,7 @@ function ResumePreview({ resume }: { resume: TailoredResumeDocument }) {
       {/* Summary */}
       {summary && (
         <div className="mb-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1.5">Professional Summary</p>
+          <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-400 mb-1.5">Professional Summary</p>
           <p className="text-zinc-700 leading-relaxed">{summary}</p>
         </div>
       )}
@@ -136,7 +137,7 @@ function ResumePreview({ resume }: { resume: TailoredResumeDocument }) {
       {/* Experience */}
       {experience?.length > 0 && (
         <div className="mb-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">Professional Experience</p>
+          <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-400 mb-2">Professional Experience</p>
           <div className="space-y-4">
             {experience.map((exp) => (
               <div key={exp.id}>
@@ -166,7 +167,7 @@ function ResumePreview({ resume }: { resume: TailoredResumeDocument }) {
       {/* Skills */}
       {allSkills?.length > 0 && (
         <div className="mb-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">Core Competencies</p>
+          <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-400 mb-2">Core Competencies</p>
           <div className="flex flex-wrap gap-1.5">
             {allSkills.map((sk, i) => (
               <span key={i} className="px-2 py-0.5 bg-violet-50 text-violet-700 border border-violet-200 rounded text-[11px] font-semibold">
@@ -180,7 +181,7 @@ function ResumePreview({ resume }: { resume: TailoredResumeDocument }) {
       {/* Education */}
       {education?.length > 0 && (
         <div className="mb-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">Education</p>
+          <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-400 mb-2">Education</p>
           <div className="space-y-1.5">
             {education.map((ed) => (
               <div key={ed.id} className="flex items-start justify-between gap-2">
@@ -198,7 +199,7 @@ function ResumePreview({ resume }: { resume: TailoredResumeDocument }) {
       {/* Certifications */}
       {certifications?.length > 0 && (
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">Certifications</p>
+          <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-400 mb-2">Certifications</p>
           <ul className="space-y-1">
             {certifications.map((c, i) => (
               <li key={i} className="text-zinc-600 text-[12px]">· {c}</li>
@@ -233,15 +234,10 @@ function Sidebar({ step, isDark, onToggleDark, onSignOut, userEmail, onStepClick
             <FileText className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
-            <p className="text-[11px] font-black tracking-tight leading-none">Resume Tailor</p>
+            <p className="text-[11px] font-semibold tracking-tight leading-none">Resume Tailor</p>
             <p className="text-[9px] text-zinc-400 dark:text-zinc-600 tracking-widest uppercase mt-0.5">Pro</p>
           </div>
         </div>
-      </div>
-
-      {/* Phase label */}
-      <div className="px-5 pt-5 pb-2">
-        <p className="text-[9px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-[0.2em]">Analysis Flow</p>
       </div>
 
       {/* Steps */}
@@ -256,6 +252,7 @@ function Sidebar({ step, isDark, onToggleDark, onSignOut, userEmail, onStepClick
               data-testid={`step-indicator-${n}`}
               aria-current={isCurrent ? 'step' : undefined}
               onClick={isDone ? () => onStepClick(n) : undefined}
+              title={isLocked ? 'Complete previous steps first' : undefined}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${
                 isCurrent
                   ? 'bg-violet-50 dark:bg-violet-500/10'
@@ -269,7 +266,7 @@ function Sidebar({ step, isDark, onToggleDark, onSignOut, userEmail, onStepClick
               <motion.div
                 animate={isCurrent ? { scale: 1.1 } : { scale: 1 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 transition-colors duration-300 ${
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium shrink-0 transition-colors duration-300 ${
                   isDone
                     ? 'bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-400'
                     : isCurrent
@@ -404,12 +401,21 @@ export default function App() {
   const [hasDownloaded, setHasDownloaded] = useState(false);
   const [extensionInstalled, setExtensionInstalled] = useState(false);
   const [applyUrl, setApplyUrl] = useState('');
-  const [autoFillArmed, setAutoFillArmed] = useState(false);
-  const [agentStatus, setAgentStatus] = useState<'idle' | 'running' | 'filled' | 'submitted' | 'protected' | 'error'>('idle');
-  const [agentSessionId, setAgentSessionId] = useState<string | null>(null);
-  const [agentScreenshot, setAgentScreenshot] = useState<string | null>(null);
-  const [agentStats, setAgentStats] = useState<{ filled: number; highlighted: number } | null>(null);
+  const [applySession, setApplySession] = useState<ApplySessionSummary | null>(null);
+  const [applyStarting, setApplyStarting] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
   const [showBlockedConfirm, setShowBlockedConfirm] = useState(false);
+  const [warningsDismissed, setWarningsDismissed] = useState(false);
+
+  // JD history (localStorage, max 5)
+  const [jdHistory, setJdHistory] = useState<{ id: string; savedAt: string; title: string; cleanText: string }[]>(() => {
+    try { return JSON.parse(localStorage.getItem('jd_history') || '[]'); } catch { return []; }
+  });
+
+  // File input refs for programmatic click (most reliable cross-browser pattern)
+  const searchFileRef = useRef<HTMLInputElement>(null);
+  const jdFileRef = useRef<HTMLInputElement>(null);
+  const resumeFileRef = useRef<HTMLInputElement>(null);
 
   // Job search (step 1)
   const [searchResumeFile, setSearchResumeFile] = useState<File | null>(null);
@@ -451,6 +457,7 @@ export default function App() {
       }
     };
     window.addEventListener('message', handleMsg);
+    window.postMessage({ type: 'RTP_SET_APP_ORIGIN', origin: window.location.origin }, window.location.origin);
     // Actively ping the content script — fixes race condition where READY fires before listener is attached
     window.postMessage({ type: 'RTP_PING' }, window.location.origin);
     // If launched from extension, request the pending JD
@@ -460,6 +467,35 @@ export default function App() {
     }
     return () => window.removeEventListener('message', handleMsg);
   }, []);
+
+  useEffect(() => {
+    if (!applySession) return;
+    if (!['created', 'queued', 'starting', 'filling', 'submitting'].includes(applySession.status)) return;
+
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const r = await apiFetch(`/api/apply/sessions/${applySession.id}`, {
+          headers: await getAuthHeader(),
+        });
+        if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to refresh apply session');
+        const next = await r.json() as ApplySessionSummary;
+        if (!cancelled) {
+          setApplySession(next);
+          setApplyError(null);
+        }
+      } catch (err: any) {
+        if (!cancelled) setApplyError(err.message);
+      }
+    };
+
+    void poll();
+    const id = window.setInterval(() => { void poll(); }, 1800);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [applySession?.id, applySession?.status]);
 
   /* ── role expansion for criteria display ── */
   const DISPLAY_ROLE_VARIANTS: Record<string, string[]> = {
@@ -582,7 +618,16 @@ export default function App() {
         normalized = { sourceType: 'paste', rawText: jdText, cleanText: jdText.trim(), extractionWarnings: [], qualityScore: 100 };
       }
       if (!normalized?.cleanText) throw new Error('No job description provided');
-      setNormalizedJd(normalized); setJdText(normalized.cleanText); setStep(3);
+      setNormalizedJd(normalized); setJdText(normalized.cleanText); setWarningsDismissed(false);
+      // Save to JD history
+      const title = normalized.cleanText.split('\n')[0].trim().slice(0, 80) || 'Job Description';
+      const newItem = { id: Date.now().toString(), savedAt: new Date().toISOString(), title, cleanText: normalized.cleanText };
+      setJdHistory(prev => {
+        const updated = [newItem, ...prev.filter(h => h.cleanText !== normalized.cleanText)].slice(0, 5);
+        localStorage.setItem('jd_history', JSON.stringify(updated));
+        return updated;
+      });
+      setStep(3);
     } catch (err: any) { setError(err.message); }
     finally { setIsLoading(false); }
   };
@@ -640,6 +685,8 @@ export default function App() {
       document.body.appendChild(a); a.click(); a.remove();
       setHasDownloaded(true);
       setApplyUrl(prev => prev || jdUrl); // pre-fill with JD URL if user used URL tab
+      setApplySession(null);
+      setApplyError(null);
       setStep(5);
       // Signal to extension (if installed) to cache prefill data for form filling
       const ci = result.tailoredResume.contactInfo;
@@ -649,55 +696,86 @@ export default function App() {
     } catch (err: any) { setError(err.message); }
   };
 
-  const handleAutoApply = async () => {
-    if (!applyUrl.trim()) return;
-    // Arm the content script so it auto-fills when the page loads
-    window.postMessage({ type: 'RTP_ARM_AUTOFILL' }, window.location.origin);
-    await new Promise(r => setTimeout(r, 150));
-    window.open(applyUrl.trim(), '_blank');
-    setAutoFillArmed(true);
-  };
-
   const handleAgentApply = async () => {
     if (!applyUrl.trim() || !result) return;
-    setAgentStatus('running');
+    if (!extensionInstalled) {
+      setApplyError('Install the Resume Tailor Pro extension to run auto-apply.');
+      return;
+    }
+    setApplyStarting(true);
+    setApplyError(null);
     try {
-      const r = await apiFetch('/api/auto-apply', {
+      const r = await apiFetch('/api/apply/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...await getAuthHeader() },
         body: JSON.stringify({
           applyUrl,
-          contactInfo: result.tailoredResume.contactInfo,
           tailoredResume: result.tailoredResume,
           templateProfile: result.templateProfile,
           validation: result.validation,
         }),
       });
-      const data = await r.json();
-      if (data.status === 'protected') { setAgentStatus('protected'); return; }
-      setAgentStatus('filled');
-      setAgentSessionId(data.sessionId);
-      setAgentScreenshot(data.screenshot);
-      setAgentStats({ filled: data.filled, highlighted: data.highlighted });
-    } catch { setAgentStatus('error'); }
+      if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to create apply session');
+      const data = await r.json() as { session: ApplySessionSummary; executorToken: string };
+      setApplySession(data.session);
+      window.postMessage({
+        type: 'RTP_START_APPLY_SESSION',
+        data: {
+          sessionId: data.session.id,
+          applyUrl,
+          apiBaseUrl: window.location.origin,
+          executorToken: data.executorToken,
+        },
+      }, window.location.origin);
+    } catch (err: any) {
+      setApplyError(err.message || 'Failed to start auto-apply.');
+    } finally {
+      setApplyStarting(false);
+    }
+  };
+
+  const handleResumeAgentApply = async () => {
+    if (!applySession) return;
+    setApplyStarting(true);
+    setApplyError(null);
+    try {
+      window.postMessage({
+        type: 'RTP_RESUME_APPLY_SESSION',
+        data: {
+          sessionId: applySession.id,
+        },
+      }, window.location.origin);
+      setApplySession({ ...applySession, status: 'starting', latestMessage: 'Resuming apply session in the extension.' });
+    } catch (err: any) {
+      setApplyError(err.message || 'Failed to resume auto-apply.');
+    } finally {
+      setApplyStarting(false);
+    }
   };
 
   const handleAgentSubmit = async () => {
-    if (!agentSessionId) return;
-    setAgentStatus('running');
+    if (!applySession) return;
+    setApplyError(null);
     try {
-      const r = await apiFetch('/api/auto-apply/submit', {
+      const r = await apiFetch(`/api/apply/sessions/${applySession.id}/confirm-submit`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...await getAuthHeader() },
-        body: JSON.stringify({ sessionId: agentSessionId }),
+        headers: await getAuthHeader(),
       });
-      const data = await r.json();
-      setAgentStatus('submitted');
-      if (data.screenshot) setAgentScreenshot(data.screenshot);
-    } catch { setAgentStatus('error'); }
+      if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to confirm submit');
+      const next = await r.json() as ApplySessionSummary;
+      setApplySession(next);
+      window.postMessage({
+        type: 'RTP_SUBMIT_APPLY_SESSION',
+        data: {
+          sessionId: applySession.id,
+        },
+      }, window.location.origin);
+    } catch (err: any) {
+      setApplyError(err.message || 'Failed to submit application.');
+    }
   };
 
-  const resetFlow = () => { setStep(1); setJdText(''); setJdFile(null); setJdUrl(''); setResumeFile(null); setResult(null); setNormalizedJd(null); setError(null); setProgress(0); setProgressMsg(''); setHasDownloaded(false); setApplyUrl(''); setAutoFillArmed(false); setAgentStatus('idle'); setAgentSessionId(null); setAgentScreenshot(null); setAgentStats(null); setSearchResumeFile(null); setJobSearchResults([]); setCandidateProfile(null); setSelectedJob(null); setSearchPreferences({}); setShowSearchPrefs(false); setProfilePreview(null); setShowProfilePreview(false); };
+  const resetFlow = () => { setStep(1); setJdText(''); setJdFile(null); setJdUrl(''); setResumeFile(null); setResult(null); setNormalizedJd(null); setError(null); setProgress(0); setProgressMsg(''); setHasDownloaded(false); setApplyUrl(''); setApplySession(null); setApplyStarting(false); setApplyError(null); setSearchResumeFile(null); setJobSearchResults([]); setCandidateProfile(null); setSelectedJob(null); setSearchPreferences({}); setShowSearchPrefs(false); setProfilePreview(null); setShowProfilePreview(false); };
   const handleBackToStep3 = () => { setResult(null); setShowAllRecs(false); setStep(3); };
   const handleRetryResume = () => { setResumeFile(null); setResult(null); setShowAllRecs(false); setStep(3); };
 
@@ -707,7 +785,7 @@ export default function App() {
   const wordCount = (t: string) => t.trim().split(/\s+/).filter(Boolean).length;
 
   /* ── design tokens ── */
-  const card = 'bg-white dark:bg-zinc-900/70 border border-zinc-100 dark:border-zinc-800/80 rounded-2xl';
+  const card = 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl';
   const inputCls = 'w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/25 focus:border-violet-500 transition-all duration-200';
   const transition = { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] };
 
@@ -715,7 +793,7 @@ export default function App() {
   if (session === undefined) {
     return (
       <div className={isDark ? 'dark' : ''}>
-        <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] flex items-center justify-center">
+        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
           <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
         </div>
       </div>
@@ -726,7 +804,7 @@ export default function App() {
   if (!session) {
     return (
       <div className={isDark ? 'dark' : ''}>
-        <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 flex items-center justify-center px-4">
+        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex items-center justify-center px-4">
           <div className="w-full max-w-md">
             <div className="flex items-center justify-center gap-3 mb-8">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg">
@@ -762,7 +840,7 @@ export default function App() {
                 )}
                 <button
                   type="submit" disabled={authLoading}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-500 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {authLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                   {authMode === 'signin' ? 'Sign In' : 'Create Account'}
@@ -786,7 +864,7 @@ export default function App() {
 
   return (
     <div className={isDark ? 'dark' : ''}>
-      <div className="relative min-h-screen bg-zinc-50 dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 transition-colors duration-500 overflow-x-hidden">
+      <div className="relative min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-500 overflow-x-hidden">
 
         {/* ── Ambient gradient orbs ── */}
         <div className="pointer-events-none fixed inset-0 overflow-hidden z-0" aria-hidden>
@@ -798,7 +876,7 @@ export default function App() {
         <Sidebar step={step} isDark={isDark} onToggleDark={toggleDark} onSignOut={() => supabase.auth.signOut()} userEmail={session?.user?.email} onStepClick={n => setStep(n)} />
 
         {/* ── Mobile header ── */}
-        <header className="lg:hidden fixed inset-x-0 top-0 z-30 h-13 border-b border-zinc-200/60 dark:border-zinc-800/60 bg-white/80 dark:bg-[#09090b]/90 backdrop-blur-xl">
+        <header className="lg:hidden fixed inset-x-0 top-0 z-30 h-13 border-b border-zinc-200/60 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-950/90 backdrop-blur-xl">
           <div className="px-5 h-13 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
@@ -814,7 +892,7 @@ export default function App() {
                     <div
                       data-testid={`step-indicator-${n}-mobile`}
                       aria-current={step === n ? 'step' : undefined}
-                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black transition-colors ${
+                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold transition-colors ${
                         step === n ? 'bg-violet-600 text-white' : step > n ? 'bg-violet-100 dark:bg-violet-900/50 text-violet-600' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400'
                       }`}
                     >
@@ -847,11 +925,16 @@ export default function App() {
               </motion.div>
             )}
           </AnimatePresence>
-          {!!activeWarnings.length && (
+          {!!activeWarnings.length && !warningsDismissed && (
             <div className="pointer-events-auto max-w-lg w-full px-4 py-3.5 bg-amber-50/95 dark:bg-amber-950/80 border border-amber-200 dark:border-amber-800/50 rounded-xl backdrop-blur-sm shadow-lg">
-              <p className="text-[11px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest mb-1.5">
-                Extraction and parsing warnings
-              </p>
+              <div className="flex items-start justify-between gap-2 mb-1.5">
+                <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-widest">
+                  Extraction and parsing warnings
+                </p>
+                <button onClick={() => setWarningsDismissed(true)} className="shrink-0 hover:opacity-60 transition-opacity">
+                  <X className="w-3.5 h-3.5 text-amber-500" />
+                </button>
+              </div>
               <ul className="space-y-1">
                 {activeWarnings.map((w, i) => (
                   <li key={`${w.code}-${i}`} className="text-xs text-amber-600 dark:text-amber-300/80 flex gap-1.5">
@@ -881,12 +964,12 @@ export default function App() {
 
                     {/* Phase label */}
                     <div className="flex items-center gap-2 mb-6">
-                      <span className="text-[10px] font-black text-violet-500 dark:text-violet-400 uppercase tracking-[0.25em]">Phase 01</span>
+                      <span className="text-[10px] font-medium text-violet-500 dark:text-violet-400 uppercase tracking-[0.25em]">Phase 01</span>
                       <span className="w-8 h-px bg-violet-400/40" />
-                      <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Opportunity Discovery</span>
+                      <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Find roles that fit</span>
                     </div>
 
-                    <h2 className="text-[3rem] font-black tracking-tight leading-[1.0] mb-3">
+                    <h2 className="text-2xl font-semibold tracking-tight mb-3">
                       Find Your{' '}
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-violet-500 to-indigo-400 dark:from-violet-400 dark:via-violet-300 dark:to-indigo-300">
                         Best Matches
@@ -897,17 +980,18 @@ export default function App() {
                     </p>
 
                     {/* Upload + prefs row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                    <div className="flex flex-col gap-5 mb-5">
 
                       {/* Resume upload */}
                       <div className={`${card} p-6 flex flex-col gap-4`}>
-                        <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Your Resume</p>
+                        <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Your Resume</p>
                         <div
                           onDragEnter={e => { e.preventDefault(); setIsDraggingSearch(true); }}
                           onDragLeave={e => { e.preventDefault(); setIsDraggingSearch(false); }}
                           onDrop={e => { e.preventDefault(); setIsDraggingSearch(false); const f = e.dataTransfer.files?.[0]; if (f) handleSearchResumeChange(f); }}
                           onDragOver={e => e.preventDefault()}
-                          className={`relative rounded-xl border-2 border-dashed p-8 text-center transition-all duration-300 flex flex-col items-center justify-center min-h-[160px] ${
+                          onClick={() => !searchResumeFile && searchFileRef.current?.click()}
+                          className={`relative rounded-xl border-2 border-dashed p-8 text-center transition-all duration-300 flex flex-col items-center justify-center min-h-[160px] cursor-pointer ${
                             isDraggingSearch
                               ? 'border-violet-500 bg-violet-500/5'
                               : searchResumeFile
@@ -916,9 +1000,9 @@ export default function App() {
                           }`}
                         >
                           {!searchResumeFile && (
-                            <input type="file" accept=".docx"
+                            <input ref={searchFileRef} type="file" accept=".docx"
                               onChange={e => { const f = e.target.files?.[0]; if (f) handleSearchResumeChange(f); }}
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                              className="hidden" />
                           )}
                           {searchResumeFile ? (
                             <>
@@ -956,7 +1040,7 @@ export default function App() {
                           onClick={() => setShowSearchPrefs(p => !p)}
                           className="flex items-center justify-between w-full"
                         >
-                          <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Search Preferences</p>
+                          <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Search Preferences</p>
                           {showSearchPrefs
                             ? <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />
                             : <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />}
@@ -1021,7 +1105,7 @@ export default function App() {
                             className="w-full flex items-center justify-between gap-3"
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-black text-violet-500 dark:text-violet-400 uppercase tracking-widest">Search Criteria</span>
+                              <span className="text-[10px] font-medium text-violet-500 dark:text-violet-400 uppercase tracking-widest">Search Criteria</span>
                               {profilePreviewLoading && <Loader2 className="w-3 h-3 text-zinc-400 animate-spin" />}
                             </div>
                             {!profilePreviewLoading && (showProfilePreview
@@ -1032,7 +1116,7 @@ export default function App() {
                           {showProfilePreview && profilePreview && (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
                               <div>
-                                <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-wider mb-1.5">Roles</p>
+                                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-wider mb-1.5">Roles</p>
                                 <div className="flex flex-wrap gap-1">
                                   {expandRoleTitles(profilePreview.primaryTitles).map(t => (
                                     <span key={t} className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300">{t}</span>
@@ -1040,12 +1124,12 @@ export default function App() {
                                 </div>
                               </div>
                               <div>
-                                <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-wider mb-1.5">Seniority</p>
+                                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-wider mb-1.5">Seniority</p>
                                 <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 capitalize">{profilePreview.seniorityLevel}</span>
                                 <span className="ml-1.5 text-[11px] text-zinc-400">· {profilePreview.yearsOfExperience} yrs</span>
                               </div>
                               <div>
-                                <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-wider mb-1.5">Industries</p>
+                                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-wider mb-1.5">Industries</p>
                                 <div className="flex flex-wrap gap-1">
                                   {profilePreview.industries.slice(0, 3).map(i => (
                                     <span key={i} className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 capitalize">{i}</span>
@@ -1053,7 +1137,7 @@ export default function App() {
                                 </div>
                               </div>
                               <div>
-                                <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-wider mb-1.5">Top Skills</p>
+                                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-wider mb-1.5">Top Skills</p>
                                 <div className="flex flex-wrap gap-1">
                                   {profilePreview.topSkills.slice(0, 4).map(s => (
                                     <span key={s} className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">{s}</span>
@@ -1085,7 +1169,7 @@ export default function App() {
                       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
                         <div className="flex items-center justify-between mb-4">
                           <div>
-                            <h3 className="text-lg font-black tracking-tight">
+                            <h3 className="text-base font-semibold tracking-tight">
                               {jobSearchResults.length} Opportunities Found
                             </h3>
                             {candidateProfile && (
@@ -1171,7 +1255,7 @@ export default function App() {
                                 {/* Actions */}
                                 <div className="mt-auto pt-2 flex items-center gap-2">
                                   <button onClick={() => handleSelectJob(job)}
-                                    className="flex-1 py-2 rounded-lg text-xs font-bold text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] transition-all shadow-sm shadow-violet-500/20">
+                                    className="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] transition-all shadow-sm shadow-violet-500/20">
                                     Use This Job →
                                   </button>
                                   {job.url && (
@@ -1222,9 +1306,9 @@ export default function App() {
                         className="w-7 h-7 rounded-lg flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
                         <ArrowLeft className="w-3.5 h-3.5 text-zinc-500" />
                       </button>
-                      <span className="text-[10px] font-black text-violet-500 dark:text-violet-400 uppercase tracking-[0.25em]">Phase 02</span>
+                      <span className="text-[10px] font-medium text-violet-500 dark:text-violet-400 uppercase tracking-[0.25em]">Phase 02</span>
                       <span className="w-8 h-px bg-violet-400/40" />
-                      <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Data Acquisition</span>
+                      <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Target job description</span>
                     </div>
 
                     {/* Selected job banner */}
@@ -1243,7 +1327,7 @@ export default function App() {
                       </motion.div>
                     )}
 
-                    <h2 className="text-[3rem] font-black tracking-tight leading-[1.0] mb-3">
+                    <h2 className="text-2xl font-semibold tracking-tight mb-3">
                       Target Job{' '}
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-violet-500 to-indigo-400 dark:from-violet-400 dark:via-violet-300 dark:to-indigo-300">
                         Description
@@ -1257,10 +1341,10 @@ export default function App() {
                     <div className="flex gap-1 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 mb-5">
                       {(['paste', 'url', 'file'] as const).map(t => (
                         <button key={t} onClick={() => setJdType(t)}
-                          className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all duration-200 ${
+                          className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium rounded-xl transition-all duration-200 ${
                             jdType === t
-                              ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm'
-                              : 'text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400'
+                              ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                              : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
                           }`}
                         >
                           {t === 'url'   && <><LinkIcon className="w-3.5 h-3.5" />URL</>}
@@ -1285,15 +1369,16 @@ export default function App() {
                             onDragLeave={() => setIsDraggingJd(false)}
                             onDrop={() => setIsDraggingJd(false)}
                             onDragOver={e => e.preventDefault()}
+                            onClick={() => jdFileRef.current?.click()}
                             className={`relative rounded-2xl border-2 border-dashed p-12 text-center cursor-pointer transition-all duration-300 ${
                               isDraggingJd
                                 ? 'border-violet-500 bg-violet-50/80 dark:bg-violet-500/8'
                                 : 'border-zinc-200 dark:border-zinc-800 hover:border-violet-400/60 dark:hover:border-violet-700'
                             }`}
                           >
-                            <input type="file" accept=".pdf,.docx,.txt"
+                            <input ref={jdFileRef} type="file" accept=".pdf,.docx,.txt"
                               onChange={e => { setJdFile(e.target.files?.[0] || null); setIsDraggingJd(false); }}
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                              className="hidden" />
                             <div className={`w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center transition-all ${isDraggingJd ? 'bg-violet-100 dark:bg-violet-500/20 rotate-6' : 'bg-zinc-100 dark:bg-zinc-800'}`}>
                               <Upload className={`w-5 h-5 ${isDraggingJd ? 'text-violet-600 dark:text-violet-400' : 'text-zinc-400'}`} />
                             </div>
@@ -1303,18 +1388,45 @@ export default function App() {
                         </motion.div>
                       )}
                       {jdType === 'paste' && (
-                        <motion.div key="paste" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                          <textarea value={jdText} onChange={e => setJdText(e.target.value)} rows={10}
+                        <motion.div key="paste" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="space-y-3">
+                          <textarea value={jdText} onChange={e => setJdText(e.target.value)} rows={6}
                             placeholder="Paste the full job description here..."
-                            className={`${inputCls} resize-none font-mono text-[13px] leading-relaxed`} />
+                            className={`${inputCls} resize-none text-sm leading-relaxed`} />
+                          {jdHistory.length > 0 && (
+                            <div>
+                              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest mb-2">Recent JDs</p>
+                              <div className="space-y-1.5">
+                                {jdHistory.map(h => (
+                                  <button key={h.id} onClick={() => setJdText(h.cleanText)}
+                                    className="w-full text-left px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-violet-400/60 dark:hover:border-violet-700 hover:bg-violet-50/40 dark:hover:bg-violet-500/5 transition-colors group">
+                                    <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200 truncate group-hover:text-violet-700 dark:group-hover:text-violet-400">{h.title}</p>
+                                    <p className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-0.5">{new Date(h.savedAt).toLocaleDateString()}</p>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </motion.div>
                       )}
                     </AnimatePresence>
 
+                    {isLoading && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 mt-5"
+                      >
+                        <Loader2 className="w-4 h-4 text-violet-500 animate-spin shrink-0" />
+                        <div>
+                          <p className="text-xs font-semibold text-violet-700 dark:text-violet-300">Extracting job description…</p>
+                          <p className="text-[11px] text-violet-500/70 dark:text-violet-400/60 mt-0.5">Parsing requirements, keywords, and must-haves</p>
+                        </div>
+                      </motion.div>
+                    )}
                     <button
                       onClick={handleExtractJd}
                       disabled={isLoading || (jdType === 'url' && !jdUrl) || (jdType === 'file' && !jdFile) || (jdType === 'paste' && !jdText)}
-                      className="mt-5 w-full relative flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-violet-500/25"
+                      className="mt-3 w-full relative flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-violet-500/25"
                     >
                       {isLoading
                         ? <><Loader2 className="w-4 h-4 animate-spin" />Extracting...</>
@@ -1345,12 +1457,12 @@ export default function App() {
                         className="w-7 h-7 rounded-lg flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
                         <ArrowLeft className="w-3.5 h-3.5 text-zinc-500" />
                       </button>
-                      <span className="text-[10px] font-black text-violet-500 dark:text-violet-400 uppercase tracking-[0.25em]">Phase 03</span>
+                      <span className="text-[10px] font-medium text-violet-500 dark:text-violet-400 uppercase tracking-[0.25em]">Phase 03</span>
                       <span className="w-8 h-px bg-violet-400/40" />
-                      <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Profile Deposit</span>
+                      <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Resume & prefs</span>
                     </div>
 
-                    <h2 className="text-[2.5rem] font-black tracking-tight leading-[1.05] mb-2">
+                    <h2 className="text-2xl font-semibold tracking-tight mb-2">
                       Reference Resume{' '}
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-500 dark:from-violet-400 dark:to-indigo-400">
                         &amp; Preferences
@@ -1366,14 +1478,14 @@ export default function App() {
                       {/* Left — JD context */}
                       <div className={`${card} p-6 flex flex-col gap-4`}>
                         <div>
-                          <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest mb-3">Job Context</p>
+                          <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest mb-3">Job Context</p>
                           {normalizedJd && (
                             <motion.div
                               initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                               data-testid="jd-preview-card"
                               className="flex items-start gap-3"
                             >
-                              <span className={`shrink-0 px-2 py-0.5 rounded-md text-[11px] font-black border mt-0.5 ${
+                              <span className={`shrink-0 px-2 py-0.5 rounded-md text-[11px] font-semibold border mt-0.5 ${
                                 normalizedJd.qualityScore >= 80
                                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
                                   : normalizedJd.qualityScore >= 50
@@ -1398,7 +1510,7 @@ export default function App() {
                         <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
                           <div className="flex items-center gap-2">
                             <Settings className="w-3.5 h-3.5 text-zinc-400" />
-                            <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Tailoring Hints</span>
+                            <span className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Tailoring Hints</span>
                           </div>
                           <p className="text-[10px] text-zinc-400 dark:text-zinc-600">Help the AI frame the right emphasis</p>
                           <div className="space-y-2.5">
@@ -1419,7 +1531,7 @@ export default function App() {
 
                       {/* Right — Resume upload */}
                       <div className={`${card} p-6 flex flex-col gap-4`}>
-                        <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Your Profile</p>
+                        <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Your Profile</p>
 
                         {/* Resume carried over from search step */}
                         {searchResumeFile && !resumeFile && (
@@ -1431,7 +1543,7 @@ export default function App() {
                               <p className="text-[10px] text-emerald-500/70 dark:text-emerald-400/60">Carried over from job search</p>
                             </div>
                             <button onClick={() => setSearchResumeFile(null)}
-                              className="px-3 py-1.5 rounded-lg text-xs font-bold text-violet-600 bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors border border-violet-200 dark:border-violet-500/20 shrink-0">
+                              className="px-3 py-1.5 rounded-xl text-xs font-semibold text-violet-600 bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors border border-violet-200 dark:border-violet-500/20 shrink-0">
                               Change
                             </button>
                           </motion.div>
@@ -1443,6 +1555,7 @@ export default function App() {
                           onDragLeave={() => setIsDraggingResume(false)}
                           onDrop={() => setIsDraggingResume(false)}
                           onDragOver={e => e.preventDefault()}
+                          onClick={() => resumeFileRef.current?.click()}
                           className={`relative rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-all duration-300 flex-1 flex flex-col items-center justify-center min-h-[180px] ${
                             isDraggingResume
                               ? 'border-violet-500 bg-violet-500/5 dark:bg-violet-500/8'
@@ -1451,9 +1564,9 @@ export default function App() {
                               : 'border-zinc-200 dark:border-zinc-800 hover:border-violet-400/60 dark:hover:border-violet-700'
                           }`}
                         >
-                          <input type="file" accept=".docx"
+                          <input ref={resumeFileRef} type="file" accept=".docx"
                             onChange={e => { setResumeFile(e.target.files?.[0] || null); setIsDraggingResume(false); }}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                            className="hidden" />
 
                           {resumeFile ? (
                             <div className="flex items-center gap-4">
@@ -1520,7 +1633,7 @@ export default function App() {
               if (step === 4 && result) {
                 const blocked = result.blocked;
                 const validation = result.validation;
-                const tailoredResume = !blocked && 'tailoredResume' in result ? result.tailoredResume : null;
+                const tailoredResume = 'tailoredResume' in result ? result.tailoredResume : null;
                 const scoreBreakdown = result.analysis.scoreBreakdown;
 
                 return (
@@ -1548,7 +1661,7 @@ export default function App() {
                             {blocked ? 'Validation warnings detected' : 'Validation passed'}
                           </div>
                         </div>
-                        <h2 className="text-4xl font-black tracking-tight">
+                        <h2 className="text-2xl font-semibold tracking-tight">
                           {blocked ? 'Validation Warnings Detected' : 'Resume Tailored Successfully'}
                         </h2>
                         <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-1.5">
@@ -1578,7 +1691,7 @@ export default function App() {
 
                               {/* ── Section 1: Fit Assessment ── always visible */}
                               <div className="flex flex-col gap-3">
-                                  <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Role Fit</p>
+                                  <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Role Fit</p>
                                   {!hasFitData && (
                                     <p className="text-[11px] text-zinc-400 dark:text-zinc-600 italic">Role fit analysis unavailable for this run.</p>
                                   )}
@@ -1589,7 +1702,7 @@ export default function App() {
                                     <div className="flex items-center gap-3">
                                       <ScoreRing score={gapAnalysis.fitScore} active={step === 4} size={76} />
                                       <div>
-                                        <p className={`text-sm font-black ${alignmentColor(gapAnalysis.fitScore)}`}>
+                                        <p className={`text-sm font-semibold ${alignmentColor(gapAnalysis.fitScore)}`}>
                                           {alignmentLabel(gapAnalysis.fitScore)}
                                         </p>
                                         <p className="text-[11px] text-zinc-400 dark:text-zinc-600 mt-0.5">Semantic fit score</p>
@@ -1607,7 +1720,7 @@ export default function App() {
                                   {/* Top strengths */}
                                   {gapAnalysis.topStrengths.length > 0 && (
                                     <div>
-                                      <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-1.5">Why you're qualified</p>
+                                      <p className="text-[10px] font-medium text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-1.5">Why you're qualified</p>
                                       <ul className="space-y-1.5">
                                         {gapAnalysis.topStrengths.map((s, i) => (
                                           <li key={i} className="flex gap-2 text-[11px] text-zinc-600 dark:text-zinc-400 leading-snug">
@@ -1623,7 +1736,7 @@ export default function App() {
                                   <div>
                                     {gapAnalysis.keyGaps.length > 0 ? (
                                       <>
-                                        <p className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest mb-1.5">Genuine gaps</p>
+                                        <p className="text-[10px] font-medium text-amber-600 dark:text-amber-500 uppercase tracking-widest mb-1.5">Genuine gaps</p>
                                         <ul className="space-y-1.5">
                                           {gapAnalysis.keyGaps.map((g, i) => (
                                             <li key={i} className="flex gap-2 text-[11px] text-zinc-600 dark:text-zinc-400 leading-snug">
@@ -1642,12 +1755,12 @@ export default function App() {
 
                               {/* ── Section 2: ATS Score ── */}
                               <div className={`flex flex-col gap-4 ${hasFitData ? 'pt-4 border-t border-zinc-100 dark:border-zinc-800' : 'pt-2'}`}>
-                                <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">ATS Score</p>
+                                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">ATS Score</p>
 
                                 <div className="flex flex-col items-center text-center">
                                   <ScoreRing score={postScore} active={step === 4} />
                                   <div className="mt-3">
-                                    <p data-testid="alignment-score-label" className={`text-sm font-black ${alignmentColor(postScore)}`}>
+                                    <p data-testid="alignment-score-label" className={`text-sm font-semibold ${alignmentColor(postScore)}`}>
                                       {alignmentLabel(postScore)}
                                     </p>
                                     <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1">
@@ -1685,7 +1798,7 @@ export default function App() {
 
                                 {/* Matched keywords */}
                                 <div className="border-t border-zinc-100 dark:border-zinc-800 pt-3">
-                                  <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest mb-2">Matched</p>
+                                  <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest mb-2">Matched</p>
                                   <div className="flex flex-wrap gap-1.5">
                                     {result.analysis.matchedKeywords.map((kw, i) => (
                                       <motion.span key={i}
@@ -1703,7 +1816,7 @@ export default function App() {
                                 {/* Missing keywords */}
                                 {result.analysis.missingMustHaveKeywords.length > 0 && (
                                   <div className="border-t border-zinc-100 dark:border-zinc-800 pt-3">
-                                    <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest mb-2">Missing Must-Haves</p>
+                                    <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest mb-2">Missing Must-Haves</p>
                                     <div className="flex flex-wrap gap-1.5">
                                       {result.analysis.missingMustHaveKeywords.map((kw, i) => (
                                         <span key={i} className="px-2 py-0.5 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[11px] font-semibold rounded border border-amber-200 dark:border-amber-500/20">
@@ -1723,7 +1836,7 @@ export default function App() {
                         <div className={`lg:col-span-5 flex flex-col gap-3`}>
                           <div className={`${card} p-4 flex items-center justify-between`}>
                             <div>
-                              <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Tailored Resume</p>
+                              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Tailored Resume</p>
                               {tailoredResume?.contactInfo?.name && (
                                 <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200 mt-0.5">{tailoredResume.contactInfo.name}</p>
                               )}
@@ -1758,7 +1871,7 @@ export default function App() {
                                 ? <ShieldCheck className="w-4 h-4 text-emerald-500" />
                                 : <ShieldAlert className="w-4 h-4 text-amber-500" />
                               }
-                              <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Validation Gate</p>
+                              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Validation Gate</p>
                             </div>
                             {validation.isValid ? (
                               <p className="text-sm text-emerald-600 dark:text-emerald-400 leading-relaxed">
@@ -1805,7 +1918,7 @@ export default function App() {
                           {/* Tailored summary */}
                           {tailoredResume?.summary && (
                             <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                              <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest mb-2">Executive Summary</p>
+                              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest mb-2">Executive Summary</p>
                               <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed line-clamp-5">{tailoredResume.summary}</p>
                             </div>
                           )}
@@ -1826,11 +1939,11 @@ export default function App() {
                                 </p>
                                 <div className="flex gap-2">
                                   <button onClick={() => { setShowBlockedConfirm(false); handleDownload(); }}
-                                    className="flex-1 py-2 rounded-lg text-xs font-bold text-white bg-amber-500 hover:bg-amber-400 transition-colors">
+                                    className="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-amber-500 hover:bg-amber-400 transition-colors">
                                     Download Anyway
                                   </button>
                                   <button onClick={() => setShowBlockedConfirm(false)}
-                                    className="flex-1 py-2 rounded-lg text-xs font-bold text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 transition-colors">
+                                    className="flex-1 py-2 rounded-xl text-xs font-semibold text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 transition-colors">
                                     Cancel
                                   </button>
                                 </div>
@@ -1881,7 +1994,7 @@ export default function App() {
 
                       {/* ── Recommendations — full width ── */}
                       <div className={`${card} p-6`}>
-                        <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest mb-4">Strategic Recommendations</p>
+                        <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-widest mb-4">Strategic Recommendations</p>
                         {(() => {
                           const recs = result.analysis.recommendations;
                           const visible = showAllRecs ? recs : recs.slice(0, 3);
@@ -1902,7 +2015,7 @@ export default function App() {
                               </div>
                               {recs.length > 3 && (
                                 <button data-testid="show-more-recs" onClick={() => setShowAllRecs(!showAllRecs)}
-                                  className="mt-4 text-xs font-black text-violet-600 dark:text-violet-400 hover:text-violet-500 uppercase tracking-wide transition-colors">
+                                  className="mt-4 text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-500 uppercase tracking-wide transition-colors">
                                   {showAllRecs ? '↑ Show less' : `↓ +${recs.length - 3} more recommendations`}
                                 </button>
                               )}
@@ -1936,19 +2049,19 @@ export default function App() {
                           className="w-7 h-7 rounded-lg flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
                           <ArrowLeft className="w-3.5 h-3.5 text-zinc-500" />
                         </button>
-                        <span className="text-[10px] font-black text-violet-500 dark:text-violet-400 uppercase tracking-[0.25em]">Phase 05</span>
+                        <span className="text-[10px] font-medium text-violet-500 dark:text-violet-400 uppercase tracking-[0.25em]">Phase 05</span>
                         <span className="w-8 h-px bg-violet-400/40" />
                         <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Submit Application</span>
                       </div>
 
-                      <h2 className="text-[2.8rem] font-black tracking-tight leading-[1.0] mb-2">
+                      <h2 className="text-2xl font-semibold tracking-tight mb-2">
                         Apply to{' '}
                         <span className="bg-gradient-to-r from-violet-500 to-indigo-500 bg-clip-text text-transparent">
                           {company}
                         </span>
                       </h2>
                       <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-8">
-                        The agent opens the form in a headless browser, maps your profile to every field using AI, uploads your tailored resume, and shows you a screenshot before submitting.
+                        Stage 5 now runs through the Resume Tailor extension in your own browser session. The backend plans the fill, the extension executes it on the live job portal, and the app shows checkpoints before you confirm submit.
                       </p>
 
                       {/* URL input */}
@@ -1959,77 +2072,126 @@ export default function App() {
                         <input
                           type="url"
                           value={applyUrl}
-                          onChange={e => { setApplyUrl(e.target.value); setAgentStatus('idle'); setAgentScreenshot(null); setAgentStats(null); }}
+                          onChange={e => { setApplyUrl(e.target.value); setApplySession(null); setApplyError(null); }}
                           placeholder="https://company.com/apply/job-123"
                           className={inputCls}
-                          disabled={agentStatus === 'running'}
+                          disabled={applyStarting || ['starting', 'filling', 'submitting'].includes(applySession?.status ?? '')}
                         />
 
+                        <div className="mt-3 flex items-center gap-2 text-xs">
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold ${
+                            extensionInstalled
+                              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                              : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
+                          }`}>
+                            {extensionInstalled ? <ShieldCheck className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
+                            {extensionInstalled ? 'Extension connected' : 'Extension required'}
+                          </span>
+                          <span className="text-zinc-400 dark:text-zinc-600">
+                            Executor: {applySession?.executorMode ?? 'extension'}
+                          </span>
+                          {applySession?.portalType && (
+                            <span className="text-zinc-400 dark:text-zinc-600 capitalize">
+                              Portal: {applySession.portalType}
+                            </span>
+                          )}
+                        </div>
+
                         <div className="mt-4 space-y-2.5">
-                          {agentStatus === 'idle' || agentStatus === 'error' ? (
+                          {!applySession || applySession.status === 'failed' ? (
                             <button
                               onClick={handleAgentApply}
-                              disabled={!applyUrl.trim()}
+                              disabled={!applyUrl.trim() || applyStarting || !extensionInstalled}
                               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-violet-500/25"
                             >
-                              <Loader2 className="w-4 h-4 hidden" />Agent Apply →
+                              {applyStarting && <Loader2 className="w-4 h-4 animate-spin" />}
+                              Start Hybrid Apply →
                             </button>
-                          ) : agentStatus === 'running' ? (
+                          ) : ['created', 'queued', 'starting', 'filling', 'submitting'].includes(applySession.status) ? (
                             <div className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-sm text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20">
                               <Loader2 className="w-4 h-4 animate-spin" />
-                              Opening form and filling fields…
+                              {applySession.latestMessage || 'Opening the form and filling supported fields…'}
                             </div>
-                          ) : agentStatus === 'protected' ? (
+                          ) : applySession.status === 'protected' ? (
                             <div className="w-full flex items-center gap-2.5 px-4 py-3.5 rounded-xl text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
                               <ShieldAlert className="w-4 h-4 shrink-0" />
                               <span>Bot protection detected (Cloudflare / CAPTCHA). <button onClick={() => applyUrl.trim() && window.open(applyUrl.trim(), '_blank')} className="underline font-semibold">Open manually ↗</button></span>
                             </div>
-                          ) : agentStatus === 'filled' ? (
+                          ) : applySession.status === 'review_required' ? (
+                            <>
+                              <div className="w-full flex items-center gap-2.5 px-4 py-3.5 rounded-xl text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
+                                <AlertCircle className="w-4 h-4 shrink-0" />
+                                <span>{applySession.latestMessage || 'Review the highlighted fields in the job portal, then ask the extension to re-check the page.'}</span>
+                              </div>
+                              <button
+                                onClick={handleResumeAgentApply}
+                                disabled={applyStarting}
+                                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-amber-600 hover:bg-amber-500 active:scale-[0.98] disabled:opacity-40 transition-all duration-200 shadow-lg shadow-amber-500/20"
+                              >
+                                {applyStarting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                Re-check Form →
+                              </button>
+                            </>
+                          ) : applySession.status === 'ready_to_submit' ? (
                             <button
                               onClick={handleAgentSubmit}
                               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-emerald-500/25"
                             >
-                              <CheckCircle2 className="w-4 h-4" />Submit Application
+                              <CheckCircle2 className="w-4 h-4" />Confirm Submit
                             </button>
-                          ) : agentStatus === 'submitted' ? (
+                          ) : applySession.status === 'submitted' ? (
                             <div className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 font-semibold">
                               <CheckCircle2 className="w-4 h-4" />Application submitted!
                             </div>
+                          ) : applySession.status === 'unsupported' ? (
+                            <div className="w-full flex items-center gap-2.5 px-4 py-3.5 rounded-xl text-sm text-zinc-600 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700">
+                              <AlertCircle className="w-4 h-4 shrink-0" />
+                              <span>{applySession.latestMessage || 'This portal needs manual completion right now.'}</span>
+                            </div>
+                          ) : applySession.status === 'manual_required' ? (
+                            <div className="w-full flex items-center gap-2.5 px-4 py-3.5 rounded-xl text-sm text-zinc-600 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700">
+                              <AlertCircle className="w-4 h-4 shrink-0" />
+                              <span>{applySession.latestMessage || 'The portal needs manual completion from this point.'}</span>
+                            </div>
                           ) : null}
 
-                          {agentStatus === 'filled' && (
-                            <button
-                              onClick={() => applyUrl.trim() && window.open(applyUrl.trim(), '_blank')}
-                              className="w-full py-2 text-xs font-semibold text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400 transition-colors"
-                            >
-                              I'll review and submit manually ↗
-                            </button>
+                          <button
+                            onClick={() => applyUrl.trim() && window.open(applyUrl.trim(), '_blank')}
+                            className="w-full py-2 text-xs font-semibold text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400 transition-colors"
+                          >
+                            Open portal manually ↗
+                          </button>
+
+                          {applyError && (
+                            <div className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
+                              {applyError}
+                            </div>
                           )}
                         </div>
                       </div>
 
                       {/* Agent stats */}
-                      {agentStats && agentStatus !== 'idle' && (
+                      {applySession && (
                         <div className="flex gap-3 mb-5">
                           <div className="flex-1 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-4 py-3 text-center">
-                            <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{agentStats.filled}</p>
+                            <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{applySession.filledCount}</p>
                             <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-500 uppercase tracking-widest mt-0.5">Fields filled</p>
                           </div>
                           <div className="flex-1 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl px-4 py-3 text-center">
-                            <p className="text-2xl font-black text-amber-600 dark:text-amber-400">{agentStats.highlighted}</p>
+                            <p className="text-2xl font-black text-amber-600 dark:text-amber-400">{applySession.reviewCount}</p>
                             <p className="text-[10px] font-bold text-amber-700 dark:text-amber-500 uppercase tracking-widest mt-0.5">Need attention</p>
                           </div>
                         </div>
                       )}
 
                       {/* Screenshot preview */}
-                      {agentScreenshot && (
+                      {applySession?.latestScreenshot && (
                         <div className={`${card} p-3 mb-5 overflow-hidden`}>
                           <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest mb-2 px-1">
-                            {agentStatus === 'submitted' ? 'Submission confirmation' : 'Form preview — review before submitting'}
+                            {applySession.status === 'submitted' ? 'Submission confirmation' : 'Latest form checkpoint'}
                           </p>
                           <img
-                            src={`data:image/png;base64,${agentScreenshot}`}
+                            src={`data:image/png;base64,${applySession.latestScreenshot}`}
                             alt="Application form screenshot"
                             className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700"
                           />
@@ -2113,7 +2275,7 @@ export default function App() {
                 )}
                 <button
                   type="submit" disabled={authLoading}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-500 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {authLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                   Sign In & Continue

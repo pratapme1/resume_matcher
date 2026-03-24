@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 
-const BACKEND = 'http://localhost:3000';
-
 type BackendStatus = 'checking' | 'connected' | 'offline';
 type ActionStatus = 'idle' | 'busy' | 'done' | 'error';
 
 export default function Popup() {
+  const [backendOrigin, setBackendOrigin] = useState('');
   const [backend, setBackend] = useState<BackendStatus>('checking');
   const [prefillReady, setPrefillReady] = useState(false);
   const [tailorStatus, setTailorStatus] = useState<ActionStatus>('idle');
@@ -14,12 +13,16 @@ export default function Popup() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch(`${BACKEND}/api/health`, { signal: AbortSignal.timeout(3000) })
-      .then((r) => setBackend(r.ok ? 'connected' : 'offline'))
-      .catch(() => setBackend('offline'));
-
-    chrome.storage.local.get('rtp_prefill').then(({ rtp_prefill }) => {
+    chrome.storage.local.get(['rtp_prefill', 'rtp_app_origin']).then(({ rtp_prefill, rtp_app_origin }) => {
       setPrefillReady(!!rtp_prefill);
+      if (typeof rtp_app_origin === 'string' && rtp_app_origin) {
+        setBackendOrigin(rtp_app_origin);
+        fetch(`${rtp_app_origin}/api/health`, { signal: AbortSignal.timeout(3000) })
+          .then((r) => setBackend(r.ok ? 'connected' : 'offline'))
+          .catch(() => setBackend('offline'));
+      } else {
+        setBackend('offline');
+      }
     });
   }, []);
 
@@ -32,8 +35,9 @@ export default function Popup() {
 
       const result = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_JD' });
       if (!result?.text) throw new Error('Could not read page text. Try refreshing the page.');
+      if (!backendOrigin) throw new Error('Open the deployed Resume Tailor app once so the extension can learn its origin.');
 
-      const res = await fetch(`${BACKEND}/api/extract-jd-text`, {
+      const res = await fetch(`${backendOrigin}/api/extract-jd-text`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: result.text }),
@@ -43,8 +47,8 @@ export default function Popup() {
 
       await chrome.storage.session.set({ pendingJD: normalized.cleanText });
 
-      const appUrl = `${BACKEND}/?from=ext`;
-      const existing = await chrome.tabs.query({ url: `${BACKEND}/*` });
+      const appUrl = `${backendOrigin}/?from=ext`;
+      const existing = await chrome.tabs.query({ url: `${backendOrigin}/*` });
       if (existing.length > 0 && existing[0].id) {
         await chrome.tabs.update(existing[0].id, { active: true, url: appUrl });
         if (existing[0].windowId) await chrome.windows.update(existing[0].windowId, { focused: true });
@@ -98,9 +102,15 @@ export default function Popup() {
         </span>
       </div>
 
-      {error && (
+        {error && (
         <div style={{ background: '#450a0a', border: '1px solid #991b1b', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 12, color: '#fca5a5', lineHeight: 1.5 }}>
           {error}
+        </div>
+      )}
+
+      {!backendOrigin && (
+        <div style={{ background: '#27272a', borderRadius: 10, padding: '10px 12px', marginBottom: 12, fontSize: 12, color: '#a1a1aa', lineHeight: 1.5 }}>
+          Open your deployed Resume Tailor app once in this browser so the extension can store its backend origin.
         </div>
       )}
 

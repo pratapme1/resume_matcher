@@ -23,5 +23,5 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "exclude": ["dist", "extension"]
+  "exclude": ["dist", "extension", "api/index.mjs", "api/index.cjs"]
 }

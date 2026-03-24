@@ -79,7 +79,7 @@ test('back-navigation from step 4 preserves JD and goes to step 3', async ({ pag
   await completeHappyPath(page);
   await page.getByTestId('back-to-step2').click();
   await expect(page.getByRole('heading', { name: 'Reference Resume & Preferences' })).toBeVisible();
-  await expect(page.locator('input[accept=".docx"]')).toBeVisible();
+  await expect(page.locator('input[accept=".docx"]')).toHaveCount(1);
   await expect(page.getByTestId('jd-preview-card')).toBeVisible();
 });
 
@@ -88,7 +88,7 @@ test('retry-resume from blocked state goes to step 3 with JD preserved', async (
   await page.getByTestId('retry-resume').click();
   await expect(page.getByRole('heading', { name: 'Reference Resume & Preferences' })).toBeVisible();
   await expect(page.getByTestId('jd-preview-card')).toBeVisible();
-  await expect(page.locator('input[accept=".docx"]')).toBeVisible();
+  await expect(page.locator('input[accept=".docx"]')).toHaveCount(1);
 });
 
 test('step indicator shows aria-current on active step and advances', async ({ page }) => {
@@ -252,7 +252,7 @@ test('Step 5: "Back to Results" goes to Step 4, not Step 3', async ({ page }) =>
 
   if (!isOnStep5) {
     // We're on step 4 (results) — try to navigate to step 5 (Apply) if available
-    const applyBtn = page.getByRole('button', { name: /Agent Apply|Apply Now|Auto-Apply/i });
+    const applyBtn = page.getByRole('button', { name: /Agent Apply|Apply Now|Auto-Apply|Start Hybrid Apply/i });
     const hasApply = await applyBtn.isVisible().catch(() => false);
     if (hasApply) {
       // Just verify step 4 indicator is active

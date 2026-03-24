@@ -10,7 +10,7 @@ export default defineConfig({
     headless: true,
   },
   webServer: {
-    command: 'VITE_SKIP_AUTH=true tsx tests/e2e/server.ts',
+    command: 'npm run build:ext && VITE_SKIP_AUTH=true tsx tests/e2e/server.ts',
     port: 3100,
     reuseExistingServer: !process.env.CI,
     env: { VITE_SKIP_AUTH: 'true' },
@@ -18,6 +18,7 @@ export default defineConfig({
   projects: [
     {
       name: chromeExecutablePath ? 'chrome-path' : 'chrome',
+      testIgnore: /hybrid-extension\.spec\.ts/,
       use: chromeExecutablePath
         ? {
             browserName: 'chromium',
@@ -29,6 +30,10 @@ export default defineConfig({
             browserName: 'chromium',
             channel: 'chrome',
           },
+    },
+    {
+      name: 'extension-hybrid',
+      testMatch: /hybrid-extension\.spec\.ts/,
     },
   ],
 });
