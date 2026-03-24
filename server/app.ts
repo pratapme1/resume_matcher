@@ -258,6 +258,15 @@ const applicantProfileSchema = z.object({
 
 export function createApp(deps: AppDependencies): Express {
   const app = express();
+  const bypassRateLimit = ((_req, _res, next) => next()) as express.RequestHandler;
+  const limitExtract = deps.skipAuth ? bypassRateLimit : rateLimitExtract;
+  const limitTailor = deps.skipAuth ? bypassRateLimit : rateLimitTailor;
+  const limitDocx = deps.skipAuth ? bypassRateLimit : rateLimitDocx;
+  const limitProfile = deps.skipAuth ? bypassRateLimit : rateLimitProfile;
+  const limitSearch = deps.skipAuth ? bypassRateLimit : rateLimitSearch;
+  const limitSmartFill = deps.skipAuth ? bypassRateLimit : rateLimitSmartFill;
+  const limitAutoApply = deps.skipAuth ? bypassRateLimit : rateLimitAutoApply;
+  const limitApplySession = deps.skipAuth ? bypassRateLimit : rateLimitApplySession;
   const upload = multer({
     limits: { fileSize: MAX_UPLOAD_BYTES },
     storage: multer.memoryStorage(),
@@ -303,7 +312,7 @@ export function createApp(deps: AppDependencies): Express {
     res.json({ status: 'ok' });
   });
 
-  app.post('/api/extract-jd-url', auth, rateLimitExtract, async (req, res) => {
+  app.post('/api/extract-jd-url', auth, limitExtract, async (req, res) => {
     try {
       const { url } = extractJdUrlRequestSchema.parse(req.body);
       const rawText = await fetchJobDescriptionText(
@@ -330,7 +339,7 @@ export function createApp(deps: AppDependencies): Express {
     }
   });
 
-  app.post('/api/extract-jd-file', auth, rateLimitExtract, async (req, res) => {
+  app.post('/api/extract-jd-file', auth, limitExtract, async (req, res) => {
     try {
       await runSingleUpload(upload, req, res, 'file');
       if (!req.file) {
@@ -346,7 +355,7 @@ export function createApp(deps: AppDependencies): Express {
     }
   });
 
-  app.post('/api/extract-jd-text', auth, rateLimitExtract, async (req, res) => {
+  app.post('/api/extract-jd-text', auth, limitExtract, async (req, res) => {
     try {
       const { text } = z.object({ text: z.string().min(1) }).parse(req.body);
       const normalized = buildNormalizedJobDescription(text, 'paste');
@@ -366,7 +375,7 @@ export function createApp(deps: AppDependencies): Express {
     }
   });
 
-  app.post('/api/tailor-resume', auth, rateLimitTailor, async (req, res) => {
+  app.post('/api/tailor-resume', auth, limitTailor, async (req, res) => {
     try {
       // Monthly quota check
       if (!deps.skipAuth && req.userId && await isOverQuota(req.internalUserId ?? req.userId, 'tailor', req.userEmail)) {
@@ -466,7 +475,7 @@ export function createApp(deps: AppDependencies): Express {
     }
   });
 
-  app.post('/api/generate-docx', auth, rateLimitDocx, async (req, res) => {
+  app.post('/api/generate-docx', auth, limitDocx, async (req, res) => {
     try {
       const { tailoredResume, templateProfile } = generateDocxRequestSchema.parse(req.body);
 
@@ -492,7 +501,7 @@ export function createApp(deps: AppDependencies): Express {
 
   // Job search: build candidate profile from resume + search via Gemini grounding
   // Lightweight: parse resume → return candidate profile (no AI search)
-  app.post('/api/build-profile', auth, rateLimitProfile, async (req, res) => {
+  app.post('/api/build-profile', auth, limitProfile, async (req, res) => {
     try {
       await runSingleUpload(upload, req, res, 'resume');
       if (!req.file) {
@@ -526,7 +535,7 @@ export function createApp(deps: AppDependencies): Express {
     }
   });
 
-  app.get('/api/application-profile', auth, rateLimitProfile, async (req, res) => {
+  app.get('/api/application-profile', auth, limitProfile, async (req, res) => {
     try {
       const profile = await loadApplicationProfileForRequest(req);
       res.json({ profile });
@@ -535,7 +544,7 @@ export function createApp(deps: AppDependencies): Express {
     }
   });
 
-  app.put('/api/application-profile', auth, rateLimitProfile, async (req, res) => {
+  app.put('/api/application-profile', auth, limitProfile, async (req, res) => {
     try {
       const body = z.object({ profile: applicantProfileSchema }).parse(req.body);
       const existingProfile = await loadApplicationProfileForRequest(req);
@@ -548,7 +557,7 @@ export function createApp(deps: AppDependencies): Express {
   });
 
   // Job search: build candidate profile from resume + search via Gemini grounding
-  app.post('/api/search-jobs', auth, rateLimitSearch, async (req, res) => {
+  app.post('/api/search-jobs', auth, limitSearch, async (req, res) => {
     try {
       // Monthly quota check
       if (!deps.skipAuth && req.userId && await isOverQuota(req.internalUserId ?? req.userId, 'search', req.userEmail)) {
@@ -614,7 +623,7 @@ export function createApp(deps: AppDependencies): Express {
   });
 
   // AI-powered form filler — called by the Chrome extension content script
-  app.post('/api/smart-fill', auth, rateLimitSmartFill, async (req, res) => {
+  app.post('/api/smart-fill', auth, limitSmartFill, async (req, res) => {
     try {
       const { fields, prefill } = z.object({
         fields: z.array(z.object({
@@ -668,7 +677,7 @@ Instructions:
     }
   });
 
-  app.post('/api/apply/sessions', auth, rateLimitApplySession, async (req, res) => {
+  app.post('/api/apply/sessions', auth, limitApplySession, async (req, res) => {
     try {
       const body = z.object({
         applyUrl: z.string().url(),
@@ -704,7 +713,7 @@ Instructions:
     }
   });
 
-  app.get('/api/apply/sessions/:id', auth, rateLimitApplySession, async (req, res) => {
+  app.get('/api/apply/sessions/:id', auth, limitApplySession, async (req, res) => {
     try {
       const session = getApplySessionForUser(req.params.id, req.internalUserId ?? req.userId);
       res.json(session);
@@ -713,7 +722,7 @@ Instructions:
     }
   });
 
-  app.post('/api/apply/sessions/:id/snapshot', rateLimitApplySession, async (req, res) => {
+  app.post('/api/apply/sessions/:id/snapshot', limitApplySession, async (req, res) => {
     try {
       const snapshot = z.object({
         url: z.string().url(),
@@ -750,7 +759,7 @@ Instructions:
     }
   });
 
-  app.post('/api/apply/sessions/:id/events', rateLimitApplySession, async (req, res) => {
+  app.post('/api/apply/sessions/:id/events', limitApplySession, async (req, res) => {
     try {
       const event = z.object({
         status: z.enum(['created', 'queued', 'starting', 'filling', 'review_required', 'ready_to_submit', 'submitting', 'submitted', 'protected', 'unsupported', 'manual_required', 'failed']).optional(),
@@ -764,7 +773,8 @@ Instructions:
           required: z.boolean(),
         })).optional(),
         pageUrl: z.string().url().optional(),
-        pauseReason: z.enum(['none', 'protected_portal', 'unsupported_widget', 'missing_profile_value', 'ambiguous_required_field', 'no_progress_after_advance', 'manual_required']).optional(),
+        portalType: z.enum(['phenom', 'greenhouse', 'lever', 'ashby', 'workday', 'icims', 'smartrecruiters', 'taleo', 'successfactors', 'generic', 'protected', 'unknown']).optional(),
+        pauseReason: z.enum(['none', 'protected_portal', 'login_required', 'unsupported_widget', 'missing_profile_value', 'ambiguous_required_field', 'no_progress_after_advance', 'manual_required']).optional(),
         stepKind: z.enum(['profile', 'work_history', 'education', 'questionnaire', 'review', 'submit', 'unknown']).optional(),
         stepSignature: z.string().optional(),
       }).parse(req.body) as ApplySessionEvent;
@@ -776,7 +786,7 @@ Instructions:
     }
   });
 
-  app.post('/api/apply/sessions/:id/confirm-submit', auth, rateLimitApplySession, async (req, res) => {
+  app.post('/api/apply/sessions/:id/confirm-submit', auth, limitApplySession, async (req, res) => {
     try {
       const session = confirmApplySessionSubmit(req.params.id, req.internalUserId ?? req.userId);
       res.json(session);
@@ -785,7 +795,7 @@ Instructions:
     }
   });
 
-  app.post('/api/apply/sessions/:id/complete', rateLimitApplySession, async (req, res) => {
+  app.post('/api/apply/sessions/:id/complete', limitApplySession, async (req, res) => {
     try {
       const { outcome, message } = z.object({
         outcome: z.enum(['submitted', 'protected', 'unsupported', 'manual_required', 'failed']),
@@ -799,7 +809,7 @@ Instructions:
   });
 
   // Server-side Playwright auto-apply agent
-  app.post('/api/auto-apply', auth, rateLimitAutoApply, async (req, res) => {
+  app.post('/api/auto-apply', auth, limitAutoApply, async (req, res) => {
     try {
       const body = z.object({
         applyUrl: z.string().url(),
@@ -828,7 +838,7 @@ Instructions:
     }
   });
 
-  app.post('/api/auto-apply/submit', auth, rateLimitAutoApply, async (req, res) => {
+  app.post('/api/auto-apply/submit', auth, limitAutoApply, async (req, res) => {
     try {
       const { sessionId } = z.object({ sessionId: z.string() }).parse(req.body);
       const result = await submitAutoApply(sessionId);

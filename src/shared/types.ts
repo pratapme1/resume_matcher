@@ -431,6 +431,7 @@ export type StepKind =
 export type PauseReason =
   | 'none'
   | 'protected_portal'
+  | 'login_required'
   | 'unsupported_widget'
   | 'missing_profile_value'
   | 'ambiguous_required_field'
@@ -576,6 +577,7 @@ export interface ApplySessionEvent {
   filledCount?: number;
   reviewItems?: ReviewItem[];
   pageUrl?: string;
+  portalType?: PortalType;
   pauseReason?: PauseReason;
   stepKind?: StepKind;
   stepSignature?: string;

@@ -86,7 +86,7 @@ export function detectPortalTypeFromUrl(applyUrl: string): PortalType {
     if (host.includes('icims.com')) return 'icims';
     if (host.includes('smartrecruiters.com')) return 'smartrecruiters';
     if (host.includes('taleo.net')) return 'taleo';
-    if (host.includes('successfactors.com')) return 'successfactors';
+    if (host.includes('successfactors')) return 'successfactors';
     if (host.includes('phenompeople.com')) return 'phenom';
     return 'generic';
   } catch {

@@ -134,6 +134,110 @@ export function phenomMultiStepPortalHtml(successUrl: string) {
   );
 }
 
+export function greenhousePortalHtml(successUrl: string) {
+  return pageShell(
+    'Greenhouse Application',
+    `
+      <meta property="og:site_name" content="Greenhouse" />
+      <div id="application_form" data-board="greenhouse"></div>
+      <h1>Apply to Acme on Greenhouse</h1>
+      <p>This fixture mimics a hosted Greenhouse application page.</p>
+      ${jobIntro('Acme is hiring via Greenhouse.')}
+      <form action="${successUrl}" method="get">
+        <div class="field"><label for="first_name">First Name</label><input id="first_name" name="first_name" type="text" required /></div>
+        <div class="field"><label for="last_name">Last Name</label><input id="last_name" name="last_name" type="text" required /></div>
+        <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required /></div>
+        <div class="field"><label for="phone">Phone</label><input id="phone" name="phone" type="tel" required /></div>
+        <div class="field"><label for="location">Location</label><input id="location" name="location" type="text" required /></div>
+        <div class="field"><label for="current_company">Current Company</label><input id="current_company" name="current_company" type="text" required /></div>
+        <div class="field"><label for="resume">Resume/CV<input id="resume" name="resume" type="file" style="display:none" required /></label></div>
+        <button type="submit">Submit Application</button>
+      </form>
+    `,
+  );
+}
+
+export function leverPortalHtml(successUrl: string) {
+  return pageShell(
+    'Lever Application',
+    `
+      <main data-qa="application-page"></main>
+      <h1>Apply to Acme on Lever</h1>
+      <p>This fixture mimics a hosted Lever application page.</p>
+      ${jobIntro('Acme is hiring via Lever.')}
+      <form data-qa="application-form" action="${successUrl}" method="get">
+        <div class="field"><label for="name">Full Name</label><input id="name" name="name" type="text" required /></div>
+        <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required /></div>
+        <div class="field"><label for="phone">Phone</label><input id="phone" name="phone" type="tel" required /></div>
+        <div class="field"><label for="company">Current Company</label><input id="company" name="org" type="text" required /></div>
+        <div class="field"><label for="linkedin">LinkedIn</label><input id="linkedin" name="urls[LinkedIn]" type="url" /></div>
+        <div class="field"><label for="experience">Years of Experience</label><input id="experience" name="experienceYears" type="number" required /></div>
+        <div class="field"><label for="resume">Resume<input id="resume" name="resume" type="file" style="display:none" required /></label></div>
+        <button type="submit">Submit Application</button>
+      </form>
+    `,
+  );
+}
+
+export function workdayPortalHtml(successUrl: string) {
+  return pageShell(
+    'Workday Application',
+    `
+      <div data-automation-id="applyFlow"></div>
+      <h1>Apply to Acme on Workday</h1>
+      <p>This fixture mimics an already-open Workday application flow.</p>
+      ${jobIntro('Acme is hiring via Workday.')}
+      <form id="workday-form" action="${successUrl}" method="get">
+        <section id="workday-step-1" class="step active" data-automation-id="step-profile" data-step-name="profile">
+          <div class="field"><label for="legal_first_name">First Name</label><input id="legal_first_name" name="legalFirstName" type="text" required /></div>
+          <div class="field"><label for="legal_last_name">Last Name</label><input id="legal_last_name" name="legalLastName" type="text" required /></div>
+          <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required /></div>
+          <button type="button" id="workday-next-1">Next</button>
+        </section>
+        <section id="workday-step-2" class="step" data-automation-id="step-work-history" data-step-name="work-history">
+          <div class="field"><label for="phone">Phone Number</label><input id="phone" name="phoneNumber" type="tel" required /></div>
+          <div class="field"><label for="location">Current Location</label><input id="location" name="location" type="text" required /></div>
+          <div class="field"><label for="current_title">Current Job Title</label><input id="current_title" name="currentTitle" type="text" required /></div>
+          <button type="button" id="workday-next-2">Save and Continue</button>
+        </section>
+        <section id="workday-step-3" class="step" data-automation-id="step-questionnaire" data-step-name="questionnaire">
+          <div class="field"><label for="current_company">Current Company</label><input id="current_company" name="currentCompany" type="text" required /></div>
+          <div class="field"><label for="experience">Total Experience (Years)</label><input id="experience" name="yearsExperience" type="number" required /></div>
+          <div class="field"><label for="resume">Upload Resume<input id="resume" name="resume" type="file" style="display:none" required /></label></div>
+          <button type="submit">Submit Application</button>
+        </section>
+      </form>
+    `,
+    `
+      document.getElementById('workday-next-1')?.addEventListener('click', () => {
+        document.getElementById('workday-step-1')?.classList.remove('active');
+        document.getElementById('workday-step-2')?.classList.add('active');
+        history.replaceState({}, '', '?step=2');
+      });
+      document.getElementById('workday-next-2')?.addEventListener('click', () => {
+        document.getElementById('workday-step-2')?.classList.remove('active');
+        document.getElementById('workday-step-3')?.classList.add('active');
+        history.replaceState({}, '', '?step=3');
+      });
+    `,
+  );
+}
+
+export function workdayLoginPortalHtml() {
+  return pageShell(
+    'Workday Sign In',
+    `
+      <div data-automation-id="applyFlow"></div>
+      <h1>Sign In</h1>
+      <p>Use my existing account to continue this Workday application.</p>
+      <div class="field"><label for="username">Email</label><input id="username" type="email" /></div>
+      <div class="field"><label for="password">Password</label><input id="password" type="password" /></div>
+      <button type="button">Sign In</button>
+      <button type="button">Create Account</button>
+    `,
+  );
+}
+
 export function reviewRequiredPortalHtml(successUrl: string) {
   return pageShell(
     'Senior Frontend Engineer Review Required Application',

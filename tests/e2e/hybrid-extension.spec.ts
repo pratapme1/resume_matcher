@@ -146,6 +146,60 @@ test('phenom-like multi-step portal proves portal classification and progression
   await expect(page.getByRole('button', { name: /Confirm Submit/i })).toBeVisible({ timeout: 15_000 });
 });
 
+test('greenhouse adapter classifies the portal and fills hosted fields', async ({ page, request }) => {
+  await reachStepFive(page, '/__fixtures__/apply/greenhouse');
+
+  const { sessionId, portalPage } = await startHybridApply(page);
+
+  await expect(portalPage.locator('#first_name')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#last_name')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#current_company')).not.toHaveValue('', { timeout: 15_000 });
+  await expect.poll(() => uploadedFileName(portalPage, '#resume'), { timeout: 15_000 }).not.toBe('');
+
+  const ready = await waitForSessionStatus(request, sessionId, ['ready_to_submit']);
+  expect(ready.portalType).toBe('greenhouse');
+});
+
+test('lever adapter classifies the portal and fills hosted fields', async ({ page, request }) => {
+  await reachStepFive(page, '/__fixtures__/apply/lever');
+
+  const { sessionId, portalPage } = await startHybridApply(page);
+
+  await expect(portalPage.locator('#name')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#company')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#experience')).not.toHaveValue('', { timeout: 15_000 });
+  await expect.poll(() => uploadedFileName(portalPage, '#resume'), { timeout: 15_000 }).not.toBe('');
+
+  const ready = await waitForSessionStatus(request, sessionId, ['ready_to_submit']);
+  expect(ready.portalType).toBe('lever');
+});
+
+test('workday adapter classifies an open-step flow and advances through multiple steps', async ({ page, request }) => {
+  await reachStepFive(page, '/__fixtures__/apply/workday');
+
+  const { sessionId, portalPage } = await startHybridApply(page);
+
+  await expect(portalPage.locator('#workday-step-3.active')).toBeVisible({ timeout: 20_000 });
+  await expect(portalPage.locator('#current_title')).not.toHaveValue('');
+  await expect(portalPage.locator('#current_company')).not.toHaveValue('');
+  await expect.poll(() => uploadedFileName(portalPage, '#resume'), { timeout: 15_000 }).not.toBe('');
+
+  const ready = await waitForSessionStatus(request, sessionId, ['ready_to_submit']);
+  expect(ready.portalType).toBe('workday');
+});
+
+test('workday adapter stops cleanly when login is required before the application form', async ({ page, request }) => {
+  await reachStepFive(page, '/__fixtures__/apply/workday-login');
+
+  const { sessionId, portalPage } = await startHybridApply(page);
+  await expect(portalPage.getByRole('heading', { name: 'Sign In' })).toBeVisible();
+
+  const manual = await waitForSessionStatus(request, sessionId, ['manual_required']);
+  expect(manual.portalType).toBe('workday');
+  expect(manual.latestPauseReason).toBe('login_required');
+  expect(manual.latestMessage).toMatch(/Login|account setup/i);
+});
+
 test('review-required portal proves pause, manual fix, re-check, and submit', async ({ page, request }) => {
   await reachStepFive(page, '/__fixtures__/apply/review-required');
 

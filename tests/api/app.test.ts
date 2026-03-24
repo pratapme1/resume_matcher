@@ -347,6 +347,39 @@ describe('api integration', () => {
     expect(getResponse.body.status).toBe('created');
   });
 
+  it('classifies portal types from major ATS URLs during session creation', async () => {
+    const applyApp = createTestApp();
+    const tailoringResponse = await request(applyApp)
+      .post('/api/tailor-resume')
+      .attach('resume', sampleResumePath())
+      .field('jdText', await readFile(fixturePath('jd-valid.txt'), 'utf8'))
+      .field('preferences', JSON.stringify({ targetRole: 'Senior Frontend Engineer' }));
+
+    const urls = [
+      ['https://jobs.lever.co/acme/123', 'lever'],
+      ['https://boards.greenhouse.io/acme/jobs/123', 'greenhouse'],
+      ['https://acme.wd5.myworkdayjobs.com/en-US/careers/job/Senior-Engineer', 'workday'],
+      ['https://acme.icims.com/jobs/123/job', 'icims'],
+      ['https://jobs.smartrecruiters.com/Acme/123', 'smartrecruiters'],
+      ['https://career5.successfactors.eu/career?job=123', 'successfactors'],
+      ['https://acme.taleo.net/careersection/2/jobdetail.ftl?job=123', 'taleo'],
+    ] as const;
+
+    for (const [applyUrl, expectedPortalType] of urls) {
+      const response = await request(applyApp)
+        .post('/api/apply/sessions')
+        .send({
+          applyUrl,
+          tailoredResume: tailoringResponse.body.tailoredResume,
+          templateProfile: tailoringResponse.body.templateProfile,
+          validation: tailoringResponse.body.validation,
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.session.portalType).toBe(expectedPortalType);
+    }
+  });
+
   it('plans, updates, confirms, and completes an apply session', async () => {
     const applyApp = createTestApp();
     const tailoringResponse = await request(applyApp)

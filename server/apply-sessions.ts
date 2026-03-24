@@ -429,6 +429,7 @@ export function recordApplySessionEvent(sessionId: string, executorToken: string
     latestStepSignature: event.stepSignature ?? session.latestStepSignature,
     filledCount: event.filledCount ?? session.filledCount,
     reviewItems: event.reviewItems ?? session.reviewItems,
+    portalType: event.portalType ?? session.portalType,
   });
   return sessionSummary(session);
 }
@@ -458,7 +459,7 @@ export function completeApplySession(sessionId: string, executorToken: string, o
     latestPauseReason: outcome === 'protected'
       ? 'protected_portal'
       : outcome === 'manual_required'
-      ? 'manual_required'
+      ? (session.latestPauseReason && session.latestPauseReason !== 'none' ? session.latestPauseReason : 'manual_required')
       : 'none',
   });
   return sessionSummary(session);

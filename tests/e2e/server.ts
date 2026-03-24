@@ -3,12 +3,16 @@ import { createTestApp } from '../helpers/test-app.ts';
 import {
   basicPortalHtml,
   customWidgetPortalHtml,
+  greenhousePortalHtml,
+  leverPortalHtml,
   manualRequiredPortalHtml,
   multiStepPortalHtml,
   phenomMultiStepPortalHtml,
   protectedPortalHtml,
   reviewRequiredPortalHtml,
   successPortalHtml,
+  workdayLoginPortalHtml,
+  workdayPortalHtml,
 } from './portal-fixtures.ts';
 
 async function main() {
@@ -24,6 +28,22 @@ async function main() {
 
   app.get('/__fixtures__/apply/phenom-multi-step', (_req, res) => {
     res.type('html').send(phenomMultiStepPortalHtml('/__fixtures__/apply/success'));
+  });
+
+  app.get('/__fixtures__/apply/greenhouse', (_req, res) => {
+    res.type('html').send(greenhousePortalHtml('/__fixtures__/apply/success'));
+  });
+
+  app.get('/__fixtures__/apply/lever', (_req, res) => {
+    res.type('html').send(leverPortalHtml('/__fixtures__/apply/success'));
+  });
+
+  app.get('/__fixtures__/apply/workday', (_req, res) => {
+    res.type('html').send(workdayPortalHtml('/__fixtures__/apply/success'));
+  });
+
+  app.get('/__fixtures__/apply/workday-login', (_req, res) => {
+    res.type('html').send(workdayLoginPortalHtml());
   });
 
   app.get('/__fixtures__/apply/review-required', (_req, res) => {

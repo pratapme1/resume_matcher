@@ -51,6 +51,7 @@ type RuntimeMessage =
           filledCount?: number;
           reviewItems?: unknown[];
           pageUrl?: string;
+          portalType?: SupportedPortalType;
           pauseReason?: string;
           stepKind?: string;
           stepSignature?: string;
@@ -119,6 +120,18 @@ type WidgetKind =
   | 'custom_number'
   | 'unknown';
 type StepKind = 'profile' | 'work_history' | 'education' | 'questionnaire' | 'review' | 'submit' | 'unknown';
+
+const PORTAL_MARKERS: Array<{ type: SupportedPortalType; selectors: string[] }> = [
+  { type: 'phenom', selectors: ['[data-ph-id]', '#_PCM', '[data-portal="phenom"]'] },
+  { type: 'greenhouse', selectors: ['#application_form', '[data-portal="greenhouse"]', '[data-board="greenhouse"]', 'meta[property="og:site_name"][content*="Greenhouse"]'] },
+  { type: 'lever', selectors: ['[data-qa="application-page"]', '[data-qa="application-form"]', '[data-portal="lever"]'] },
+  { type: 'ashby', selectors: ['[data-portal="ashby"]', '[data-ashby-job-board]'] },
+  { type: 'workday', selectors: ['[data-automation-id="applyFlow"]', '[data-automation-id="jobApplication"]', '[data-portal="workday"]'] },
+  { type: 'icims', selectors: ['[data-portal="icims"]', '.iCIMS_JobApplication', '#icims_content'] },
+  { type: 'smartrecruiters', selectors: ['[data-portal="smartrecruiters"]', '[data-testid="job-application-form"]', '.st-job-application'] },
+  { type: 'taleo', selectors: ['[data-portal="taleo"]', '#taleoApplication', '#applyFlow'] },
+  { type: 'successfactors', selectors: ['[data-portal="successfactors"]', '[data-sf-application]', '#careerSiteApp'] },
+];
 
 async function getStoredAppOrigin(): Promise<string | null> {
   const result = await chrome.storage.local.get('rtp_app_origin');
@@ -403,12 +416,20 @@ function getVisibleStepText() {
     document.title,
     window.location.pathname,
     window.location.search,
-    ...Array.from(document.querySelectorAll<HTMLElement>('h1, h2, [aria-current="step"], [data-step-name], .step.active')).map((el) => el.textContent || ''),
+    ...Array.from(document.querySelectorAll<HTMLElement>('h1, h2, [aria-current="step"], [data-step-name], .step.active, [data-automation-id], [data-qa]')).map((el) => el.textContent || ''),
   ].join(' ').toLowerCase();
 }
 
-function detectStepKind(): StepKind {
+function detectStepKind(portalType: SupportedPortalType): StepKind {
   const text = getVisibleStepText();
+  if (portalType === 'workday') {
+    if (/my information|contact information|personal information|candidate home/.test(text)) return 'profile';
+    if (/work experience|employment history|experience/.test(text)) return 'work_history';
+    if (/education/.test(text)) return 'education';
+    if (/screening|questionnaire|my questions/.test(text)) return 'questionnaire';
+    if (/review|application review/.test(text)) return 'review';
+    if (/submit|application submitted/.test(text)) return 'submit';
+  }
   if (/review|final review/.test(text)) return 'review';
   if (/submit|application received|complete your application/.test(text)) return 'submit';
   if (/work|employment|experience/.test(text)) return 'work_history';
@@ -431,8 +452,6 @@ function portalTypeForLocation(): SupportedPortalType {
   const host = window.location.hostname.toLowerCase();
   if (
     host.includes('phenompeople.com') ||
-    document.querySelector('[data-ph-id]') ||
-    document.getElementById('_PCM') ||
     typeof (window as typeof window & { phApp?: unknown }).phApp !== 'undefined'
   ) return 'phenom';
   if (host.includes('greenhouse')) return 'greenhouse';
@@ -442,8 +461,30 @@ function portalTypeForLocation(): SupportedPortalType {
   if (host.includes('icims.com')) return 'icims';
   if (host.includes('smartrecruiters.com')) return 'smartrecruiters';
   if (host.includes('taleo.net')) return 'taleo';
-  if (host.includes('successfactors.com')) return 'successfactors';
+  if (host.includes('successfactors')) return 'successfactors';
+  for (const marker of PORTAL_MARKERS) {
+    if (marker.selectors.some((selector) => document.querySelector(selector))) {
+      return marker.type;
+    }
+  }
   return 'generic';
+}
+
+function detectLoginRequired(portalType: SupportedPortalType) {
+  const pageText = [
+    document.title,
+    ...Array.from(document.querySelectorAll<HTMLElement>('h1, h2, h3, button, label, p')).map((el) => el.textContent || ''),
+  ].join(' ').toLowerCase();
+  const passwordInput = document.querySelector('input[type="password"]');
+  if (!passwordInput) return false;
+
+  if (portalType === 'workday') {
+    return /sign in|create account|use my existing resume|existing account|login/.test(pageText);
+  }
+  if (portalType === 'icims' || portalType === 'successfactors' || portalType === 'taleo') {
+    return /sign in|create account|login|register/.test(pageText);
+  }
+  return /sign in|login/.test(pageText);
 }
 
 function detectBotProtection(): boolean {
@@ -591,10 +632,12 @@ function collectApplySnapshot(sessionId: string) {
     controls: controlMap,
   };
 
-  const stepKind = detectStepKind();
+  const portalType = portalTypeForLocation();
+  const stepKind = detectStepKind(portalType);
   const signatureInput = [
     window.location.pathname,
     window.location.search,
+    portalType,
     stepKind,
     ...fields.map((field) => `${field.name}:${field.widgetKind}:${field.required}`).sort(),
     ...controls.map((control) => `${control.kind}:${control.label}`).sort(),
@@ -604,7 +647,7 @@ function collectApplySnapshot(sessionId: string) {
   return {
     url: window.location.href,
     title: document.title,
-    portalType: portalTypeForLocation(),
+    portalType,
     stepKind,
     stepSignature,
     fields,
@@ -736,6 +779,7 @@ async function executeApplySession(sessionId: string) {
       status: 'starting',
       message: 'Inspecting the current page.',
       pageUrl: window.location.href,
+      portalType: initialSnapshot.portalType,
       stepKind: initialSnapshot.stepKind,
       stepSignature: initialSnapshot.stepSignature,
     });
@@ -747,12 +791,28 @@ async function executeApplySession(sessionId: string) {
         status: 'protected',
         message: 'Bot protection detected on this portal.',
         pageUrl: window.location.href,
+        portalType: initialSnapshot.portalType,
         pauseReason: 'protected_portal',
         stepKind: initialSnapshot.stepKind,
         stepSignature: initialSnapshot.stepSignature,
         includeScreenshot: true,
       });
       await completeApply(sessionId, 'protected', 'Bot protection detected.');
+      return;
+    }
+
+    if (detectLoginRequired(initialSnapshot.portalType)) {
+      await emitApplyEvent(sessionId, {
+        status: 'manual_required',
+        message: 'Login or account setup is required before the application can continue.',
+        pageUrl: window.location.href,
+        portalType: initialSnapshot.portalType,
+        pauseReason: 'login_required',
+        stepKind: initialSnapshot.stepKind,
+        stepSignature: initialSnapshot.stepSignature,
+        includeScreenshot: true,
+      });
+      await completeApply(sessionId, 'manual_required', 'Login or account setup is required before the application can continue.');
       return;
     }
 
@@ -763,6 +823,7 @@ async function executeApplySession(sessionId: string) {
           status: 'manual_required',
           message: 'No supported fields were detected on the current page.',
           pageUrl: window.location.href,
+          portalType: snapshot.portalType,
           pauseReason: 'manual_required',
           stepKind: snapshot.stepKind,
           stepSignature: snapshot.stepSignature,
@@ -791,6 +852,7 @@ async function executeApplySession(sessionId: string) {
           filledCount: filled,
           reviewItems: plan.reviewItems,
           pageUrl: window.location.href,
+          portalType: snapshot.portalType,
           pauseReason: plan.pauseReason,
           stepKind: snapshot.stepKind,
           stepSignature: snapshot.stepSignature,
@@ -807,6 +869,7 @@ async function executeApplySession(sessionId: string) {
           message: 'Continuing to the next step.',
           filledCount: filled,
           pageUrl: window.location.href,
+          portalType: snapshot.portalType,
           stepKind: snapshot.stepKind,
           stepSignature: snapshot.stepSignature,
         });
@@ -817,6 +880,7 @@ async function executeApplySession(sessionId: string) {
             message: 'The form did not advance after the continue action.',
             filledCount: filled,
             pageUrl: window.location.href,
+            portalType: snapshot.portalType,
             pauseReason: 'no_progress_after_advance',
             stepKind: snapshot.stepKind,
             stepSignature: snapshot.stepSignature,
@@ -835,6 +899,7 @@ async function executeApplySession(sessionId: string) {
           message: 'Application is ready for your submit confirmation.',
           filledCount: filled,
           pageUrl: window.location.href,
+          portalType: snapshot.portalType,
           pauseReason: 'none',
           stepKind: snapshot.stepKind,
           stepSignature: snapshot.stepSignature,
@@ -848,6 +913,7 @@ async function executeApplySession(sessionId: string) {
       status: 'manual_required',
       message: 'The form needs manual completion after several fill attempts.',
       pageUrl: window.location.href,
+      portalType: portalTypeForLocation(),
       pauseReason: 'manual_required',
       includeScreenshot: true,
     });
@@ -873,6 +939,7 @@ async function submitApplySession(sessionId: string) {
     status: 'submitting',
     message: 'Submitting the application.',
     pageUrl: window.location.href,
+    portalType: snapshot.portalType,
   });
 
   activeApplyState.controls.get(submitControl.id)!.click();

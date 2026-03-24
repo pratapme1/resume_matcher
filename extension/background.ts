@@ -47,6 +47,7 @@ type RuntimeMessage =
           filledCount?: number;
           reviewItems?: unknown[];
           pageUrl?: string;
+          portalType?: string;
           pauseReason?: string;
           stepKind?: string;
           stepSignature?: string;
