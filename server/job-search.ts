@@ -353,13 +353,15 @@ function buildSearchPrompt(profile: CandidateProfile, prefs?: JobSearchPreferenc
 
   return [
     'Find up to 10 currently open jobs for this candidate.',
-    'Prefer direct company career pages, Greenhouse, Lever, LinkedIn Jobs, and Wellfound.',
+    'Prefer direct company career pages and trusted ATS pages: Greenhouse, Lever, Ashby, Workday, iCIMS, SmartRecruiters, Taleo, SuccessFactors, LinkedIn Jobs, Wellfound.',
+    'Do not return generic aggregator pages like Indeed, Glassdoor, Jooble, Naukri, Monster, or Talent.',
+    'Only keep jobs where company name is explicit on the source posting page.',
     'Prioritize strong fit and recent listings. Skip expired, duplicate, or clearly mismatched jobs.',
     `Candidate: ${JSON.stringify(candidateContext)}`,
     'Return raw JSON only. No markdown.',
     'Schema:',
     '{"jobs":[{"title":"","company":"","location":"","remoteType":"remote|hybrid|onsite|unknown","url":"","description":"one short sentence","requiredSkills":[""],"niceToHaveSkills":[""],"estimatedSalary":null,"postedDate":null,"companyStage":"startup|growth|enterprise|unknown"}]}',
-    'Rules: description max 160 chars, requiredSkills max 6, niceToHaveSkills max 3, only real currently open roles.',
+    'Rules: description max 220 chars, requiredSkills max 6, niceToHaveSkills max 3, URL must be the actual posting URL, company is required.',
   ].join('\n');
 }
 
@@ -379,6 +381,168 @@ interface RawJob {
   estimatedSalary?: string | null;
   postedDate?: string | null;
   companyStage?: string;
+}
+
+const ATS_HOST_PATTERNS = [
+  'greenhouse.io',
+  'lever.co',
+  'ashbyhq.com',
+  'myworkdayjobs.com',
+  'workdayjobs.com',
+  'icims.com',
+  'smartrecruiters.com',
+  'taleo.net',
+  'successfactors.com',
+];
+
+const JOB_BOARD_HOST_PATTERNS = [
+  'linkedin.com',
+  'wellfound.com',
+];
+
+const AGGREGATOR_HOST_PATTERNS = [
+  'indeed.com',
+  'glassdoor.com',
+  'ziprecruiter.com',
+  'monster.com',
+  'naukri.com',
+  'foundit.in',
+  'foundit.com',
+  'jooble.org',
+  'jooble.com',
+  'talent.com',
+  'careerbuilder.com',
+  'simplyhired.com',
+];
+
+function normalizeUrl(rawUrl?: string): string | undefined {
+  if (!rawUrl) return undefined;
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return undefined;
+  try {
+    return new URL(trimmed).toString();
+  } catch {
+    try {
+      return new URL(`https://${trimmed}`).toString();
+    } catch {
+      return undefined;
+    }
+  }
+}
+
+function getHostname(url?: string): string | undefined {
+  if (!url) return undefined;
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch {
+    return undefined;
+  }
+}
+
+function hostMatches(hostname: string | undefined, patterns: string[]): boolean {
+  if (!hostname) return false;
+  return patterns.some((pattern) => hostname === pattern || hostname.endsWith(`.${pattern}`));
+}
+
+function titleCaseWords(value: string): string {
+  return value
+    .split(/[\s-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function cleanCompanyName(value?: string): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  if (/^(unknown|n\/a|na|confidential|company)$/i.test(trimmed)) return undefined;
+  return trimmed.replace(/\s{2,}/g, ' ');
+}
+
+function inferCompanyFromUrl(url?: string): string | undefined {
+  const hostname = getHostname(url);
+  if (!hostname) return undefined;
+
+  try {
+    const parsed = new URL(url!);
+    const parts = parsed.pathname.split('/').filter(Boolean);
+
+    if (hostMatches(hostname, ['greenhouse.io']) && parts[0]) return titleCaseWords(parts[0]);
+    if (hostMatches(hostname, ['lever.co']) && parts[0]) return titleCaseWords(parts[0]);
+    if (hostMatches(hostname, ['ashbyhq.com']) && parts[0]) return titleCaseWords(parts[0]);
+    if (hostMatches(hostname, ['smartrecruiters.com']) && parts[0]) return titleCaseWords(parts[0]);
+    if (hostMatches(hostname, ['myworkdayjobs.com', 'workdayjobs.com']) && parts[0]) return titleCaseWords(parts[0]);
+    if (hostMatches(hostname, ['icims.com'])) {
+      const subdomain = hostname.split('.')[0];
+      if (subdomain && subdomain !== 'jobs') return titleCaseWords(subdomain);
+    }
+    if (hostMatches(hostname, ['successfactors.com', 'taleo.net'])) {
+      const subdomain = hostname.split('.')[0];
+      if (subdomain && !['career5', 'career2', 'sjobs', 'jobs'].includes(subdomain)) return titleCaseWords(subdomain);
+    }
+
+    if (!hostMatches(hostname, [...JOB_BOARD_HOST_PATTERNS, ...AGGREGATOR_HOST_PATTERNS])) {
+      const root = hostname.replace(/^www\./, '').split('.');
+      if (root.length >= 2) return titleCaseWords(root[root.length - 2]);
+    }
+  } catch {
+    return undefined;
+  }
+
+  return undefined;
+}
+
+function classifySourceType(url?: string): JobSearchResult['sourceType'] {
+  const hostname = getHostname(url);
+  if (!hostname) return 'unknown';
+  if (hostMatches(hostname, ATS_HOST_PATTERNS)) return 'ats';
+  if (hostMatches(hostname, JOB_BOARD_HOST_PATTERNS)) return 'board';
+  if (hostMatches(hostname, AGGREGATOR_HOST_PATTERNS)) return 'aggregator';
+  return 'direct';
+}
+
+function normalizeTextList(values?: string[], max = 6): string[] {
+  return [...new Set((values ?? []).map((value) => value?.trim()).filter(Boolean) as string[])].slice(0, max);
+}
+
+function normalizeDescription(value?: string): string {
+  return (value ?? '').replace(/\s+/g, ' ').trim().slice(0, 400);
+}
+
+function normalizeRawJob(job: RawJob): RawJob & {
+  company?: string;
+  url?: string;
+  sourceHost?: string;
+  sourceType: JobSearchResult['sourceType'];
+  verifiedSource: boolean;
+} {
+  const url = normalizeUrl(job.url);
+  const sourceHost = getHostname(url);
+  const sourceType = classifySourceType(url);
+  const company = cleanCompanyName(job.company) ?? inferCompanyFromUrl(url);
+  return {
+    ...job,
+    title: job.title?.trim(),
+    company,
+    location: job.location?.trim(),
+    url,
+    sourceHost,
+    sourceType,
+    verifiedSource: sourceType === 'direct' || sourceType === 'ats' || sourceType === 'board',
+    description: normalizeDescription(job.description),
+    requiredSkills: normalizeTextList(job.requiredSkills, 6),
+    niceToHaveSkills: normalizeTextList(job.niceToHaveSkills, 3),
+    estimatedSalary: job.estimatedSalary?.trim() || null,
+    postedDate: job.postedDate?.trim() || null,
+    companyStage: job.companyStage?.trim(),
+  };
+}
+
+function shouldKeepJob(job: ReturnType<typeof normalizeRawJob>): boolean {
+  if (!job.title || !job.company || !job.url) return false;
+  if (job.sourceType === 'aggregator') return false;
+  if ((job.description ?? '').length < 40 && (job.requiredSkills?.length ?? 0) === 0) return false;
+  return true;
 }
 
 export class SearchProviderError extends Error {
@@ -450,6 +614,16 @@ function isProviderUnavailableError(error: { status?: number; message?: string }
 }
 
 function extractJobsFromResponse(responseText: string): RawJob[] {
+  const trimmed = responseText.trim();
+  if (trimmed.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      return Array.isArray(parsed.jobs) ? parsed.jobs : [];
+    } catch {
+      // Fall through to fenced/raw extraction paths.
+    }
+  }
+
   const match = responseText.match(/```json\s*([\s\S]*?)```/);
   if (!match) {
     // Try raw JSON fallback
@@ -601,6 +775,13 @@ function scoreJobAgainstProfile(raw: RawJob, profile: CandidateProfile, idx: num
     seniorityScore(seniorityFit) * 0.20 +
     domainMatch * 0.15
   );
+  const sourceType = classifySourceType(raw.url);
+  const sourceBonus =
+    sourceType === 'direct' ? 6
+    : sourceType === 'ats' ? 5
+    : sourceType === 'board' ? 2
+    : 0;
+  const boostedMatchScore = Math.min(100, matchScore + sourceBonus);
 
   const topMatchingSkills = skillsIntersection(required, allProfileSkills).slice(0, 5);
   const keyGaps = required
@@ -627,11 +808,14 @@ function scoreJobAgainstProfile(raw: RawJob, profile: CandidateProfile, idx: num
     location: raw.location ?? '',
     remoteType,
     url: raw.url ?? undefined,
+    sourceHost: getHostname(raw.url),
+    sourceType,
+    verifiedSource: sourceType !== 'aggregator' && sourceType !== 'unknown',
     description: raw.description ?? '',
     requiredSkills: required,
     niceToHaveSkills: niceToHave,
     estimatedSalary: raw.estimatedSalary ?? undefined,
-    matchScore,
+    matchScore: boostedMatchScore,
     matchBreakdown: {
       skillsOverlap,
       titleSimilarity,
@@ -692,7 +876,11 @@ export async function searchJobs(
     }
   }
 
-  const scored = rawJobs
+  const normalizedJobs = rawJobs
+    .map((job) => normalizeRawJob(job))
+    .filter(shouldKeepJob);
+
+  const scored = normalizedJobs
     .filter(j => j.title && j.company)
     .map((j, i) => scoreJobAgainstProfile(j, candidateProfile, i));
   scored.sort((a, b) => b.matchScore - a.matchScore);

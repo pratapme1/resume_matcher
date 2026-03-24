@@ -331,6 +331,9 @@ export interface JobSearchResult {
   location: string;
   remoteType: 'remote' | 'hybrid' | 'onsite' | 'unknown';
   url?: string;
+  sourceHost?: string;
+  sourceType?: 'direct' | 'ats' | 'board' | 'aggregator' | 'unknown';
+  verifiedSource?: boolean;
   description: string;
   requiredSkills: string[];
   niceToHaveSkills: string[];
@@ -354,6 +357,18 @@ export interface JobSearchResponse {
   totalFound: number;
   resumeSource?: ResumeSource;
   resumeId?: string;
+}
+
+export interface LatestJobSearchSessionResponse {
+  session: {
+    id: string;
+    createdAt: string;
+    preferences: JobSearchPreferences;
+    results: JobSearchResult[];
+    candidateProfile: CandidateProfile | null;
+    totalFound: number;
+    resumeId?: string;
+  } | null;
 }
 
 /* ─────────────────────────────────────────

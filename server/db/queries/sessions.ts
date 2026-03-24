@@ -39,6 +39,7 @@ export async function completeTailorSession(
 
 export async function createJobSearchSession(opts: {
   userId: string;
+  resumeId?: string;
   preferencesJson?: unknown;
   candidateProfileJson?: unknown;
   resultsJson?: unknown;
@@ -48,6 +49,7 @@ export async function createJobSearchSession(opts: {
     .from('job_search_sessions')
     .insert({
       user_id: opts.userId,
+      resume_id: opts.resumeId ?? null,
       preferences_json: opts.preferencesJson ?? null,
       candidate_profile_json: opts.candidateProfileJson ?? null,
       results_json: opts.resultsJson ?? null,
@@ -58,4 +60,34 @@ export async function createJobSearchSession(opts: {
   if (error) throw error;
   if (!data?.id) throw new Error('job_search_sessions insert returned no id');
   return data.id as string;
+}
+
+export async function getLatestJobSearchSession(userId: string): Promise<{
+  id: string;
+  resumeId?: string | null;
+  preferencesJson?: unknown;
+  candidateProfileJson?: unknown;
+  resultsJson?: unknown;
+  totalResults?: number | null;
+  createdAt: string;
+} | null> {
+  const { data, error } = await supabase
+    .from('job_search_sessions')
+    .select('id, resume_id, preferences_json, candidate_profile_json, results_json, total_results, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data?.id) return null;
+  return {
+    id: data.id as string,
+    resumeId: (data.resume_id as string | null | undefined) ?? null,
+    preferencesJson: data.preferences_json,
+    candidateProfileJson: data.candidate_profile_json,
+    resultsJson: data.results_json,
+    totalResults: (data.total_results as number | null | undefined) ?? 0,
+    createdAt: data.created_at as string,
+  };
 }

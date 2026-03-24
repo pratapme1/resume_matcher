@@ -212,6 +212,63 @@ describe('api integration', () => {
     expect(Array.isArray(response.body.results)).toBe(true);
   });
 
+  it('normalizes search results to infer company names and drop aggregator listings', async () => {
+    const saveResponse = await request(app)
+      .post('/api/resumes/default')
+      .attach('resume', sampleResumePath());
+
+    const searchPayload = {
+      jobs: [
+        {
+          title: 'Senior Frontend Engineer',
+          company: '',
+          location: 'Remote',
+          remoteType: 'remote',
+          url: 'https://boards.greenhouse.io/acme/jobs/123456',
+          description: 'Build modern React and TypeScript experiences for the product platform.',
+          requiredSkills: ['React', 'TypeScript'],
+          niceToHaveSkills: ['GraphQL'],
+          estimatedSalary: null,
+          postedDate: null,
+          companyStage: 'growth',
+        },
+        {
+          title: 'Frontend Engineer',
+          company: '',
+          location: 'Bengaluru',
+          remoteType: 'hybrid',
+          url: 'https://indeed.com/viewjob?jk=abc123',
+          description: 'A short snippet.',
+          requiredSkills: [],
+          niceToHaveSkills: [],
+          estimatedSalary: null,
+          postedDate: null,
+          companyStage: 'unknown',
+        },
+      ],
+    };
+
+    const searchApp = createTestApp({
+      getSearchAI: () => ({
+        providerName: 'perplexity',
+        models: {
+          generateContent: async () => ({ text: JSON.stringify(searchPayload) }),
+        },
+      }),
+    });
+
+    const response = await request(searchApp)
+      .post('/api/search-jobs')
+      .field('resumeId', saveResponse.body.resume.id)
+      .field('preferences', JSON.stringify({ roleType: 'Frontend Engineer' }));
+
+    expect(response.status).toBe(200);
+    expect(response.body.results).toHaveLength(1);
+    expect(response.body.results[0].company).toBe('Acme');
+    expect(response.body.results[0].sourceType).toBe('ats');
+    expect(response.body.results[0].sourceHost).toContain('greenhouse.io');
+  });
+
   it('falls back to Gemini when Perplexity search is unavailable', async () => {
     const saveResponse = await request(app)
       .post('/api/resumes/default')

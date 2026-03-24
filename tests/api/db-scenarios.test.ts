@@ -26,6 +26,7 @@ const { mockUsage, mockSessions, usageStore } = vi.hoisted(() => {
     createTailorSession: vi.fn(async () => 'session-1'),
     completeTailorSession: vi.fn(async () => {}),
     createJobSearchSession: vi.fn(async () => 'jss-1'),
+    getLatestJobSearchSession: vi.fn(async () => null),
   };
   return { mockUsage, mockSessions, usageStore };
 });
@@ -76,6 +77,7 @@ describe('DB real-world scenarios', () => {
     mockSessions.createTailorSession.mockResolvedValue('session-1');
     mockSessions.completeTailorSession.mockResolvedValue(undefined);
     mockSessions.createJobSearchSession.mockResolvedValue('jss-1');
+    mockSessions.getLatestJobSearchSession.mockResolvedValue(null);
   });
 
   it('Scenario 1: writes success usage event after successful tailor', async () => {

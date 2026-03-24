@@ -58,7 +58,7 @@ import {
   upsertDefaultResume,
   type StoredResumeRecord,
 } from './db/queries/uploaded-resumes.ts';
-import { createJobSearchSession } from './db/queries/sessions.ts';
+import { createJobSearchSession, getLatestJobSearchSession } from './db/queries/sessions.ts';
 import { supabase } from './db/client.ts';
 import { logger } from './logger.ts';
 import type {
@@ -67,6 +67,8 @@ import type {
   CandidateProfile,
   DefaultResumeResponse,
   ExtractionWarning,
+  JobSearchResult,
+  LatestJobSearchSessionResponse,
   PageSnapshot,
   JobSearchPreferences,
   ResumeSource,
@@ -767,6 +769,7 @@ export function createApp(deps: AppDependencies): Express {
           .catch(err => logger.error({ err }, 'Failed to write search usage event'));
         createJobSearchSession({
           userId: effectiveUserId,
+          resumeId: resolvedResume.resumeId,
           preferencesJson: preferences,
           candidateProfileJson: response.candidateProfile,
           resultsJson: response.results,
@@ -780,6 +783,39 @@ export function createApp(deps: AppDependencies): Express {
           .catch(err => logger.error({ err }, 'Failed to write search error event'));
       }
       sendErrorResponse(res, error, 'search-jobs');
+    }
+  });
+
+  app.get('/api/search-jobs/latest', auth, async (req, res) => {
+    try {
+      if (deps.skipAuth || !req.userId) {
+        const body: LatestJobSearchSessionResponse = { session: null };
+        res.json(body);
+        return;
+      }
+
+      const effectiveUserId = req.internalUserId ?? req.userId;
+      const latest = await getLatestJobSearchSession(effectiveUserId);
+      if (!latest) {
+        const body: LatestJobSearchSessionResponse = { session: null };
+        res.json(body);
+        return;
+      }
+
+      const body: LatestJobSearchSessionResponse = {
+        session: {
+          id: latest.id,
+          createdAt: latest.createdAt,
+          preferences: (latest.preferencesJson as JobSearchPreferences | null) ?? {},
+          results: Array.isArray(latest.resultsJson) ? latest.resultsJson as JobSearchResult[] : [],
+          candidateProfile: (latest.candidateProfileJson as CandidateProfile | null) ?? null,
+          totalFound: latest.totalResults ?? 0,
+          resumeId: latest.resumeId ?? undefined,
+        },
+      };
+      res.json(body);
+    } catch (error) {
+      sendErrorResponse(res, error, 'search-jobs-latest');
     }
   });
 

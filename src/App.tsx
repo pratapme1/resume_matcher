@@ -16,6 +16,7 @@ import type {
   ExtractionWarning,
   JobSearchPreferences,
   JobSearchResult,
+  LatestJobSearchSessionResponse,
   NormalizedJobDescription,
   ResumeSource,
   StoredResumeSummary,
@@ -410,6 +411,25 @@ function deriveApplicationProfileFromResume(result: TailorResumeResponse | null,
   });
 }
 
+function pushJdHistoryItem(
+  normalized: NormalizedJobDescription,
+  setJdHistory: React.Dispatch<React.SetStateAction<{ id: string; savedAt: string; title: string; cleanText: string }[]>>,
+) {
+  const title = normalized.cleanText.split('\n')[0].trim().slice(0, 80) || 'Job Description';
+  const newItem = { id: Date.now().toString(), savedAt: new Date().toISOString(), title, cleanText: normalized.cleanText };
+  setJdHistory(prev => {
+    const updated = [newItem, ...prev.filter(h => h.cleanText !== normalized.cleanText)].slice(0, 5);
+    localStorage.setItem('jd_history', JSON.stringify(updated));
+    return updated;
+  });
+}
+
+function buildSearchSnippetJd(job: JobSearchResult): string {
+  return `${job.title} at ${job.company}\n${job.location ? `Location: ${job.location}\n` : ''}${job.description}\n\n${
+    job.requiredSkills.length ? `Required Skills: ${job.requiredSkills.join(', ')}\n` : ''
+  }${job.niceToHaveSkills.length ? `Nice to Have: ${job.niceToHaveSkills.join(', ')}\n` : ''}${job.estimatedSalary ? `Salary: ${job.estimatedSalary}\n` : ''}`.trim();
+}
+
 /* ─────────────────────────────────────────
    Main App
 ───────────────────────────────────────── */
@@ -526,6 +546,7 @@ export default function App() {
   const [jobSearchResults, setJobSearchResults] = useState<JobSearchResult[]>([]);
   const [candidateProfile, setCandidateProfile] = useState<CandidateProfile | null>(null);
   const [selectedJob, setSelectedJob] = useState<JobSearchResult | null>(null);
+  const [selectingJobId, setSelectingJobId] = useState<string | null>(null);
   const [showSearchPrefs, setShowSearchPrefs] = useState(false);
   const [profilePreview, setProfilePreview] = useState<CandidateProfile | null>(null);
   const [profilePreviewLoading, setProfilePreviewLoading] = useState(false);
@@ -621,8 +642,26 @@ export default function App() {
       }
     };
 
+    const loadLatestSearchSession = async () => {
+      try {
+        const r = await apiFetch('/api/search-jobs/latest', {
+          headers: await getAuthHeader(),
+        });
+        if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to load latest search');
+        const body = await r.json() as LatestJobSearchSessionResponse;
+        if (!cancelled && body.session) {
+          setJobSearchResults(body.session.results ?? []);
+          setCandidateProfile(body.session.candidateProfile ?? null);
+          setSearchPreferences(body.session.preferences ?? {});
+        }
+      } catch {
+        // Ignore latest-search hydration failures; live search still works.
+      }
+    };
+
     void loadDefaultResume();
     void loadApplicationProfile();
+    void loadLatestSearchSession();
     return () => {
       cancelled = true;
     };
@@ -770,7 +809,7 @@ export default function App() {
 
   const handleSearchJobs = async () => {
     if (!searchResumeFile && !defaultResume) { setError('Please upload or save your resume first'); return; }
-    setSearchLoading(true); setError(null); setJobSearchResults([]);
+    setSearchLoading(true); setError(null); setJobSearchResults([]); setSelectedJob(null);
     try {
       const fd = new FormData();
       if (searchResumeFile) {
@@ -788,19 +827,50 @@ export default function App() {
     finally { setSearchLoading(false); }
   };
 
-  const handleSelectJob = (job: JobSearchResult) => {
+  const handleSelectJob = async (job: JobSearchResult) => {
     setSelectedJob(job);
-    // Pre-fill JD text with the job description
-    setJdType('paste');
-    setJdText(
-      `${job.title} at ${job.company}\n${job.location ? `Location: ${job.location}\n` : ''}` +
-      `${job.description}\n\n` +
-      (job.requiredSkills.length ? `Required Skills: ${job.requiredSkills.join(', ')}\n` : '') +
-      (job.niceToHaveSkills.length ? `Nice to Have: ${job.niceToHaveSkills.join(', ')}\n` : '') +
-      (job.estimatedSalary ? `Salary: ${job.estimatedSalary}\n` : '')
-    );
     setPreferences(p => ({ ...p, targetRole: p.targetRole || job.title }));
-    setStep(2);
+    setError(null);
+
+    if (job.url) {
+      setSelectingJobId(job.id);
+      setJdType('url');
+      setJdUrl(job.url);
+      try {
+        const r = await apiFetch('/api/extract-jd-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...await getAuthHeader() },
+          body: JSON.stringify({ url: job.url }),
+        });
+        if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to extract from URL');
+        const normalized = await r.json() as NormalizedJobDescription;
+        setNormalizedJd(normalized);
+        setJdText(normalized.cleanText);
+        setWarningsDismissed(false);
+        pushJdHistoryItem(normalized, setJdHistory);
+        setStep(3);
+        return;
+      } catch {
+        // Fall back to the lighter search-result summary below.
+      } finally {
+        setSelectingJobId(null);
+      }
+    }
+
+    const fallbackText = buildSearchSnippetJd(job);
+    const fallbackNormalized: NormalizedJobDescription = {
+      sourceType: 'paste',
+      rawText: fallbackText,
+      cleanText: fallbackText,
+      extractionWarnings: [],
+      qualityScore: 70,
+    };
+    setJdType('paste');
+    setJdText(fallbackText);
+    setNormalizedJd(fallbackNormalized);
+    setWarningsDismissed(false);
+    pushJdHistoryItem(fallbackNormalized, setJdHistory);
+    setStep(3);
   };
 
   const handleExtractJd = async () => {
@@ -822,14 +892,7 @@ export default function App() {
       }
       if (!normalized?.cleanText) throw new Error('No job description provided');
       setNormalizedJd(normalized); setJdText(normalized.cleanText); setWarningsDismissed(false);
-      // Save to JD history
-      const title = normalized.cleanText.split('\n')[0].trim().slice(0, 80) || 'Job Description';
-      const newItem = { id: Date.now().toString(), savedAt: new Date().toISOString(), title, cleanText: normalized.cleanText };
-      setJdHistory(prev => {
-        const updated = [newItem, ...prev.filter(h => h.cleanText !== normalized.cleanText)].slice(0, 5);
-        localStorage.setItem('jd_history', JSON.stringify(updated));
-        return updated;
-      });
+      pushJdHistoryItem(normalized, setJdHistory);
       setStep(3);
     } catch (err: any) { setError(err.message); }
     finally { setIsLoading(false); }
@@ -1500,7 +1563,7 @@ export default function App() {
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Ranked by fit</span>
-                            <button onClick={() => { setJobSearchResults([]); setCandidateProfile(null); }}
+                            <button onClick={() => { setJobSearchResults([]); setCandidateProfile(null); setSelectedJob(null); }}
                               className="text-xs font-semibold text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors">
                               ← Search Again
                             </button>
@@ -1535,6 +1598,11 @@ export default function App() {
                                   {job.location && (
                                     <span className="flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400">
                                       <MapPin className="w-3 h-3" />{job.location}
+                                    </span>
+                                  )}
+                                  {job.sourceHost && (
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 uppercase">
+                                      {job.sourceType === 'ats' ? 'ATS' : job.sourceType === 'direct' ? 'Direct' : job.sourceType === 'board' ? 'Board' : 'Source'} · {job.sourceHost.replace(/^www\./, '')}
                                     </span>
                                   )}
                                   {remoteLabel && (
@@ -1574,9 +1642,10 @@ export default function App() {
 
                                 {/* Actions */}
                                 <div className="mt-auto pt-2 flex items-center gap-2">
-                                  <button onClick={() => handleSelectJob(job)}
+                                  <button onClick={() => { void handleSelectJob(job); }}
+                                    disabled={selectingJobId === job.id}
                                     className="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] transition-all shadow-sm shadow-violet-500/20">
-                                    Use This Job →
+                                    {selectingJobId === job.id ? <span className="inline-flex items-center gap-1"><Loader2 className="w-3.5 h-3.5 animate-spin" />Loading full JD…</span> : 'Use This Job →'}
                                   </button>
                                   {job.url && (
                                     <a href={job.url} target="_blank" rel="noopener noreferrer"
@@ -1598,7 +1667,7 @@ export default function App() {
                         <Briefcase className="w-8 h-8 text-zinc-300 dark:text-zinc-700 mx-auto mb-3" />
                         <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-400">No results returned</p>
                         <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1 mb-4">Try adjusting your preferences or skip to enter a specific job description.</p>
-                        <button onClick={() => { setJobSearchResults([]); setCandidateProfile(null); }}
+                        <button onClick={() => { setJobSearchResults([]); setCandidateProfile(null); setSelectedJob(null); }}
                           className="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline">
                           ← Search Again
                         </button>

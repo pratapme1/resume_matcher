@@ -35,6 +35,7 @@ const { mockUsage, mockSessions } = vi.hoisted(() => {
     createTailorSession: vi.fn(async () => 'session-1'),
     completeTailorSession: vi.fn(async () => {}),
     createJobSearchSession: vi.fn(async () => 'jss-1'),
+    getLatestJobSearchSession: vi.fn(async () => null),
   };
 
   return { mockUsage, mockSessions };
@@ -79,6 +80,7 @@ describe('monthly quota enforcement', () => {
     mockSessions.createTailorSession.mockResolvedValue('session-1');
     mockSessions.completeTailorSession.mockResolvedValue(undefined);
     mockSessions.createJobSearchSession.mockResolvedValue('jss-1');
+    mockSessions.getLatestJobSearchSession.mockResolvedValue(null);
   });
 
   it('allows /api/extract-jd-text at any count (extract is unlimited)', async () => {

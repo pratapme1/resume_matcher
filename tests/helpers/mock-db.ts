@@ -72,5 +72,18 @@ export function createMockSessionQueries() {
       jobSearchSessions.push({ id, ...(opts as object) });
       return id;
     }),
+    getLatestJobSearchSession: vi.fn(async () => {
+      const latest = jobSearchSessions[jobSearchSessions.length - 1] as Record<string, unknown> | undefined;
+      if (!latest) return null;
+      return {
+        id: latest.id as string,
+        resumeId: latest.resumeId as string | undefined,
+        preferencesJson: latest.preferencesJson,
+        candidateProfileJson: latest.candidateProfileJson,
+        resultsJson: latest.resultsJson,
+        totalResults: latest.totalResults as number | undefined,
+        createdAt: new Date().toISOString(),
+      };
+    }),
   };
 }
