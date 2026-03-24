@@ -75,6 +75,14 @@ CREATE TABLE IF NOT EXISTS job_search_sessions (
 );
 CREATE INDEX IF NOT EXISTS job_search_sessions_user_id_idx ON job_search_sessions(user_id, created_at DESC);
 
+-- ── application_profiles ──────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS application_profiles (
+  user_id        UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  profile_json   JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- ── usage_events ──────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS usage_events (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -94,6 +102,7 @@ ALTER TABLE uploaded_resumes    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE job_descriptions    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tailor_sessions     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE job_search_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE application_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE usage_events        ENABLE ROW LEVEL SECURITY;
 
 -- Service role bypasses RLS automatically.
@@ -109,6 +118,9 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
   CREATE POLICY "own rows only" ON job_search_sessions FOR ALL USING (user_id = auth.uid());
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE POLICY "own rows only" ON application_profiles FOR ALL USING (user_id = auth.uid());
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
   CREATE POLICY "own rows only" ON usage_events        FOR ALL USING (user_id = auth.uid());

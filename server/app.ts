@@ -10,6 +10,12 @@ import { buildAnalysis, buildTailoringPlan } from './analysis.ts';
 import { buildGapAnalysis } from './gap-analysis.ts';
 import { generateTailoredDocx } from './docx-render.ts';
 import {
+  getMemoryApplicationProfile,
+  mergeApplicantProfiles,
+  sanitizeApplicantProfile,
+  setMemoryApplicationProfile,
+} from './application-profile.ts';
+import {
   createApplySession,
   confirmApplySessionSubmit,
   completeApplySession,
@@ -42,10 +48,12 @@ import { startAutoApply, submitAutoApply } from './auto-apply.ts';
 import { searchJobs, buildCandidateProfile } from './job-search.ts';
 import { requireAuth } from './middleware/auth.ts';
 import { writeUsageEvent, isOverQuota } from './db/queries/usage.ts';
+import { getStoredApplicationProfile, upsertStoredApplicationProfile } from './db/queries/application-profiles.ts';
 import { createJobSearchSession } from './db/queries/sessions.ts';
 import { supabase } from './db/client.ts';
 import { logger } from './logger.ts';
 import type {
+  ApplicantProfile,
   ApplySessionEvent,
   PageSnapshot,
   JobSearchPreferences,
@@ -225,6 +233,29 @@ const rateLimitSmartFill = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 30, me
 const rateLimitAutoApply = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 5,  message: 'Auto-apply limit: 5 per hour.' });
 const rateLimitApplySession = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 3600, message: 'Apply session limit: 3600 per hour.' });
 
+const applicantProfileSchema = z.object({
+  fullName: z.string().optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  linkedin: z.string().optional(),
+  github: z.string().optional(),
+  portfolio: z.string().optional(),
+  website: z.string().optional(),
+  location: z.string().optional(),
+  currentCompany: z.string().optional(),
+  currentTitle: z.string().optional(),
+  yearsOfExperience: z.string().optional(),
+  currentCtcLpa: z.string().optional(),
+  expectedCtcLpa: z.string().optional(),
+  noticePeriodDays: z.string().optional(),
+  workAuthorization: z.string().optional(),
+  requiresSponsorship: z.string().optional(),
+  visaStatus: z.string().optional(),
+  gender: z.string().optional(),
+});
+
 export function createApp(deps: AppDependencies): Express {
   const app = express();
   const upload = multer({
@@ -240,8 +271,33 @@ export function createApp(deps: AppDependencies): Express {
   app.use(express.json({ limit: '2mb' }));
 
   const auth = deps.skipAuth
-    ? (_req: Request, _res: Response, next: NextFunction) => next()
+    ? (req: Request, _res: Response, next: NextFunction) => {
+        req.userId = 'test-user-e2e';
+        req.userEmail = 'test-user-e2e@example.com';
+        req.internalUserId = 'test-user-e2e';
+        next();
+      }
     : requireAuth;
+
+  const getProfileUserKey = (req: Request) => req.internalUserId ?? req.userId ?? 'anonymous';
+
+  const loadApplicationProfileForRequest = async (req: Request): Promise<ApplicantProfile> => {
+    const userKey = getProfileUserKey(req);
+    if (deps.skipAuth) {
+      return sanitizeApplicantProfile(getMemoryApplicationProfile(userKey));
+    }
+    const stored = await getStoredApplicationProfile(userKey);
+    return sanitizeApplicantProfile(stored);
+  };
+
+  const saveApplicationProfileForRequest = async (req: Request, profile: Partial<ApplicantProfile>): Promise<ApplicantProfile> => {
+    const userKey = getProfileUserKey(req);
+    const sanitized = sanitizeApplicantProfile(profile);
+    if (deps.skipAuth) {
+      return setMemoryApplicationProfile(userKey, sanitized);
+    }
+    return upsertStoredApplicationProfile(userKey, sanitized);
+  };
 
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok' });
@@ -470,6 +526,27 @@ export function createApp(deps: AppDependencies): Express {
     }
   });
 
+  app.get('/api/application-profile', auth, rateLimitProfile, async (req, res) => {
+    try {
+      const profile = await loadApplicationProfileForRequest(req);
+      res.json({ profile });
+    } catch (error) {
+      sendErrorResponse(res, error, 'application-profile-get');
+    }
+  });
+
+  app.put('/api/application-profile', auth, rateLimitProfile, async (req, res) => {
+    try {
+      const body = z.object({ profile: applicantProfileSchema }).parse(req.body);
+      const existingProfile = await loadApplicationProfileForRequest(req);
+      const mergedProfile = mergeApplicantProfiles(existingProfile, body.profile);
+      const profile = await saveApplicationProfileForRequest(req, mergedProfile);
+      res.json({ profile });
+    } catch (error) {
+      sendErrorResponse(res, error, 'application-profile-put');
+    }
+  });
+
   // Job search: build candidate profile from resume + search via Gemini grounding
   app.post('/api/search-jobs', auth, rateLimitSearch, async (req, res) => {
     try {
@@ -598,7 +675,19 @@ Instructions:
         tailoredResume: z.any(),
         templateProfile: z.any(),
         validation: z.any(),
+        applicationProfile: applicantProfileSchema.optional(),
       }).parse(req.body);
+
+      const savedProfile = await loadApplicationProfileForRequest(req);
+      const mergedApplicationProfile = mergeApplicantProfiles(savedProfile, body.applicationProfile);
+
+      if (body.applicationProfile) {
+        try {
+          await saveApplicationProfileForRequest(req, mergedApplicationProfile);
+        } catch (error) {
+          logger.warn({ error }, 'Failed to persist application profile before creating apply session.');
+        }
+      }
 
       const response = await createApplySession({
         applyUrl: body.applyUrl,
@@ -606,6 +695,7 @@ Instructions:
         tailoredResume: body.tailoredResume as TailoredResumeDocument,
         templateProfile: body.templateProfile as ResumeTemplateProfile,
         validation: body.validation as ValidationReport,
+        applicationProfile: mergedApplicationProfile,
       });
 
       res.json(response);

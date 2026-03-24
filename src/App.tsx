@@ -9,6 +9,7 @@ import {
 import type { Session } from '@supabase/supabase-js';
 import { supabase, getAuthHeader } from './supabaseClient.ts';
 import type {
+  ApplicantProfile,
   ApplySessionSummary,
   CandidateProfile,
   ExtractionWarning,
@@ -320,6 +321,88 @@ const preservationLabels = {
   fallback_template: 'Fallback template used',
 } as const;
 
+const APPLICATION_PROFILE_FIELDS: Array<{
+  key: keyof ApplicantProfile;
+  label: string;
+  placeholder: string;
+  type?: string;
+}> = [
+  { key: 'firstName', label: 'First Name', placeholder: 'Vishnu' },
+  { key: 'lastName', label: 'Last Name', placeholder: 'Pratap Kumar' },
+  { key: 'email', label: 'Email', placeholder: 'you@example.com', type: 'email' },
+  { key: 'phone', label: 'Phone', placeholder: '9148969183', type: 'tel' },
+  { key: 'location', label: 'Current Location', placeholder: 'Bengaluru, India' },
+  { key: 'currentCompany', label: 'Current Company', placeholder: 'Current employer' },
+  { key: 'currentTitle', label: 'Current Title', placeholder: 'Current designation' },
+  { key: 'yearsOfExperience', label: 'Total Experience (Years)', placeholder: '5' },
+  { key: 'currentCtcLpa', label: 'Current CTC (LPA)', placeholder: '12.5' },
+  { key: 'expectedCtcLpa', label: 'Expected CTC (LPA)', placeholder: '18.0' },
+  { key: 'noticePeriodDays', label: 'Notice Period (Days)', placeholder: '30' },
+  { key: 'linkedin', label: 'LinkedIn Profile', placeholder: 'linkedin.com/in/yourprofile' },
+  { key: 'github', label: 'GitHub Profile', placeholder: 'github.com/yourprofile' },
+  { key: 'portfolio', label: 'Portfolio URL', placeholder: 'https://portfolio.example.com' },
+  { key: 'website', label: 'Personal Website', placeholder: 'https://your-site.example.com' },
+  { key: 'workAuthorization', label: 'Work Authorization', placeholder: 'Authorized to work in India' },
+  { key: 'requiresSponsorship', label: 'Requires Sponsorship', placeholder: 'No' },
+  { key: 'visaStatus', label: 'Visa Status', placeholder: 'Citizen / H1B / None' },
+  { key: 'gender', label: 'Gender', placeholder: 'Prefer not to say' },
+];
+
+function splitFullName(fullName?: string) {
+  const parts = (fullName ?? '').trim().split(/\s+/).filter(Boolean);
+  return {
+    firstName: parts[0] || '',
+    lastName: parts.slice(1).join(' '),
+  };
+}
+
+function mergeApplicantProfileDrafts(...profiles: Array<Partial<ApplicantProfile> | null | undefined>): ApplicantProfile {
+  const merged = profiles.reduce<ApplicantProfile>((acc, profile) => {
+    if (!profile) return acc;
+    const next = { ...acc };
+    for (const [key, value] of Object.entries(profile)) {
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (trimmed) {
+          (next as Record<string, string | undefined>)[key] = trimmed;
+        }
+      }
+    }
+    return next;
+  }, {});
+
+  if (!merged.firstName && merged.fullName) {
+    const split = splitFullName(merged.fullName);
+    merged.firstName = split.firstName;
+    merged.lastName = merged.lastName || split.lastName;
+  }
+
+  if (!merged.fullName && (merged.firstName || merged.lastName)) {
+    merged.fullName = [merged.firstName, merged.lastName].filter(Boolean).join(' ');
+  }
+
+  return merged;
+}
+
+function deriveApplicationProfileFromResume(result: TailorResumeResponse | null, candidateProfile?: CandidateProfile | null): ApplicantProfile {
+  if (!result) return {};
+  const ci = result.tailoredResume.contactInfo;
+  const split = splitFullName(ci?.name);
+  const latestExperience = result.tailoredResume.experience?.[0];
+  return mergeApplicantProfileDrafts({
+    fullName: ci?.name,
+    firstName: split.firstName,
+    lastName: split.lastName,
+    email: ci?.email,
+    phone: ci?.phone,
+    linkedin: ci?.linkedin,
+    location: ci?.location,
+    currentCompany: latestExperience?.company,
+    currentTitle: latestExperience?.title,
+    yearsOfExperience: candidateProfile?.yearsOfExperience ? String(candidateProfile.yearsOfExperience) : undefined,
+  });
+}
+
 /* ─────────────────────────────────────────
    Main App
 ───────────────────────────────────────── */
@@ -404,6 +487,12 @@ export default function App() {
   const [applySession, setApplySession] = useState<ApplySessionSummary | null>(null);
   const [applyStarting, setApplyStarting] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
+  const [savedApplicationProfile, setSavedApplicationProfile] = useState<ApplicantProfile>({});
+  const [applicationProfile, setApplicationProfile] = useState<ApplicantProfile>({});
+  const [applicationProfileLoading, setApplicationProfileLoading] = useState(false);
+  const [applicationProfileSaving, setApplicationProfileSaving] = useState(false);
+  const [applicationProfileError, setApplicationProfileError] = useState<string | null>(null);
+  const [applicationProfileSavedNotice, setApplicationProfileSavedNotice] = useState<string | null>(null);
   const [showBlockedConfirm, setShowBlockedConfirm] = useState(false);
   const [warningsDismissed, setWarningsDismissed] = useState(false);
 
@@ -467,6 +556,43 @@ export default function App() {
     }
     return () => window.removeEventListener('message', handleMsg);
   }, []);
+
+  useEffect(() => {
+    if (!session) return;
+
+    let cancelled = false;
+    const loadApplicationProfile = async () => {
+      setApplicationProfileLoading(true);
+      try {
+        const r = await apiFetch('/api/application-profile', {
+          headers: await getAuthHeader(),
+        });
+        if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to load application profile');
+        const body = await r.json() as { profile?: ApplicantProfile };
+        if (!cancelled) {
+          setSavedApplicationProfile(body.profile ?? {});
+          setApplicationProfileError(null);
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          setSavedApplicationProfile({});
+          setApplicationProfileError(err.message);
+        }
+      } finally {
+        if (!cancelled) setApplicationProfileLoading(false);
+      }
+    };
+
+    void loadApplicationProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    const derived = deriveApplicationProfileFromResume(result, candidateProfile ?? profilePreview);
+    setApplicationProfile(mergeApplicantProfileDrafts(derived, savedApplicationProfile));
+  }, [result, candidateProfile, profilePreview, savedApplicationProfile]);
 
   useEffect(() => {
     if (!applySession) return;
@@ -696,6 +822,40 @@ export default function App() {
     } catch (err: any) { setError(err.message); }
   };
 
+  const handleApplicationProfileChange = (key: keyof ApplicantProfile, value: string) => {
+    setApplicationProfile((prev) => {
+      const next = { ...prev, [key]: value };
+      if (key === 'firstName' || key === 'lastName') {
+        next.fullName = [key === 'firstName' ? value : next.firstName, key === 'lastName' ? value : next.lastName]
+          .filter(Boolean)
+          .join(' ');
+      }
+      return next;
+    });
+    setApplicationProfileSavedNotice(null);
+  };
+
+  const saveApplicationProfile = async () => {
+    setApplicationProfileSaving(true);
+    setApplicationProfileError(null);
+    try {
+      const r = await apiFetch('/api/application-profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...await getAuthHeader() },
+        body: JSON.stringify({ profile: applicationProfile }),
+      });
+      if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to save application profile');
+      const body = await r.json() as { profile?: ApplicantProfile };
+      setSavedApplicationProfile(body.profile ?? applicationProfile);
+      setApplicationProfile(body.profile ?? applicationProfile);
+      setApplicationProfileSavedNotice('Profile saved to your account.');
+    } catch (err: any) {
+      setApplicationProfileError(err.message || 'Failed to save application profile.');
+    } finally {
+      setApplicationProfileSaving(false);
+    }
+  };
+
   const handleAgentApply = async () => {
     if (!applyUrl.trim() || !result) return;
     if (!extensionInstalled) {
@@ -713,6 +873,7 @@ export default function App() {
           tailoredResume: result.tailoredResume,
           templateProfile: result.templateProfile,
           validation: result.validation,
+          applicationProfile,
         }),
       });
       if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to create apply session');
@@ -2031,7 +2192,6 @@ export default function App() {
 
               /* ════════════════ STEP 5 — AGENT APPLY ════════════════ */
               if (step === 5 && result && !result.blocked) {
-                const ci = result.tailoredResume.contactInfo;
                 const company = result.jdCompanyName ?? 'the Role';
                 return (
                   <motion.div key="s5"
@@ -2198,23 +2358,54 @@ export default function App() {
                         </div>
                       )}
 
-                      {/* Contact data for manual reference */}
+                      {/* Application profile for deterministic filling */}
                       <div className={`${card} p-5 mb-5`}>
-                        <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-3">Your profile used for filling</p>
-                        <div className="grid grid-cols-2 gap-2.5 text-sm">
-                          {[
-                            { label: 'Name', value: ci?.name },
-                            { label: 'Email', value: ci?.email },
-                            { label: 'Phone', value: ci?.phone },
-                            { label: 'LinkedIn', value: ci?.linkedin },
-                            { label: 'Location', value: ci?.location },
-                          ].filter(f => f.value).map(({ label, value }) => (
-                            <div key={label} className="bg-zinc-50 dark:bg-zinc-800/60 rounded-lg px-3 py-2">
-                              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{label}</p>
-                              <p className="text-zinc-800 dark:text-zinc-200 mt-0.5 truncate">{value}</p>
-                            </div>
+                        <div className="flex items-start justify-between gap-3 mb-4">
+                          <div>
+                            <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Application Profile</p>
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Saved to your account and reused across supported job portals.</p>
+                          </div>
+                          <button
+                            onClick={() => void saveApplicationProfile()}
+                            disabled={applicationProfileSaving || applicationProfileLoading}
+                            className="shrink-0 px-3 py-2 rounded-xl text-xs font-semibold text-white bg-zinc-900 hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white disabled:opacity-40 transition-colors"
+                          >
+                            {applicationProfileSaving ? 'Saving…' : 'Save Profile'}
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {APPLICATION_PROFILE_FIELDS.map((field) => (
+                            <label key={field.key} className="block">
+                              <span className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">{field.label}</span>
+                              <input
+                                type={field.type ?? 'text'}
+                                value={applicationProfile[field.key] ?? ''}
+                                onChange={(e) => handleApplicationProfileChange(field.key, e.target.value)}
+                                placeholder={field.placeholder}
+                                className={`${inputCls} py-2.5`}
+                              />
+                            </label>
                           ))}
                         </div>
+
+                        {(applicationProfileLoading || applicationProfileSavedNotice || applicationProfileError) && (
+                          <div className="mt-4 space-y-2">
+                            {applicationProfileLoading && (
+                              <div className="text-xs text-zinc-400 dark:text-zinc-500">Loading saved profile…</div>
+                            )}
+                            {applicationProfileSavedNotice && (
+                              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+                                {applicationProfileSavedNotice}
+                              </div>
+                            )}
+                            {applicationProfileError && (
+                              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+                                {applicationProfileError}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Nav buttons */}

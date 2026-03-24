@@ -16,6 +16,7 @@ import type {
   TailoredResumeDocument,
   ValidationReport,
 } from '../src/shared/types.ts';
+import { deriveApplicantProfile, mergeApplicantProfiles } from './application-profile.ts';
 import { generateTailoredDocx } from './docx-render.ts';
 import { badRequest, internalServerError, notFound, unauthorized } from './errors.ts';
 
@@ -53,17 +54,6 @@ function sanitizeFilename(input: string) {
   return input.replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'resume';
 }
 
-function firstAndLastName(fullName?: string) {
-  const parts = (fullName ?? '').trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) {
-    return { firstName: undefined, lastName: undefined };
-  }
-  return {
-    firstName: parts[0],
-    lastName: parts.slice(1).join(' ') || undefined,
-  };
-}
-
 function detectPortalType(applyUrl: string): PortalType {
   try {
     const url = new URL(applyUrl);
@@ -75,23 +65,6 @@ function detectPortalType(applyUrl: string): PortalType {
   } catch {
     return 'unknown';
   }
-}
-
-function buildApplicantProfile(tailoredResume: TailoredResumeDocument): ApplicantProfile {
-  const fullName = tailoredResume.contactInfo?.name?.trim() || undefined;
-  const { firstName, lastName } = firstAndLastName(fullName);
-  const linkedin = tailoredResume.contactInfo?.linkedin?.trim() || undefined;
-
-  return {
-    fullName,
-    firstName,
-    lastName,
-    email: tailoredResume.contactInfo?.email?.trim() || undefined,
-    phone: tailoredResume.contactInfo?.phone?.trim() || undefined,
-    linkedin,
-    location: tailoredResume.contactInfo?.location?.trim() || undefined,
-    website: undefined,
-  };
 }
 
 function sessionSummary(session: ApplySessionRecord): ApplySessionSummary {
@@ -128,9 +101,20 @@ function inferSemanticType(field: DetectedField): FieldSemanticType {
   if (/full\s*name|your\s*name|applicant\s*name/.test(text) || /^name$/.test(text.trim())) return 'full_name';
   if (/email/.test(text)) return 'email';
   if (/phone|mobile|tel|contact/.test(text)) return 'phone';
-  if (/linkedin/.test(text)) return 'linkedin';
-  if (/portfolio/.test(text)) return 'portfolio';
-  if (/website|personal\s*site|url/.test(text)) return 'website';
+  if (/linkedin|linked[\s_-]*in/.test(text)) return 'linkedin';
+  if (/github|git[\s_-]*hub/.test(text)) return 'github';
+  if (/portfolio|project[\s_-]*(url|link)|portfolio[\s_/-]*github/.test(text)) return 'portfolio';
+  if (/website|personal[\s_-]*(site|website)|homepage|blog/.test(text)) return 'website';
+  if (/current[\s_-]*(company|employer)|present[\s_-]*(company|employer)|company[\s_-]*name|currentemployer|employername/.test(text)) return 'current_company';
+  if (/current[\s_-]*(title|role|designation)|present[\s_-]*(title|role|designation)|job[\s_-]*title|designation/.test(text)) return 'current_title';
+  if (/total[\s_-]*experience|years?[\s_-]*of[\s_-]*experience|experience[\s_-]*\(years\)|experience[\s_-]*in[\s_-]*years|yearsexperience|totalexperience|experienceyears/.test(text)) return 'years_of_experience';
+  if (/current[\s_-]*(ctc|salary|compensation|package)|salary[\s_-]*current|currentcompensation/.test(text)) return 'current_ctc';
+  if (/expected[\s_-]*(ctc|salary|compensation|package)|salary[\s_-]*expectation|compensation[\s_-]*expectation|expectedcompensation/.test(text)) return 'expected_ctc';
+  if (/notice[\s_-]*period|serving[\s_-]*notice|notice[\s_-]*days|availability[\s_-]*(days|period)/.test(text)) return 'notice_period';
+  if (/work[\s_-]*authorization|authorized[\s_-]*to[\s_-]*work|legally[\s_-]*authorized|work[\s_-]*permit|citizenship[\s_-]*status/.test(text)) return 'work_authorization';
+  if (/sponsorship|require[\s_-]*visa|visa[\s_-]*sponsorship|need[\s_-]*sponsorship/.test(text)) return 'requires_sponsorship';
+  if (/visa[\s_-]*status|current[\s_-]*visa|work[\s_-]*visa/.test(text)) return 'visa_status';
+  if (/gender|sex/.test(text)) return 'gender';
   if (/location|city|address|town|state/.test(text)) return 'location';
   return 'unknown';
 }
@@ -173,12 +157,35 @@ function getFieldValue(field: DetectedField, profile: ApplicantProfile): { value
       return { semanticType, value: normalizePhone(profile.phone) };
     case 'linkedin':
       return { semanticType, value: profile.linkedin };
+    case 'github':
+      return { semanticType, value: profile.github };
     case 'portfolio':
+      return { semanticType, value: profile.portfolio ?? profile.github ?? profile.website };
     case 'website':
-      return { semanticType, value: profile.website };
+      return { semanticType, value: profile.website ?? profile.portfolio ?? profile.github };
     case 'location':
     case 'city':
       return { semanticType, value: profile.location };
+    case 'current_company':
+      return { semanticType, value: profile.currentCompany };
+    case 'current_title':
+      return { semanticType, value: profile.currentTitle };
+    case 'years_of_experience':
+      return { semanticType, value: profile.yearsOfExperience };
+    case 'current_ctc':
+      return { semanticType, value: profile.currentCtcLpa };
+    case 'expected_ctc':
+      return { semanticType, value: profile.expectedCtcLpa };
+    case 'notice_period':
+      return { semanticType, value: profile.noticePeriodDays };
+    case 'work_authorization':
+      return { semanticType, value: profile.workAuthorization };
+    case 'requires_sponsorship':
+      return { semanticType, value: profile.requiresSponsorship };
+    case 'visa_status':
+      return { semanticType, value: profile.visaStatus };
+    case 'gender':
+      return { semanticType, value: profile.gender };
     default:
       return { semanticType };
   }
@@ -198,6 +205,7 @@ export async function createApplySession(params: {
   tailoredResume: TailoredResumeDocument;
   templateProfile: ResumeTemplateProfile;
   validation: ValidationReport;
+  applicationProfile?: Partial<ApplicantProfile> | null;
 }): Promise<{ session: ApplySessionSummary; executorToken: string }> {
   const createdAt = nowIso();
   const portalType = detectPortalType(params.applyUrl);
@@ -227,7 +235,10 @@ export async function createApplySession(params: {
     executorToken,
     createdAt,
     updatedAt: createdAt,
-    applicantProfile: buildApplicantProfile(params.tailoredResume),
+    applicantProfile: mergeApplicantProfiles(
+      deriveApplicantProfile({ tailoredResume: params.tailoredResume }),
+      params.applicationProfile,
+    ),
     latestMessage: 'Apply session created.',
     latestScreenshot: null,
     latestPageUrl: params.applyUrl,

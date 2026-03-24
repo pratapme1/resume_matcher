@@ -268,8 +268,53 @@ describe('api integration', () => {
         tailoredResume: {},
         templateProfile: {},
         validation: { isValid: true },
-      });
+    });
     expect(response.status).toBe(400);
+  });
+
+  it('loads and persists the application profile for Stage 5', async () => {
+    const profileApp = createTestApp();
+
+    const initialResponse = await request(profileApp)
+      .get('/api/application-profile');
+
+    expect(initialResponse.status).toBe(200);
+    expect(initialResponse.body.profile).toEqual({});
+
+    const updateResponse = await request(profileApp)
+      .put('/api/application-profile')
+      .send({
+        profile: {
+          currentCtcLpa: '12.5',
+          expectedCtcLpa: '18.0',
+          noticePeriodDays: '30',
+          github: 'github.com/vishnu',
+          requiresSponsorship: 'No',
+        },
+      });
+
+    expect(updateResponse.status).toBe(200);
+    expect(updateResponse.body.profile.currentCtcLpa).toBe('12.5');
+
+    const mergeResponse = await request(profileApp)
+      .put('/api/application-profile')
+      .send({
+        profile: {
+          visaStatus: 'H1B',
+        },
+      });
+
+    expect(mergeResponse.status).toBe(200);
+    expect(mergeResponse.body.profile.currentCtcLpa).toBe('12.5');
+    expect(mergeResponse.body.profile.visaStatus).toBe('H1B');
+
+    const getResponse = await request(profileApp)
+      .get('/api/application-profile');
+
+    expect(getResponse.status).toBe(200);
+    expect(getResponse.body.profile.noticePeriodDays).toBe('30');
+    expect(getResponse.body.profile.github).toBe('github.com/vishnu');
+    expect(getResponse.body.profile.visaStatus).toBe('H1B');
   });
 
   it('creates and fetches an apply session for Stage 5 orchestration', async () => {
@@ -317,6 +362,13 @@ describe('api integration', () => {
         tailoredResume: tailoringResponse.body.tailoredResume,
         templateProfile: tailoringResponse.body.templateProfile,
         validation: tailoringResponse.body.validation,
+        applicationProfile: {
+          currentCtcLpa: '12.5',
+          expectedCtcLpa: '18.0',
+          noticePeriodDays: '30',
+          github: 'github.com/vishnu',
+          requiresSponsorship: 'No',
+        },
       });
 
     const sessionId = createResponse.body.session.id;
@@ -332,6 +384,11 @@ describe('api integration', () => {
         fields: [
           { id: 'name', name: 'name', label: 'Full Name', placeholder: '', inputType: 'text', tagName: 'input', required: true, visible: true, value: '', hasValue: false },
           { id: 'email', name: 'email', label: 'Email', placeholder: '', inputType: 'email', tagName: 'input', required: true, visible: true, value: '', hasValue: false },
+          { id: 'experience', name: 'totalExperience', label: 'Total Experience (Years)', placeholder: '5', inputType: 'text', tagName: 'input', required: true, visible: true, value: '', hasValue: false },
+          { id: 'currentCtc', name: 'currentCtc', label: 'Current CTC (LPA)', placeholder: '12.5', inputType: 'text', tagName: 'input', required: true, visible: true, value: '', hasValue: false },
+          { id: 'expectedCtc', name: 'expectedCtc', label: 'Expected CTC (LPA)', placeholder: '18.0', inputType: 'text', tagName: 'input', required: true, visible: true, value: '', hasValue: false },
+          { id: 'notice', name: 'noticePeriod', label: 'Notice Period (Days)', placeholder: '30', inputType: 'text', tagName: 'input', required: true, visible: true, value: '', hasValue: false },
+          { id: 'github', name: 'portfolio', label: 'Portfolio / GitHub', placeholder: 'github.com/yourprofile', inputType: 'text', tagName: 'input', required: false, visible: true, value: '', hasValue: false },
           { id: 'resume', name: 'resume', label: 'Resume', placeholder: '', inputType: 'file', tagName: 'input', required: true, visible: true, hasValue: false },
         ],
         controls: [
@@ -342,6 +399,13 @@ describe('api integration', () => {
     expect(snapshotResponse.status).toBe(200);
     expect(snapshotResponse.body.status).toBe('ready_to_submit');
     expect(snapshotResponse.body.actions.map((action: { type: string }) => action.type)).toEqual(expect.arrayContaining(['fill', 'upload']));
+    expect(snapshotResponse.body.actions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ fieldId: 'experience', value: expect.any(String), semanticType: 'years_of_experience' }),
+      expect.objectContaining({ fieldId: 'currentCtc', value: '12.5', semanticType: 'current_ctc' }),
+      expect.objectContaining({ fieldId: 'expectedCtc', value: '18.0', semanticType: 'expected_ctc' }),
+      expect.objectContaining({ fieldId: 'notice', value: '30', semanticType: 'notice_period' }),
+      expect.objectContaining({ fieldId: 'github', value: 'github.com/vishnu', semanticType: 'github' }),
+    ]));
 
     const eventResponse = await request(applyApp)
       .post(`/api/apply/sessions/${sessionId}/events`)

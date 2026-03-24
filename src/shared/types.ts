@@ -371,10 +371,21 @@ export type FieldSemanticType =
   | 'email'
   | 'phone'
   | 'linkedin'
+  | 'github'
   | 'location'
   | 'city'
   | 'portfolio'
   | 'website'
+  | 'current_company'
+  | 'current_title'
+  | 'years_of_experience'
+  | 'current_ctc'
+  | 'expected_ctc'
+  | 'notice_period'
+  | 'work_authorization'
+  | 'requires_sponsorship'
+  | 'visa_status'
+  | 'gender'
   | 'resume_upload'
   | 'cover_letter_upload'
   | 'unknown';
@@ -388,8 +399,20 @@ export interface ApplicantProfile {
   email?: string;
   phone?: string;
   linkedin?: string;
+  github?: string;
+  portfolio?: string;
   location?: string;
   website?: string;
+  currentCompany?: string;
+  currentTitle?: string;
+  yearsOfExperience?: string;
+  currentCtcLpa?: string;
+  expectedCtcLpa?: string;
+  noticePeriodDays?: string;
+  workAuthorization?: string;
+  requiresSponsorship?: string;
+  visaStatus?: string;
+  gender?: string;
 }
 
 export interface DetectedFieldOption {
@@ -488,6 +511,10 @@ export interface ApplySessionSummary {
 export interface CreateApplySessionResponse {
   session: ApplySessionSummary;
   executorToken: string;
+}
+
+export interface ApplicationProfileResponse {
+  profile: ApplicantProfile;
 }
 
 export interface ApplySessionEvent {
