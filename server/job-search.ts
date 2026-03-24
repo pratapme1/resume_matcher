@@ -1,5 +1,6 @@
 import type { AIClient } from './app.ts';
 import type { AIProviderName } from './ai.ts';
+import { badGateway } from './errors.ts';
 import type {
   CandidateProfile,
   JobMatchBreakdown,
@@ -380,7 +381,7 @@ interface RawJob {
   companyStage?: string;
 }
 
-class SearchProviderError extends Error {
+export class SearchProviderError extends Error {
   providerName: AIProviderName;
   modelName: string;
   status?: number;
@@ -400,6 +401,13 @@ class SearchProviderError extends Error {
     this.status = params.status;
     this.unavailable = params.unavailable;
   }
+}
+
+function buildSearchProviderError(error: SearchProviderError): never {
+  throw badGateway('The AI job search service is currently unavailable.', 'AI_PROVIDER_ERROR', {
+    cause: error,
+    logMessage: `AI provider request failed during job search using ${error.providerName}:${error.modelName}.`,
+  });
 }
 
 function getProviderName(ai: AIClient): AIProviderName {
@@ -478,7 +486,6 @@ async function searchJobsWithProvider(prompt: string, ai: AIClient): Promise<Raw
           contents: prompt,
           config: {
             temperature: 0,
-            responseMimeType: 'application/json',
             maxOutputTokens: 1800,
           },
         })
@@ -658,18 +665,31 @@ export async function searchJobs(
   try {
     rawJobs = await searchJobsWithProvider(prompt, ai);
   } catch (error) {
-    if (!(error instanceof SearchProviderError) || !error.unavailable || !fallbackAI || !hasDistinctFallback) {
+    if (!(error instanceof SearchProviderError)) {
       throw error;
     }
+    if (!fallbackAI || !hasDistinctFallback) {
+      buildSearchProviderError(error);
+    }
     console.warn(
-      `[job-search] Primary search provider ${error.providerName}:${error.modelName} unavailable, trying fallback.`,
+      `[job-search] Primary search provider ${error.providerName}:${error.modelName} failed, trying fallback.`,
     );
-    rawJobs = await searchJobsWithProvider(prompt, fallbackAI);
+    try {
+      rawJobs = await searchJobsWithProvider(prompt, fallbackAI);
+    } catch (fallbackError) {
+      if (fallbackError instanceof SearchProviderError) buildSearchProviderError(fallbackError);
+      throw fallbackError;
+    }
   }
 
   if (rawJobs.length === 0 && fallbackAI && hasDistinctFallback) {
     console.warn('[job-search] Primary search provider returned no parseable jobs, trying fallback provider.');
-    rawJobs = await searchJobsWithProvider(prompt, fallbackAI);
+    try {
+      rawJobs = await searchJobsWithProvider(prompt, fallbackAI);
+    } catch (fallbackError) {
+      if (fallbackError instanceof SearchProviderError) buildSearchProviderError(fallbackError);
+      throw fallbackError;
+    }
   }
 
   const scored = rawJobs
