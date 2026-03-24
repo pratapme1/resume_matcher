@@ -6,7 +6,7 @@ import helmet from 'helmet';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import pinoHttp from 'pino-http';
 import { z } from 'zod';
-import { buildAnalysis, buildTailoringPlan } from './analysis.ts';
+import { buildAnalysis, buildTailoringPlan, ensureGapAnalysisNarrative } from './analysis.ts';
 import { buildGapAnalysis } from './gap-analysis.ts';
 import { generateTailoredDocx } from './docx-render.ts';
 import {
@@ -615,16 +615,11 @@ export function createApp(deps: AppDependencies): Express {
         buildTailoredCorpus(tailoredResume),
       );
 
-      if (tailoringPlan.gapAnalysis) {
-        tailoringPlan.gapAnalysis = {
-          ...tailoringPlan.gapAnalysis,
-          fitScore:
-            typeof tailoringPlan.gapAnalysis.fitScore === 'number' &&
-            Number.isFinite(tailoringPlan.gapAnalysis.fitScore)
-              ? tailoringPlan.gapAnalysis.fitScore
-              : analysis.preAlignmentScore,
-        };
-      }
+      tailoringPlan.gapAnalysis = ensureGapAnalysisNarrative(
+        tailoringPlan.gapAnalysis,
+        analysis,
+        jdRequirements,
+      );
 
       const validation = validateTailoredResume(resume, tailoredResume, templateProfile);
       const response: TailorResumeResponse = validation.isValid

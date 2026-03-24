@@ -224,6 +224,37 @@ describe('api integration', () => {
     expect(response.body.tailoringPlan?.gapAnalysis?.fitScore).toBe(response.body.analysis.preAlignmentScore);
   });
 
+  it('restores role-fit narrative when gap analysis falls back to minimal output', async () => {
+    let callCount = 0;
+    const minimalGapApp = createTestApp({
+      getAI: () => ({
+        models: {
+          generateContent: async () => {
+            callCount++;
+            if (callCount === 1) {
+              return { text: JSON.stringify({ mustHaveKeywords: ['react', 'typescript', 'testing'], niceToHaveKeywords: ['graphql'], targetTitles: ['Senior Frontend Engineer'], seniorityLevel: 'senior' }) };
+            }
+            if (callCount === 2) {
+              return { text: '{"unexpected":true}' };
+            }
+            return { text: await readFile(fixturePath('mock-ai-success.json'), 'utf8') };
+          },
+        },
+      }),
+    });
+
+    const response = await request(minimalGapApp)
+      .post('/api/tailor-resume')
+      .attach('resume', sampleResumePath())
+      .field('jdText', await readFile(fixturePath('jd-valid.txt'), 'utf8'))
+      .field('preferences', JSON.stringify({ targetRole: 'Senior Frontend Engineer' }));
+
+    expect(response.status).toBe(200);
+    expect(response.body.tailoringPlan?.gapAnalysis?.fitScore).toBe(response.body.analysis.preAlignmentScore);
+    expect(response.body.tailoringPlan?.gapAnalysis?.repositioningAngle).toBeTruthy();
+    expect(response.body.tailoringPlan?.gapAnalysis?.topStrengths?.length).toBeGreaterThan(0);
+  });
+
   it('rebuilds the final tailored resume from locked source fields when the model drifts', async () => {
     const saveResponse = await request(app)
       .post('/api/resumes/default')

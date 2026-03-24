@@ -1,4 +1,5 @@
 import type {
+  GapAnalysis,
   JDRequirementModel,
   ResumeAnalysis,
   ScoreBreakdown,
@@ -174,5 +175,55 @@ export function buildAnalysis(
     strongestAlignedExperiences,
     weakSections,
     recommendations,
+  };
+}
+
+export function ensureGapAnalysisNarrative(
+  gapAnalysis: GapAnalysis | undefined,
+  analysis: ResumeAnalysis,
+  jd: JDRequirementModel,
+): GapAnalysis {
+  const matchedKeywords = analysis.matchedKeywords.slice(0, 3);
+  const missingKeywords = analysis.missingMustHaveKeywords.slice(0, 3);
+  const strongestExperiences = analysis.strongestAlignedExperiences.slice(0, 2);
+  const targetTitle = jd.targetTitles[0]?.trim() || 'the target role';
+  const fallbackFitScore =
+    typeof gapAnalysis?.fitScore === 'number' && Number.isFinite(gapAnalysis.fitScore)
+      ? gapAnalysis.fitScore
+      : analysis.preAlignmentScore;
+
+  const fallbackTopStrengths = unique([
+    matchedKeywords.length > 0 ? `Verified overlap with ${matchedKeywords.join(', ')}.` : '',
+    strongestExperiences.length > 0
+      ? `Most aligned experience includes ${strongestExperiences.join(' and ')}.`
+      : '',
+    analysis.scoreBreakdown.titleMatch ? `Past role titles align credibly with ${targetTitle}.` : '',
+    analysis.scoreBreakdown.seniorityMatch ? 'Resume signals the expected seniority for this role.' : '',
+  ].filter(Boolean)).slice(0, 4);
+
+  const fallbackKeyGaps = unique([
+    ...missingKeywords.map((keyword) => `Limited explicit evidence for ${keyword}.`),
+    ...(missingKeywords.length === 0
+      ? analysis.weakSections.slice(0, 2).map((section) => `Resume could strengthen the ${section.toLowerCase()} section for this role.`)
+      : []),
+  ]).slice(0, 3);
+
+  const fallbackRepositioningAngle =
+    matchedKeywords.length > 0
+      ? `Position the candidate as a fit for ${targetTitle} by foregrounding verified work in ${matchedKeywords.join(', ')}.`
+      : `Position the candidate for ${targetTitle} by emphasizing the most aligned verified experience first.`;
+
+  const fallbackSummaryOpeningHint =
+    matchedKeywords.length > 0
+      ? `${targetTitle} with proven experience in ${matchedKeywords[0]}${matchedKeywords[1] ? ` and ${matchedKeywords[1]}` : ''}`
+      : `Experience aligned to ${targetTitle}`;
+
+  return {
+    fitScore: fallbackFitScore,
+    repositioningAngle: gapAnalysis?.repositioningAngle?.trim() || fallbackRepositioningAngle,
+    topStrengths: gapAnalysis?.topStrengths?.length ? gapAnalysis.topStrengths : fallbackTopStrengths,
+    keyGaps: gapAnalysis?.keyGaps?.length ? gapAnalysis.keyGaps : fallbackKeyGaps,
+    bulletPriorities: gapAnalysis?.bulletPriorities ?? [],
+    summaryOpeningHint: gapAnalysis?.summaryOpeningHint?.trim() || fallbackSummaryOpeningHint,
   };
 }
