@@ -10,6 +10,7 @@ export async function createTailorSession(opts: {
     .select('id')
     .single();
   if (error) throw error;
+  if (!data?.id) throw new Error('tailor_sessions insert returned no id');
   return data.id as string;
 }
 
@@ -24,7 +25,7 @@ export async function completeTailorSession(
     errorMessage?: string;
   },
 ): Promise<void> {
-  await supabase.from('tailor_sessions').update({
+  const { error } = await supabase.from('tailor_sessions').update({
     status: opts.status,
     tailored_doc_json: opts.tailoredDocJson ?? null,
     validation_report_json: opts.validationReportJson ?? null,
@@ -33,6 +34,7 @@ export async function completeTailorSession(
     error_message: opts.errorMessage ?? null,
     completed_at: new Date().toISOString(),
   }).eq('id', id);
+  if (error) throw error;
 }
 
 export async function createJobSearchSession(opts: {
@@ -54,5 +56,6 @@ export async function createJobSearchSession(opts: {
     .select('id')
     .single();
   if (error) throw error;
+  if (!data?.id) throw new Error('job_search_sessions insert returned no id');
   return data.id as string;
 }

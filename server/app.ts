@@ -3,7 +3,7 @@ import type { Express, NextFunction, Request, Response } from 'express';
 import multer from 'multer';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import pinoHttp from 'pino-http';
 import { z } from 'zod';
 import { buildAnalysis, buildTailoringPlan } from './analysis.ts';
@@ -186,15 +186,18 @@ function makeRateLimit(opts: { windowMs: number; max: number; message: string })
     max: opts.max,
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => (req as Request).userId ?? req.ip ?? 'unknown',
+    keyGenerator: (req) => (req as Request).userId ?? ipKeyGenerator(req.ip ?? '127.0.0.1'),
     message: { error: opts.message, code: 'RATE_LIMITED' },
   });
 }
 
-const rateLimitSearch   = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 5,  message: 'Job search limit: 5 per hour.' });
-const rateLimitTailor   = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 10, message: 'Tailor limit: 10 per hour.' });
-const rateLimitExtract  = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 30, message: 'Extract limit: 30 per hour.' });
-const rateLimitProfile  = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 20, message: 'Profile build limit: 20 per hour.' });
+const rateLimitSearch    = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 5,  message: 'Job search limit: 5 per hour.' });
+const rateLimitTailor    = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 10, message: 'Tailor limit: 10 per hour.' });
+const rateLimitExtract   = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 30, message: 'Extract limit: 30 per hour.' });
+const rateLimitProfile   = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 20, message: 'Profile build limit: 20 per hour.' });
+const rateLimitDocx      = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 20, message: 'DOCX generation limit: 20 per hour.' });
+const rateLimitSmartFill = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 30, message: 'Smart fill limit: 30 per hour.' });
+const rateLimitAutoApply = makeRateLimit({ windowMs: 60 * 60 * 1000, max: 5,  message: 'Auto-apply limit: 5 per hour.' });
 
 export function createApp(deps: AppDependencies): Express {
   const app = express();
@@ -204,8 +207,9 @@ export function createApp(deps: AppDependencies): Express {
   });
 
   const appUrl = process.env.APP_URL;
+  const corsOrigin = appUrl ?? (process.env.NODE_ENV !== 'production' ? '*' : false);
   app.use(helmet({ contentSecurityPolicy: false })); // CSP managed by Vite in dev
-  app.use(cors(appUrl ? { origin: appUrl } : {}));
+  app.use(cors(corsOrigin ? { origin: corsOrigin } : { origin: false }));
   app.use(pinoHttp({ logger, quietReqLogger: true }));
   app.use(express.json({ limit: '2mb' }));
 
@@ -345,22 +349,20 @@ export function createApp(deps: AppDependencies): Express {
           };
 
       if (!deps.skipAuth && req.userId) {
-        void writeUsageEvent({
-          userId: req.userId,
-          eventType: 'tailor',
-          status: validation.isValid ? 'success' : 'blocked',
-        });
+        writeUsageEvent({ userId: req.userId, eventType: 'tailor', status: validation.isValid ? 'success' : 'blocked' })
+          .catch(err => logger.error({ err }, 'Failed to write tailor usage event'));
       }
       res.json(response);
     } catch (error) {
       if (!deps.skipAuth && req.userId) {
-        void writeUsageEvent({ userId: req.userId, eventType: 'tailor', status: 'error' });
+        writeUsageEvent({ userId: req.userId, eventType: 'tailor', status: 'error' })
+          .catch(err => logger.error({ err }, 'Failed to write tailor error event'));
       }
       sendErrorResponse(res, error, 'tailor-resume');
     }
   });
 
-  app.post('/api/generate-docx', auth, async (req, res) => {
+  app.post('/api/generate-docx', auth, rateLimitDocx, async (req, res) => {
     try {
       const { tailoredResume, templateProfile, validation } = generateDocxRequestSchema.parse(req.body);
       if (!validation.isValid) {
@@ -458,31 +460,28 @@ export function createApp(deps: AppDependencies): Express {
       const response = await searchJobs(parsedResume.resume, preferences, ai);
 
       if (!deps.skipAuth && req.userId) {
-        void writeUsageEvent({
-          userId: req.userId,
-          eventType: 'search',
-          status: 'success',
-          durationMs: Date.now() - t0,
-        });
-        void createJobSearchSession({
+        writeUsageEvent({ userId: req.userId, eventType: 'search', status: 'success', durationMs: Date.now() - t0 })
+          .catch(err => logger.error({ err }, 'Failed to write search usage event'));
+        createJobSearchSession({
           userId: req.userId,
           preferencesJson: preferences,
           candidateProfileJson: response.candidateProfile,
           resultsJson: response.results,
           totalResults: response.totalFound,
-        });
+        }).catch(err => logger.error({ err }, 'Failed to create job search session'));
       }
       res.json(response);
     } catch (error) {
       if (!deps.skipAuth && req.userId) {
-        void writeUsageEvent({ userId: req.userId, eventType: 'search', status: 'error' });
+        writeUsageEvent({ userId: req.userId, eventType: 'search', status: 'error' })
+          .catch(err => logger.error({ err }, 'Failed to write search error event'));
       }
       sendErrorResponse(res, error, 'search-jobs');
     }
   });
 
   // AI-powered form filler — called by the Chrome extension content script
-  app.post('/api/smart-fill', auth, async (req, res) => {
+  app.post('/api/smart-fill', auth, rateLimitSmartFill, async (req, res) => {
     try {
       const { fields, prefill } = z.object({
         fields: z.array(z.object({
@@ -537,7 +536,7 @@ Instructions:
   });
 
   // Server-side Playwright auto-apply agent
-  app.post('/api/auto-apply', auth, async (req, res) => {
+  app.post('/api/auto-apply', auth, rateLimitAutoApply, async (req, res) => {
     try {
       const body = z.object({
         applyUrl: z.string().url(),
@@ -566,7 +565,7 @@ Instructions:
     }
   });
 
-  app.post('/api/auto-apply/submit', auth, async (req, res) => {
+  app.post('/api/auto-apply/submit', auth, rateLimitAutoApply, async (req, res) => {
     try {
       const { sessionId } = z.object({ sessionId: z.string() }).parse(req.body);
       const result = await submitAutoApply(sessionId);
