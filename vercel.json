@@ -1,5 +1,5 @@
 {
-  "buildCommand": "vite build && npx esbuild api/_index.ts --bundle --platform=node --target=node20 --format=esm --outfile=api/index.mjs --external:fsevents --external:@playwright/test --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
+  "buildCommand": "vite build && node scripts/build-api.mjs",
   "outputDirectory": "dist",
   "functions": {
     "api/index.mjs": {
