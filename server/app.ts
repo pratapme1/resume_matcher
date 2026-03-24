@@ -114,6 +114,8 @@ export interface AIClient {
 export interface AppDependencies {
   getAI: (req?: Request) => AIClient;
   getTailorFallbackAI?: (req?: Request) => AIClient;
+  getSearchAI?: (req?: Request) => AIClient;
+  getSearchFallbackAI?: (req?: Request) => AIClient;
   fetchImpl?: typeof fetch;
   disablePlaywrightJdFallback?: boolean;
   /** Skip auth + DB writes — for unit/integration tests */
@@ -731,7 +733,7 @@ export function createApp(deps: AppDependencies): Express {
     }
   });
 
-  // Job search: build candidate profile from resume + search via Gemini grounding
+  // Job search: build candidate profile from resume + search via configured search provider
   app.post('/api/search-jobs', auth, limitSearch, async (req, res) => {
     try {
       // Monthly quota check
@@ -752,9 +754,10 @@ export function createApp(deps: AppDependencies): Express {
 
       const resolvedResume = await resolveResumeInputForRequest(req);
 
-      const ai = deps.getAI(req);
+      const ai = deps.getSearchAI ? deps.getSearchAI(req) : deps.getAI(req);
+      const fallbackAI = deps.getSearchFallbackAI ? deps.getSearchFallbackAI(req) : undefined;
       const t0 = Date.now();
-      const response = await searchJobs(resolvedResume.resume, preferences, ai);
+      const response = await searchJobs(resolvedResume.resume, preferences, ai, fallbackAI);
       response.resumeSource = resolvedResume.resumeSource;
       response.resumeId = resolvedResume.resumeId;
 

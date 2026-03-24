@@ -1,4 +1,5 @@
 import type { AIClient } from './app.ts';
+import type { AIProviderName } from './ai.ts';
 import type {
   CandidateProfile,
   JobMatchBreakdown,
@@ -284,17 +285,8 @@ export function buildCandidateProfile(resume: SourceResumeDocument): CandidatePr
 
 function buildSearchPrompt(profile: CandidateProfile, prefs?: JobSearchPreferences): string {
   const locationParts = [prefs?.location, prefs?.country].filter(Boolean).join(', ');
-  const locationHint = locationParts
-    ? `Preferred location: ${locationParts}`
-    : profile.location
-    ? `Candidate is based in: ${profile.location}`
-    : 'No location preference specified (consider remote-friendly roles)';
 
-  const remoteHint = prefs?.remotePreference && prefs.remotePreference !== 'any'
-    ? `Remote preference: ${prefs.remotePreference}`
-    : 'Open to remote, hybrid, or onsite';
-
-  // Expand primary titles with close role variants so Gemini searches broadly
+  // Expand primary titles with close role variants so the search stays broad with a small prompt.
   const ROLE_VARIANTS: Record<string, string[]> = {
     // Product
     'product manager':     ['Product Manager', 'Senior Product Manager', 'Product Owner', 'Group Product Manager', 'Principal PM'],
@@ -345,53 +337,29 @@ function buildSearchPrompt(profile: CandidateProfile, prefs?: JobSearchPreferenc
     }
     return [t]; // no expansion found, use as-is
   });
-  const uniqueTitles = [...new Set(expandedTitles)].slice(0, 6);
+  const uniqueTitles = [...new Set(expandedTitles)].slice(0, 5);
+  const candidateContext = {
+    titles: uniqueTitles,
+    roleType: prefs?.roleType || null,
+    seniority: profile.seniorityLevel,
+    years: profile.yearsOfExperience,
+    location: locationParts || profile.location || null,
+    remotePreference: prefs?.remotePreference && prefs.remotePreference !== 'any' ? prefs.remotePreference : 'any',
+    skills: profile.topSkills.slice(0, 8),
+    industries: profile.industries.slice(0, 3),
+    domainExpertise: profile.domainExpertise.slice(0, 3),
+  };
 
-  const roleHint = prefs?.roleType
-    ? `Preferred role type: ${prefs.roleType}`
-    : `Target roles (search for ALL of these): ${uniqueTitles.join(', ')}`;
-
-  return `You are an expert technical recruiter searching for the best current job openings for a candidate.
-
-Use Google Search to find 12–15 CURRENT open positions that match this candidate's profile. Search LinkedIn Jobs, Greenhouse, Lever, Indeed, Glassdoor, and company career pages. Prioritize roles posted in the last 30 days.
-
-CANDIDATE PROFILE:
-${JSON.stringify(profile, null, 2)}
-
-SEARCH CONTEXT:
-- ${locationHint}
-- ${remoteHint}
-- ${roleHint}
-- Seniority: ${profile.seniorityLevel} (${profile.yearsOfExperience} years experience)
-- Key skills: ${profile.topSkills.slice(0, 10).join(', ')}
-- Industries: ${profile.industries.join(', ') || 'general tech'}
-
-INSTRUCTIONS:
-Search for open job postings that match this profile. Look for strong technical matches. For each job you find, extract the actual posting data.
-
-Return ONLY a JSON code block in this exact format (no other text):
-
-\`\`\`json
-{
-  "jobs": [
-    {
-      "title": "string",
-      "company": "string",
-      "location": "string (city, state or 'Remote')",
-      "remoteType": "remote | hybrid | onsite | unknown",
-      "url": "string (direct link to job posting if found)",
-      "description": "string (2-3 sentence summary of the role)",
-      "requiredSkills": ["string"],
-      "niceToHaveSkills": ["string"],
-      "estimatedSalary": "string or null",
-      "postedDate": "string or null",
-      "companyStage": "startup | growth | enterprise | unknown"
-    }
-  ]
-}
-\`\`\`
-
-Find real, currently open positions. Do not fabricate job listings.`;
+  return [
+    'Find up to 10 currently open jobs for this candidate.',
+    'Prefer direct company career pages, Greenhouse, Lever, LinkedIn Jobs, and Wellfound.',
+    'Prioritize strong fit and recent listings. Skip expired, duplicate, or clearly mismatched jobs.',
+    `Candidate: ${JSON.stringify(candidateContext)}`,
+    'Return raw JSON only. No markdown.',
+    'Schema:',
+    '{"jobs":[{"title":"","company":"","location":"","remoteType":"remote|hybrid|onsite|unknown","url":"","description":"one short sentence","requiredSkills":[""],"niceToHaveSkills":[""],"estimatedSalary":null,"postedDate":null,"companyStage":"startup|growth|enterprise|unknown"}]}',
+    'Rules: description max 160 chars, requiredSkills max 6, niceToHaveSkills max 3, only real currently open roles.',
+  ].join('\n');
 }
 
 // ─────────────────────────────────────────
@@ -412,26 +380,68 @@ interface RawJob {
   companyStage?: string;
 }
 
-async function searchJobsWithGemini(prompt: string, ai: AIClient): Promise<RawJob[]> {
-  let responseText = '';
-  const model = process.env.GEMINI_SEARCH_MODEL ?? 'gemini-2.0-flash';
-  try {
-    const result = await (ai.models as any).generateContent({
-      model,
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      config: {
-        tools: [{ googleSearch: {} }],
-        temperature: 0.1,
-      },
-    });
-    responseText = result.text ?? '';
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error('[job-search] Gemini grounded search failed:', message);
-    throw new Error(`Job search failed: ${message}`);
+class SearchProviderError extends Error {
+  providerName: AIProviderName;
+  modelName: string;
+  status?: number;
+  unavailable: boolean;
+
+  constructor(params: {
+    providerName: AIProviderName;
+    modelName: string;
+    status?: number;
+    message: string;
+    unavailable: boolean;
+  }) {
+    super(params.message);
+    this.name = 'SearchProviderError';
+    this.providerName = params.providerName;
+    this.modelName = params.modelName;
+    this.status = params.status;
+    this.unavailable = params.unavailable;
+  }
+}
+
+function getProviderName(ai: AIClient): AIProviderName {
+  return ((ai as { providerName?: AIProviderName }).providerName ?? 'gemini');
+}
+
+function getSearchModelForProvider(providerName: AIProviderName): string {
+  if (providerName === 'perplexity') {
+    return process.env.OPENROUTER_PERPLEXITY_SEARCH_MODEL?.trim() || 'perplexity/sonar';
+  }
+  return process.env.GEMINI_SEARCH_MODEL ?? 'gemini-2.0-flash';
+}
+
+function isProviderUnavailableError(error: { status?: number; message?: string }): boolean {
+  if (typeof error.status === 'number') {
+    if (error.status === 408 || error.status === 409 || error.status === 425 || error.status === 429) return true;
+    if (error.status >= 500 && error.status < 600) return true;
+    if (error.status === 404) return true;
+    if (error.status === 400 && /model|provider|available|unavailable|not found/i.test(error.message ?? '')) return true;
   }
 
-  // Extract JSON block
+  const message = (error.message ?? '').toLowerCase();
+  return [
+    'quota',
+    'rate limit',
+    'rate-limit',
+    'timeout',
+    'timed out',
+    'fetch failed',
+    'network',
+    'connection',
+    'econnreset',
+    'enotfound',
+    'unavailable',
+    'overloaded',
+    'model not found',
+    'no such model',
+    'resource_exhausted',
+  ].some((token) => message.includes(token));
+}
+
+function extractJobsFromResponse(responseText: string): RawJob[] {
   const match = responseText.match(/```json\s*([\s\S]*?)```/);
   if (!match) {
     // Try raw JSON fallback
@@ -454,6 +464,47 @@ async function searchJobsWithGemini(prompt: string, ai: AIClient): Promise<RawJo
   } catch (err) {
     console.warn('[job-search] JSON parse failed:', err);
     return [];
+  }
+}
+
+async function searchJobsWithProvider(prompt: string, ai: AIClient): Promise<RawJob[]> {
+  const providerName = getProviderName(ai);
+  const model = getSearchModelForProvider(providerName);
+
+  try {
+    const result = providerName === 'perplexity'
+      ? await ai.models.generateContent({
+          model,
+          contents: prompt,
+          config: {
+            temperature: 0,
+            responseMimeType: 'application/json',
+            maxOutputTokens: 1800,
+          },
+        })
+      : await (ai.models as any).generateContent({
+          model,
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          config: {
+            tools: [{ googleSearch: {} }],
+            temperature: 0,
+            maxOutputTokens: 1800,
+          },
+        });
+
+    return extractJobsFromResponse(result.text ?? '');
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const status = typeof err === 'object' && err !== null && 'status' in err ? (err as { status?: number }).status : undefined;
+    const wrapped = new SearchProviderError({
+      providerName,
+      modelName: model,
+      status,
+      message,
+      unavailable: isProviderUnavailableError({ status, message }),
+    });
+    console.error(`[job-search] ${providerName} search failed:`, message);
+    throw wrapped;
   }
 }
 
@@ -596,10 +647,31 @@ export async function searchJobs(
   resume: SourceResumeDocument,
   prefs: JobSearchPreferences | undefined,
   ai: AIClient,
+  fallbackAI?: AIClient,
 ): Promise<JobSearchResponse> {
   const candidateProfile = buildCandidateProfile(resume);
   const prompt = buildSearchPrompt(candidateProfile, prefs);
-  const rawJobs = await searchJobsWithGemini(prompt, ai);
+  const hasDistinctFallback =
+    Boolean(fallbackAI) && getProviderName(fallbackAI as AIClient) !== getProviderName(ai);
+  let rawJobs: RawJob[] = [];
+
+  try {
+    rawJobs = await searchJobsWithProvider(prompt, ai);
+  } catch (error) {
+    if (!(error instanceof SearchProviderError) || !error.unavailable || !fallbackAI || !hasDistinctFallback) {
+      throw error;
+    }
+    console.warn(
+      `[job-search] Primary search provider ${error.providerName}:${error.modelName} unavailable, trying fallback.`,
+    );
+    rawJobs = await searchJobsWithProvider(prompt, fallbackAI);
+  }
+
+  if (rawJobs.length === 0 && fallbackAI && hasDistinctFallback) {
+    console.warn('[job-search] Primary search provider returned no parseable jobs, trying fallback provider.');
+    rawJobs = await searchJobsWithProvider(prompt, fallbackAI);
+  }
+
   const scored = rawJobs
     .filter(j => j.title && j.company)
     .map((j, i) => scoreJobAgainstProfile(j, candidateProfile, i));

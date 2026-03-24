@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
-import { createGeminiAIClient, createOpenRouterQwenClient } from './server/ai.ts';
+import { createGeminiAIClient, createOpenRouterPerplexityClient, createOpenRouterQwenClient } from './server/ai.ts';
 import { createApp } from './server/app.ts';
 
 const PORT = parseInt(process.env.PORT ?? '3000', 10);
@@ -14,6 +14,14 @@ export async function startServer() {
   const app = createApp({
     getAI: () => createGeminiAIClient(),
     getTailorFallbackAI: () => createOpenRouterQwenClient(),
+    getSearchAI: () => {
+      try {
+        return createOpenRouterPerplexityClient();
+      } catch {
+        return createGeminiAIClient();
+      }
+    },
+    getSearchFallbackAI: () => createGeminiAIClient(),
   });
 
   if (process.env.NODE_ENV !== 'production') {

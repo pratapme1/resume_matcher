@@ -212,6 +212,47 @@ describe('api integration', () => {
     expect(Array.isArray(response.body.results)).toBe(true);
   });
 
+  it('falls back to Gemini when Perplexity search is unavailable', async () => {
+    const saveResponse = await request(app)
+      .post('/api/resumes/default')
+      .attach('resume', sampleResumePath());
+
+    let primaryCallCount = 0;
+    let fallbackCallCount = 0;
+    const searchApp = createTestApp({
+      getSearchAI: () => ({
+        providerName: 'perplexity',
+        models: {
+          generateContent: async () => {
+            primaryCallCount++;
+            const error = new Error('upstream overloaded') as Error & { status?: number };
+            error.status = 503;
+            throw error;
+          },
+        },
+      }),
+      getSearchFallbackAI: () => ({
+        providerName: 'gemini',
+        models: {
+          generateContent: async () => {
+            fallbackCallCount++;
+            return { text: await readFile(fixturePath('mock-ai-job-search.json'), 'utf8') };
+          },
+        },
+      }),
+    });
+
+    const response = await request(searchApp)
+      .post('/api/search-jobs')
+      .field('resumeId', saveResponse.body.resume.id)
+      .field('preferences', JSON.stringify({ roleType: 'Frontend Engineer' }));
+
+    expect(response.status).toBe(200);
+    expect(response.body.results.length).toBeGreaterThan(0);
+    expect(primaryCallCount).toBe(1);
+    expect(fallbackCallCount).toBe(1);
+  });
+
   it('falls back to a stable fit score when gap analysis omits fitScore', async () => {
     const response = await request(app)
       .post('/api/tailor-resume')
