@@ -59,6 +59,16 @@ test('blocked path shows warning download button and confirmation dialog', async
   await expect(page.getByRole('button', { name: 'Download Anyway' })).toBeVisible();
 });
 
+test('blocked path can proceed to apply stage after warning download', async ({ page }) => {
+  await completeBlockedPath(page);
+  await page.getByRole('button', { name: /Download with Warnings/i }).click();
+  await page.getByRole('button', { name: 'Download Anyway' }).click();
+
+  await expect(page.getByRole('heading', { name: /Apply to/i })).toBeVisible({ timeout: 30000 });
+  await expect(page.getByText('Validation warnings were detected in the tailored resume.')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Back to Results/i })).toBeVisible();
+});
+
 test('warning path shows extraction warnings and reset clears state', async ({ page }) => {
   await page.goto('/');
   await skipToJDStep(page);

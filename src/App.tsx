@@ -1795,6 +1795,7 @@ export default function App() {
                 const blocked = result.blocked;
                 const validation = result.validation;
                 const tailoredResume = 'tailoredResume' in result ? result.tailoredResume : null;
+                const canProceedToApply = Boolean(tailoredResume);
                 const scoreBreakdown = result.analysis.scoreBreakdown;
 
                 return (
@@ -1827,7 +1828,7 @@ export default function App() {
                         </h2>
                         <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-1.5">
                           {blocked
-                            ? 'Ambiguous claims detected. Review before downloading.'
+                            ? 'Ambiguous claims detected. Review before downloading and submitting.'
                             : 'All claims validated against your source resume.'}
                         </p>
                       </div>
@@ -2111,22 +2112,38 @@ export default function App() {
                               </div>
                             )}
 
-                            {/* Auto-apply hint — shown after download or always when not blocked */}
-                            {!blocked && (
+                            {/* Apply hint — shown when a tailored resume is available */}
+                            {canProceedToApply && (
                               <div className={`rounded-xl border px-3.5 py-3 text-xs leading-relaxed transition-all duration-300 ${
                                 hasDownloaded
-                                  ? 'border-violet-400/40 bg-violet-500/10 dark:bg-violet-500/10'
-                                  : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50'
+                                  ? blocked
+                                    ? 'border-amber-400/40 bg-amber-500/10 dark:bg-amber-500/10'
+                                    : 'border-violet-400/40 bg-violet-500/10 dark:bg-violet-500/10'
+                                  : blocked
+                                    ? 'border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10'
+                                    : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50'
                               }`}>
                                 {hasDownloaded ? (
                                   <>
-                                    <p className="font-bold text-violet-600 dark:text-violet-400 mb-1">✓ Resume ready — next step</p>
-                                    <p className="text-zinc-600 dark:text-zinc-400">Open the job application form, then click the <span className="font-semibold text-zinc-800 dark:text-zinc-200">Resume Tailor Pro</span> extension icon in Chrome and hit <span className="font-semibold text-zinc-800 dark:text-zinc-200">Fill application form →</span></p>
+                                    <p className={`font-bold mb-1 ${blocked ? 'text-amber-700 dark:text-amber-400' : 'text-violet-600 dark:text-violet-400'}`}>
+                                      {blocked ? 'Resume ready — review required in Apply stage' : '✓ Resume ready — next step'}
+                                    </p>
+                                    <p className="text-zinc-600 dark:text-zinc-400">
+                                      {blocked
+                                        ? 'Proceed to Apply, review the flagged claims and any unsupported required fields, then confirm submit only after checking the portal.'
+                                        : <>Open the job application form, then click the <span className="font-semibold text-zinc-800 dark:text-zinc-200">Resume Tailor Pro</span> extension icon in Chrome and hit <span className="font-semibold text-zinc-800 dark:text-zinc-200">Fill application form →</span></>}
+                                    </p>
                                   </>
                                 ) : (
                                   <>
-                                    <p className="font-bold text-zinc-700 dark:text-zinc-300 mb-1">🧩 Auto-fill job applications</p>
-                                    <p className="text-zinc-500 dark:text-zinc-500">After downloading, use the <span className="font-semibold text-zinc-700 dark:text-zinc-300">Resume Tailor Pro Chrome extension</span> to pre-fill application forms on any career site. Run <code className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded text-[11px]">npm run build:ext</code> to build it.</p>
+                                    <p className={`font-bold mb-1 ${blocked ? 'text-amber-700 dark:text-amber-400' : 'text-zinc-700 dark:text-zinc-300'}`}>
+                                      {blocked ? 'You can still continue to Apply' : '🧩 Auto-fill job applications'}
+                                    </p>
+                                    <p className="text-zinc-500 dark:text-zinc-500">
+                                      {blocked
+                                        ? 'After downloading, Stage 5 will still open so you can use the extension, review flagged claims, and complete the portal carefully.'
+                                        : <>After downloading, use the <span className="font-semibold text-zinc-700 dark:text-zinc-300">Resume Tailor Pro Chrome extension</span> to pre-fill application forms on any career site. Run <code className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded text-[11px]">npm run build:ext</code> to build it.</>}
+                                    </p>
                                   </>
                                 )}
                               </div>
@@ -2191,7 +2208,7 @@ export default function App() {
               }
 
               /* ════════════════ STEP 5 — AGENT APPLY ════════════════ */
-              if (step === 5 && result && !result.blocked) {
+              if (step === 5 && result) {
                 const company = result.jdCompanyName ?? 'the Role';
                 return (
                   <motion.div key="s5"
@@ -2223,6 +2240,12 @@ export default function App() {
                       <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-8">
                         Stage 5 now runs through the Resume Tailor extension in your own browser session. The backend plans the fill, the extension executes it on the live job portal, and the app shows checkpoints before you confirm submit.
                       </p>
+
+                      {result.blocked && (
+                        <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+                          Validation warnings were detected in the tailored resume. You can still use Apply, but review flagged claims and portal fields before you confirm submit.
+                        </div>
+                      )}
 
                       {/* URL input */}
                       <div className={`${card} p-5 mb-5`}>
