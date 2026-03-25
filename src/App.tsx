@@ -5,11 +5,14 @@ import {
   Download, Loader2, ShieldAlert, ShieldCheck, ArrowLeft,
   Sun, Moon, CheckCircle2, X, Mail, Phone, MapPin, Linkedin,
   Search, Briefcase, ChevronDown, ChevronUp, Building2, LogOut,
+  LayoutDashboard, RefreshCw,
 } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase, getAuthHeader } from './supabaseClient.ts';
 import type {
   ApplicantProfile,
+  ApplicationRecord,
+  ApplicationStatus,
   ApplySessionSummary,
   CandidateProfile,
   DefaultResumeResponse,
@@ -219,8 +222,8 @@ function ResumePreview({ resume }: { resume: TailoredResumeDocument }) {
 /* ─────────────────────────────────────────
    Topbar — sticky top nav (V11 Studio)
 ───────────────────────────────────────── */
-function Topbar({ isDark, onToggleDark, onSignOut, userEmail, onHome }: {
-  isDark: boolean; onToggleDark: () => void; onSignOut: () => void; userEmail?: string; onHome?: () => void;
+function Topbar({ isDark, onToggleDark, onSignOut, userEmail, onHome, onDashboard, showDashboard }: {
+  isDark: boolean; onToggleDark: () => void; onSignOut: () => void; userEmail?: string; onHome?: () => void; onDashboard?: () => void; showDashboard?: boolean;
 }) {
   const initials = userEmail
     ? userEmail.split('@')[0].slice(0, 2).toUpperCase()
@@ -240,8 +243,22 @@ function Topbar({ isDark, onToggleDark, onSignOut, userEmail, onHome }: {
         <span className="text-sm font-bold tracking-tight">Resume Tailor</span>
       </button>
 
-      {/* Right: dark mode toggle + user pill */}
+      {/* Right: dashboard + dark mode toggle + user pill */}
       <div className="flex items-center gap-3">
+        {onDashboard && (
+          <button
+            onClick={onDashboard}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors text-xs font-medium ${
+              showDashboard
+                ? 'bg-[var(--rt-accent-soft)] text-[var(--rt-accent)]'
+                : 'text-[var(--rt-text-2)] hover:bg-[var(--rt-surface-2)]'
+            }`}
+            title="Application history"
+          >
+            <LayoutDashboard className="w-3.5 h-3.5" />
+            <span>Dashboard</span>
+          </button>
+        )}
         <button
           onClick={onToggleDark}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[var(--rt-text-2)] hover:bg-[var(--rt-surface-2)] transition-colors text-xs font-medium"
@@ -545,6 +562,12 @@ export default function App() {
   const [defaultResumeSavedNotice, setDefaultResumeSavedNotice] = useState<string | null>(null);
   const [showBlockedConfirm, setShowBlockedConfirm] = useState(false);
   const [warningsDismissed, setWarningsDismissed] = useState(false);
+
+  // Dashboard
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [applications, setApplications] = useState<ApplicationRecord[]>([]);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
 
   // JD history (localStorage, max 5)
   const [jdHistory, setJdHistory] = useState<{ id: string; savedAt: string; title: string; cleanText: string }[]>(() => {
@@ -1098,6 +1121,56 @@ export default function App() {
     }
   };
 
+  const fetchApplications = async () => {
+    setDashboardLoading(true);
+    setDashboardError(null);
+    try {
+      const r = await apiFetch('/api/applications', {
+        headers: await getAuthHeader(),
+      });
+      if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to load applications');
+      const data = await r.json() as ApplicationRecord[];
+      setApplications(data);
+    } catch (err: any) {
+      setDashboardError(err.message || 'Failed to load applications');
+    } finally {
+      setDashboardLoading(false);
+    }
+  };
+
+  const updateApplicationStatus = async (appId: string, newStatus: ApplicationStatus) => {
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      await fetch(`/api/applications/${appId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: newStatus } : a));
+    } catch {
+      // silently ignore status update errors
+    }
+  };
+
+  function exportApplicationsCSV(apps: ApplicationRecord[]) {
+    const rows = [
+      ['Title', 'Company', 'URL', 'Status', 'Applied At'],
+      ...apps.map(a => [
+        a.job?.title ?? '',
+        a.job?.company ?? '',
+        a.applyUrl ?? '',
+        a.status,
+        a.createdAt ? new Date(a.createdAt).toLocaleDateString() : '',
+      ]),
+    ];
+    const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'applications.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const resetFlow = () => {
     setStep(1);
     setJdText('');
@@ -1232,7 +1305,19 @@ export default function App() {
         </div>
 
         {/* ── Topbar ── */}
-        <Topbar isDark={isDark} onToggleDark={toggleDark} onSignOut={() => supabase.auth.signOut()} userEmail={session?.user?.email} onHome={() => setStep(0)} />
+        <Topbar
+          isDark={isDark}
+          onToggleDark={toggleDark}
+          onSignOut={() => supabase.auth.signOut()}
+          userEmail={session?.user?.email}
+          onHome={() => { setShowDashboard(false); setStep(0); }}
+          onDashboard={() => {
+            const next = !showDashboard;
+            setShowDashboard(next);
+            if (next) void fetchApplications();
+          }}
+          showDashboard={showDashboard}
+        />
 
         {/* ── Step progress bar (shown when on a workflow step) ── */}
         {step >= 1 && step <= 4 && (
@@ -1281,6 +1366,175 @@ export default function App() {
         <main className="relative z-10 max-w-[1100px] mx-auto px-6 pb-16 pt-6">
           <AnimatePresence mode="wait">
             {(() => {
+
+              /* ════════════════ DASHBOARD ════════════════ */
+              if (showDashboard) {
+                const statusColors: Record<ApplicationStatus, string> = {
+                  pending: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
+                  in_progress: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+                  applied: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+                  review: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+                  rejected: 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300',
+                  interview: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+                  offered: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+                  failed: 'bg-red-200 text-red-800 dark:bg-red-900/60 dark:text-red-200',
+                };
+                const statusLabels: Record<ApplicationStatus, string> = {
+                  pending: 'Pending',
+                  in_progress: 'In Progress',
+                  applied: 'Applied',
+                  review: 'In Review',
+                  rejected: 'Rejected',
+                  interview: 'Interview',
+                  offered: 'Offered',
+                  failed: 'Failed',
+                };
+                const allStatuses: ApplicationStatus[] = ['pending', 'in_progress', 'applied', 'review', 'interview', 'offered', 'rejected', 'failed'];
+                const statCounts = {
+                  total: applications.length,
+                  inReview: applications.filter(a => a.status === 'review').length,
+                  interview: applications.filter(a => a.status === 'interview').length,
+                  offered: applications.filter(a => a.status === 'offered').length,
+                };
+
+                return (
+                  <motion.div key="dashboard"
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -16 }}
+                    transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    className="py-8"
+                  >
+                    {/* Header row */}
+                    <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[var(--rt-accent-soft)] flex items-center justify-center">
+                          <LayoutDashboard className="w-5 h-5 text-[var(--rt-accent)]" />
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-bold tracking-tight">Application History</h2>
+                          <p className="text-xs text-[var(--rt-text-3)]">Track and manage your job applications</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => void fetchApplications()}
+                          disabled={dashboardLoading}
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[var(--rt-text-2)] hover:bg-[var(--rt-surface-2)] border border-[var(--rt-border)] transition-colors text-xs font-medium disabled:opacity-50"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${dashboardLoading ? 'animate-spin' : ''}`} />
+                          Refresh
+                        </button>
+                        {applications.length > 0 && (
+                          <button
+                            onClick={() => exportApplicationsCSV(applications)}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--rt-accent)] text-white hover:opacity-90 transition-opacity text-xs font-medium"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            Export CSV
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Summary stats */}
+                    {applications.length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                        {[
+                          { label: 'Total Applied', value: statCounts.total, color: 'text-[var(--rt-text)]' },
+                          { label: 'In Review', value: statCounts.inReview, color: 'text-amber-500 dark:text-amber-400' },
+                          { label: 'Interviews', value: statCounts.interview, color: 'text-purple-600 dark:text-purple-400' },
+                          { label: 'Offers', value: statCounts.offered, color: 'text-emerald-600 dark:text-emerald-400' },
+                        ].map(stat => (
+                          <div key={stat.label} className="bg-[var(--rt-surface)] border border-[var(--rt-border)] rounded-xl px-4 py-3 [box-shadow:var(--rt-shadow-card)]">
+                            <p className="text-xs text-[var(--rt-text-3)] mb-1">{stat.label}</p>
+                            <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Loading state */}
+                    {dashboardLoading && (
+                      <div className="flex items-center justify-center py-20">
+                        <Loader2 className="w-8 h-8 text-[var(--rt-accent)] animate-spin" />
+                      </div>
+                    )}
+
+                    {/* Error state */}
+                    {!dashboardLoading && dashboardError && (
+                      <div className="flex items-start gap-3 px-4 py-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 rounded-xl text-red-700 dark:text-red-300">
+                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <p className="text-sm">{dashboardError}</p>
+                      </div>
+                    )}
+
+                    {/* Empty state */}
+                    {!dashboardLoading && !dashboardError && applications.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-20 text-center">
+                        <div className="w-16 h-16 rounded-2xl bg-[var(--rt-surface-2)] flex items-center justify-center mb-4">
+                          <Briefcase className="w-8 h-8 text-[var(--rt-text-3)]" />
+                        </div>
+                        <p className="text-base font-semibold text-[var(--rt-text-2)] mb-1">No applications yet</p>
+                        <p className="text-sm text-[var(--rt-text-3)]">Start applying to jobs to track them here!</p>
+                      </div>
+                    )}
+
+                    {/* Applications list */}
+                    {!dashboardLoading && !dashboardError && applications.length > 0 && (
+                      <div className="space-y-3">
+                        {applications.map(app => (
+                          <div key={app.id} className="bg-[var(--rt-surface)] border border-[var(--rt-border)] rounded-xl px-5 py-4 [box-shadow:var(--rt-shadow-card)] flex flex-col sm:flex-row sm:items-center gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start gap-2 flex-wrap">
+                                <p className="font-semibold text-sm text-[var(--rt-text)] truncate">
+                                  {app.job?.title ?? 'Unknown Role'}
+                                </p>
+                                <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold shrink-0 ${statusColors[app.status]}`}>
+                                  {statusLabels[app.status]}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3 mt-1 flex-wrap">
+                                {app.job?.company && (
+                                  <span className="flex items-center gap-1 text-xs text-[var(--rt-text-2)]">
+                                    <Building2 className="w-3 h-3 shrink-0" />
+                                    {app.job.company}
+                                  </span>
+                                )}
+                                {app.applyUrl && (
+                                  <a
+                                    href={app.applyUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-xs text-[var(--rt-accent)] hover:underline truncate max-w-[200px]"
+                                  >
+                                    <LinkIcon className="w-3 h-3 shrink-0" />
+                                    {app.applyUrl.replace(/^https?:\/\//, '').split('/')[0]}
+                                  </a>
+                                )}
+                                <span className="text-xs text-[var(--rt-text-3)]">
+                                  {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '—'}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="shrink-0">
+                              <select
+                                value={app.status}
+                                onChange={e => void updateApplicationStatus(app.id, e.target.value as ApplicationStatus)}
+                                className="text-xs px-3 py-1.5 rounded-lg bg-[var(--rt-surface-2)] border border-[var(--rt-border)] text-[var(--rt-text)] focus:outline-none focus:ring-2 focus:ring-[var(--rt-accent-soft)] focus:border-[var(--rt-accent)] transition-all cursor-pointer"
+                              >
+                                {allStatuses.map(s => (
+                                  <option key={s} value={s}>{statusLabels[s]}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              }
 
               /* ════════════════ ENTRY — MODE PICKER ════════════════ */
               if (step === 0) return (
