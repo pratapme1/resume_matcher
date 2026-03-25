@@ -50,13 +50,13 @@ function ScoreRing({ score, active, size = 120 }: { score: number; active: boole
 
   const ringColor =
     score >= 80 ? '#34d399'
-    : score >= 60 ? '#a78bfa'
+    : score >= 60 ? 'var(--rt-accent)'
     : score >= 40 ? '#fbbf24'
     : '#f87171';
 
   const labelColor =
     score >= 80 ? 'text-emerald-400'
-    : score >= 60 ? 'text-violet-400'
+    : score >= 60 ? 'text-[var(--rt-accent)]'
     : score >= 40 ? 'text-amber-400'
     : 'text-red-400';
 
@@ -104,7 +104,7 @@ function ResumePreview({ resume }: { resume: TailoredResumeDocument }) {
             {contactInfo.name}
           </h1>
           {headline && (
-            <p className="text-xs font-semibold text-violet-600 uppercase tracking-wide mt-1">{headline}</p>
+            <p className="text-xs font-semibold text-accent uppercase tracking-wide mt-1">{headline}</p>
           )}
           <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px] text-zinc-500">
             {contactInfo.email && (
@@ -149,7 +149,7 @@ function ResumePreview({ resume }: { resume: TailoredResumeDocument }) {
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <div>
                     <p className="font-bold text-zinc-900 text-[13px]">{exp.title}</p>
-                    <p className="text-violet-600 font-semibold text-xs">{exp.company}{exp.location ? ` · ${exp.location}` : ''}</p>
+                    <p className="text-accent font-semibold text-xs">{exp.company}{exp.location ? ` · ${exp.location}` : ''}</p>
                   </div>
                   <span className="text-[11px] text-zinc-400 shrink-0 mt-0.5">{exp.dates}</span>
                 </div>
@@ -157,7 +157,7 @@ function ResumePreview({ resume }: { resume: TailoredResumeDocument }) {
                   <ul className="space-y-1 ml-3">
                     {exp.bullets.map((b, i) => (
                       <li key={i} className="text-zinc-600 flex gap-2">
-                        <span className="mt-[7px] w-1 h-1 rounded-full bg-violet-400 shrink-0" />
+                        <span className="mt-[7px] w-1 h-1 rounded-full bg-accent-soft shrink-0" />
                         <span>{b.text}</span>
                       </li>
                     ))}
@@ -175,7 +175,7 @@ function ResumePreview({ resume }: { resume: TailoredResumeDocument }) {
           <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-400 mb-2">Core Competencies</p>
           <div className="flex flex-wrap gap-1.5">
             {allSkills.map((sk, i) => (
-              <span key={i} className="px-2 py-0.5 bg-violet-50 text-violet-700 border border-violet-200 rounded text-[11px] font-semibold">
+              <span key={i} className="px-2 py-0.5 bg-accent-soft text-accent border border-accent-soft rounded text-[11px] font-semibold">
                 {sk}
               </span>
             ))}
@@ -231,11 +231,11 @@ function Sidebar({ step, isDark, onToggleDark, onSignOut, userEmail, onStepClick
   ];
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-[200px] hidden lg:flex flex-col bg-white/80 dark:bg-zinc-950/80 border-r border-zinc-200/80 dark:border-zinc-800/60 backdrop-blur-xl z-30">
+    <aside className="fixed left-0 top-0 h-screen w-[200px] hidden lg:flex flex-col bg-[var(--rt-sidebar-bg)] border-r border-[var(--rt-border)] backdrop-blur-xl z-30">
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-zinc-100 dark:border-zinc-800/80">
+      <div className="px-5 py-5 border-b border-[var(--rt-border)]">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
+          <div className="w-7 h-7 rounded-lg bg-[var(--rt-accent)] flex items-center justify-center shadow-lg">
             <FileText className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
@@ -260,11 +260,11 @@ function Sidebar({ step, isDark, onToggleDark, onSignOut, userEmail, onStepClick
               title={isLocked ? 'Complete previous steps first' : undefined}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${
                 isCurrent
-                  ? 'bg-violet-50 dark:bg-violet-500/10'
+                  ? 'bg-accent-soft'
                   : isLocked
                   ? 'opacity-35'
                   : isDone
-                  ? 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer'
+                  ? 'hover:bg-[var(--rt-surface-2)] cursor-pointer'
                   : 'cursor-default'
               }`}
             >
@@ -273,9 +273,9 @@ function Sidebar({ step, isDark, onToggleDark, onSignOut, userEmail, onStepClick
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium shrink-0 transition-colors duration-300 ${
                   isDone
-                    ? 'bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-400'
+                    ? 'bg-accent-soft text-accent'
                     : isCurrent
-                    ? 'bg-violet-600 text-white shadow-md shadow-violet-500/40'
+                    ? 'bg-accent text-white shadow-md'
                     : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400'
                 }`}
               >
@@ -293,20 +293,20 @@ function Sidebar({ step, isDark, onToggleDark, onSignOut, userEmail, onStepClick
       </nav>
 
       {/* Bottom */}
-      <div className="p-3 border-t border-zinc-100 dark:border-zinc-800/80 space-y-1">
+      <div className="p-3 border-t border-[var(--rt-border)] space-y-1">
         <button
           onClick={onToggleDark}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors"
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[var(--rt-text-2)] hover:bg-[var(--rt-surface-2)] transition-colors"
         >
           {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
           <span className="text-xs font-medium">{isDark ? 'Light mode' : 'Dark mode'}</span>
         </button>
         {userEmail && (
-          <div className="px-3 py-1 text-[10px] text-zinc-400 dark:text-zinc-600 truncate">{userEmail}</div>
+          <div className="px-3 py-1 text-[10px] text-[var(--rt-text-3)] truncate">{userEmail}</div>
         )}
         <button
           onClick={onSignOut}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-zinc-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[var(--rt-text-2)] hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
         >
           <LogOut className="w-3.5 h-3.5" />
           <span className="text-xs font-medium">Sign out</span>
@@ -1114,20 +1114,20 @@ export default function App() {
     return Math.max(0, Math.min(100, Math.round(candidate)));
   };
   const alignmentLabel = (s: number) => s >= 80 ? 'Strong match' : s >= 60 ? 'Moderate match' : s >= 40 ? 'Fair match' : 'Weak match';
-  const alignmentColor = (s: number) => s >= 80 ? 'text-emerald-500 dark:text-emerald-400' : s >= 60 ? 'text-violet-600 dark:text-violet-400' : s >= 40 ? 'text-amber-500 dark:text-amber-400' : 'text-red-500 dark:text-red-400';
+  const alignmentColor = (s: number) => s >= 80 ? 'text-emerald-500 dark:text-emerald-400' : s >= 60 ? 'text-[var(--rt-accent)]' : s >= 40 ? 'text-amber-500 dark:text-amber-400' : 'text-red-500 dark:text-red-400';
   const wordCount = (t: string) => t.trim().split(/\s+/).filter(Boolean).length;
 
   /* ── design tokens ── */
-  const card = 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl';
-  const inputCls = 'w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/25 focus:border-violet-500 transition-all duration-200';
+  const card = 'bg-[var(--rt-surface)] border border-[var(--rt-border)] rounded-2xl [box-shadow:var(--rt-shadow-card)] dark:backdrop-blur-[16px]';
+  const inputCls = 'w-full px-4 py-3 bg-[var(--rt-surface-2)] border border-[var(--rt-border)] rounded-xl text-sm text-[var(--rt-text)] placeholder:text-[var(--rt-text-3)] focus:outline-none focus:ring-2 focus:ring-[var(--rt-accent-soft)] focus:border-[var(--rt-accent)] transition-all duration-200';
   const transition = { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] };
 
   // Show loading spinner while session is being determined
   if (session === undefined) {
     return (
       <div className={isDark ? 'dark' : ''}>
-        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
+        <div className="rt-page min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-[var(--rt-accent)] animate-spin" />
         </div>
       </div>
     );
@@ -1137,34 +1137,34 @@ export default function App() {
   if (!session) {
     return (
       <div className={isDark ? 'dark' : ''}>
-        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex items-center justify-center px-4">
+        <div className="rt-page min-h-screen text-[var(--rt-text)] flex items-center justify-center px-4">
           <div className="w-full max-w-md">
             <div className="flex items-center justify-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 rounded-xl bg-[var(--rt-accent)] flex items-center justify-center shadow-lg">
                 <FileText className="w-5 h-5 text-white" />
               </div>
               <span className="text-2xl font-bold">Resume Tailor Pro</span>
             </div>
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-8 shadow-xl">
+            <div className="bg-[var(--rt-surface)] border border-[var(--rt-border)] rounded-2xl p-8 [box-shadow:var(--rt-shadow-card)] dark:backdrop-blur-[24px]">
               <h2 className="text-xl font-semibold mb-6">
                 {authMode === 'signin' ? 'Sign in to continue' : 'Create your account'}
               </h2>
               <form onSubmit={handleAuth} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">Email</label>
+                  <label className="block text-sm font-medium text-[var(--rt-text-2)] mb-1.5">Email</label>
                   <input
                     type="email" required value={authEmail}
                     onChange={e => setAuthEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/25 focus:border-violet-500 transition-all"
+                    className={inputCls}
                     placeholder="you@example.com"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">Password</label>
+                  <label className="block text-sm font-medium text-[var(--rt-text-2)] mb-1.5">Password</label>
                   <input
                     type="password" required value={authPassword}
                     onChange={e => setAuthPassword(e.target.value)}
-                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/25 focus:border-violet-500 transition-all"
+                    className={inputCls}
                     placeholder="••••••••"
                   />
                 </div>
@@ -1173,17 +1173,17 @@ export default function App() {
                 )}
                 <button
                   type="submit" disabled={authLoading}
-                  className="w-full py-3 rounded-xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-500 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="btn-primary w-full py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {authLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                   {authMode === 'signin' ? 'Sign In' : 'Create Account'}
                 </button>
               </form>
-              <p className="text-center text-sm text-zinc-500 mt-6">
+              <p className="text-center text-sm text-[var(--rt-text-3)] mt-6">
                 {authMode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
                 <button
                   onClick={() => { setAuthMode(m => m === 'signin' ? 'signup' : 'signin'); setAuthError(null); }}
-                  className="text-violet-600 dark:text-violet-400 font-medium hover:underline"
+                  className="text-accent font-medium hover:underline"
                 >
                   {authMode === 'signin' ? 'Sign up' : 'Sign in'}
                 </button>
@@ -1197,22 +1197,30 @@ export default function App() {
 
   return (
     <div className={isDark ? 'dark' : ''}>
-      <div className="relative min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-500 overflow-x-hidden">
+      <div className="rt-page relative min-h-screen text-[var(--rt-text)] transition-colors duration-500 overflow-x-hidden">
 
         {/* ── Ambient gradient orbs ── */}
         <div className="pointer-events-none fixed inset-0 overflow-hidden z-0" aria-hidden>
-          <div className="absolute -top-1/4 -right-1/4 w-[900px] h-[900px] rounded-full bg-violet-500/6 dark:bg-violet-500/10 blur-[160px] animate-pulse-glow" />
-          <div className="absolute -bottom-1/4 -left-1/4 w-[700px] h-[700px] rounded-full bg-indigo-500/5 dark:bg-indigo-500/8 blur-[130px] animate-pulse-glow" style={{ animationDelay: '1.5s' }} />
+          {/* V11 orbs — shown in default mode */}
+          <div className="v11-orbs">
+            <div className="absolute top-0 right-0 w-[700px] h-[700px] rounded-full bg-[var(--rt-accent-soft)] blur-[160px] animate-pulse-glow" />
+            <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full" style={{ background: 'rgba(20,184,166,0.06)', filter: 'blur(130px)', animationDelay: '1.5s' }} />
+          </div>
+          {/* Legacy orbs — shown only when .legacy-ui is active */}
+          <div className="legacy-orbs">
+            <div className="absolute -top-1/4 -right-1/4 w-[900px] h-[900px] rounded-full bg-[var(--rt-accent-soft)] dark:bg-[var(--rt-accent-soft)] blur-[160px] animate-pulse-glow" />
+            <div className="absolute -bottom-1/4 -left-1/4 w-[700px] h-[700px] rounded-full bg-indigo-500/5 dark:bg-indigo-500/8 blur-[130px] animate-pulse-glow" style={{ animationDelay: '1.5s' }} />
+          </div>
         </div>
 
         {/* ── Sidebar (desktop) ── */}
         <Sidebar step={step} isDark={isDark} onToggleDark={toggleDark} onSignOut={() => supabase.auth.signOut()} userEmail={session?.user?.email} onStepClick={n => setStep(n)} />
 
         {/* ── Mobile header ── */}
-        <header className="lg:hidden fixed inset-x-0 top-0 z-30 h-13 border-b border-zinc-200/60 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-950/90 backdrop-blur-xl">
+        <header className="lg:hidden fixed inset-x-0 top-0 z-30 h-13 border-b border-[var(--rt-border)] bg-[var(--rt-sidebar-bg)] backdrop-blur-xl">
           <div className="px-5 h-13 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-md bg-[var(--rt-accent)] flex items-center justify-center">
                 <FileText className="w-3 h-3 text-white" />
               </div>
               <span className="text-sm font-bold">Resume Tailor Pro</span>
@@ -1221,12 +1229,12 @@ export default function App() {
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((n, i) => (
                   <React.Fragment key={n}>
-                    {i > 0 && <div className={`w-5 h-px ${step > i ? 'bg-violet-400' : 'bg-zinc-300 dark:bg-zinc-700'}`} />}
+                    {i > 0 && <div className={`w-5 h-px ${step > i ? 'bg-accent' : 'bg-zinc-300 dark:bg-zinc-700'}`} />}
                     <div
                       data-testid={`step-indicator-${n}-mobile`}
                       aria-current={step === n ? 'step' : undefined}
                       className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold transition-colors ${
-                        step === n ? 'bg-violet-600 text-white' : step > n ? 'bg-violet-100 dark:bg-violet-900/50 text-violet-600' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400'
+                        step === n ? 'bg-accent text-white' : step > n ? 'bg-accent-soft text-accent' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400'
                       }`}
                     >
                       {step > n ? <CheckCircle2 className="w-3 h-3" /> : n}
@@ -1297,14 +1305,14 @@ export default function App() {
 
                     {/* Phase label */}
                     <div className="flex items-center gap-2 mb-6">
-                      <span className="text-[10px] font-medium text-violet-500 dark:text-violet-400 uppercase tracking-[0.25em]">Phase 01</span>
-                      <span className="w-8 h-px bg-violet-400/40" />
+                      <span className="text-[10px] font-medium text-accent uppercase tracking-[0.25em]">Phase 01</span>
+                      <span className="w-8 h-px bg-accent-soft" />
                       <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Find roles that fit</span>
                     </div>
 
                     <h2 className="text-2xl font-semibold tracking-tight mb-3">
                       Find Your{' '}
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-violet-500 to-indigo-400 dark:from-violet-400 dark:via-violet-300 dark:to-indigo-300">
+                      <span className="text-[var(--rt-accent)]">
                         Best Matches
                       </span>
                     </h2>
@@ -1339,7 +1347,7 @@ export default function App() {
                             <div className="flex flex-wrap gap-2">
                               <button
                                 onClick={() => searchFileRef.current?.click()}
-                                className="px-3 py-2 rounded-xl text-xs font-semibold text-violet-600 bg-white dark:bg-zinc-900 border border-violet-200 dark:border-violet-500/20 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors"
+                                className="px-3 py-2 rounded-xl text-xs font-semibold text-accent bg-white dark:bg-zinc-900 border border-accent-soft hover:bg-accent-soft dark:hover:bg-[var(--rt-accent-soft)] transition-colors"
                               >
                                 Upload Override
                               </button>
@@ -1354,10 +1362,10 @@ export default function App() {
                             onClick={() => !searchResumeFile && searchFileRef.current?.click()}
                             className={`relative rounded-xl border-2 border-dashed p-8 text-center transition-all duration-300 flex flex-col items-center justify-center min-h-[160px] cursor-pointer ${
                               isDraggingSearch
-                                ? 'border-violet-500 bg-violet-500/5'
+                                ? 'border-accent bg-[var(--rt-accent-soft)]'
                                 : searchResumeFile
                                 ? 'border-emerald-400 dark:border-emerald-600 bg-emerald-50/40 dark:bg-emerald-500/5'
-                                : 'border-zinc-200 dark:border-zinc-800 hover:border-violet-400/60 dark:hover:border-violet-700'
+                                : 'border-zinc-200 dark:border-zinc-800 hover:border-accent-soft'
                             }`}
                           >
                             {searchResumeFile ? (
@@ -1380,8 +1388,8 @@ export default function App() {
                               </>
                             ) : (
                               <>
-                                <div className={`w-11 h-11 rounded-2xl mb-3 flex items-center justify-center transition-all ${isDraggingSearch ? 'bg-violet-100 dark:bg-violet-500/20 rotate-3' : 'bg-zinc-100 dark:bg-zinc-800'}`}>
-                                  <Upload className={`w-5 h-5 ${isDraggingSearch ? 'text-violet-600 dark:text-violet-400' : 'text-zinc-400'}`} />
+                                <div className={`w-11 h-11 rounded-2xl mb-3 flex items-center justify-center transition-all ${isDraggingSearch ? 'bg-accent-soft rotate-3' : 'bg-zinc-100 dark:bg-zinc-800'}`}>
+                                  <Upload className={`w-5 h-5 ${isDraggingSearch ? 'text-accent' : 'text-zinc-400'}`} />
                                 </div>
                                 <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">Drop your resume or click to browse</p>
                                 <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1">DOCX only</p>
@@ -1488,7 +1496,7 @@ export default function App() {
                             className="w-full flex items-center justify-between gap-3"
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-medium text-violet-500 dark:text-violet-400 uppercase tracking-widest">Search Criteria</span>
+                              <span className="text-[10px] font-medium text-accent uppercase tracking-widest">Search Criteria</span>
                               {profilePreviewLoading && <Loader2 className="w-3 h-3 text-zinc-400 animate-spin" />}
                             </div>
                             {!profilePreviewLoading && (showProfilePreview
@@ -1502,7 +1510,7 @@ export default function App() {
                                 <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600 uppercase tracking-wider mb-1.5">Roles</p>
                                 <div className="flex flex-wrap gap-1">
                                   {expandRoleTitles(profilePreview.primaryTitles).map(t => (
-                                    <span key={t} className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300">{t}</span>
+                                    <span key={t} className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-accent-soft text-accent">{t}</span>
                                   ))}
                                 </div>
                               </div>
@@ -1536,7 +1544,7 @@ export default function App() {
                     {/* Search button */}
                     <div className="flex flex-col items-center gap-3 max-w-xs mx-auto mb-8">
                       <button onClick={handleSearchJobs} disabled={searchLoading || (!searchResumeFile && !defaultResume)}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-violet-500/25">
+                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white btn-primary active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-lg">
                         {searchLoading
                           ? <><Loader2 className="w-4 h-4 animate-spin" />Searching live job boards...</>
                           : <><Search className="w-4 h-4" />Search Jobs</>}
@@ -1574,13 +1582,13 @@ export default function App() {
                           {jobSearchResults.map(job => {
                             const fitColors = {
                               strong:   'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
-                              good:     'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-500/20',
+                              good:     'bg-accent-soft text-accent border-accent-soft',
                               moderate: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20',
                               stretch:  'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20',
                             };
                             const remoteLabel = job.remoteType !== 'unknown' ? job.remoteType : null;
                             return (
-                              <div key={job.id} className={`${card} p-5 flex flex-col gap-3 hover:border-violet-300 dark:hover:border-violet-700/60 transition-colors`}>
+                              <div key={job.id} className={`${card} p-5 flex flex-col gap-3 hover:border-accent-soft transition-colors`}>
                                 {/* Header row */}
                                 <div className="flex items-start gap-3">
                                   <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
@@ -1617,7 +1625,7 @@ export default function App() {
                                 {job.matchBreakdown.topMatchingSkills.length > 0 && (
                                   <div className="flex flex-wrap gap-1">
                                     {job.matchBreakdown.topMatchingSkills.slice(0, 4).map(s => (
-                                      <span key={s} className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300">
+                                      <span key={s} className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-accent-soft text-accent">
                                         {s}
                                       </span>
                                     ))}
@@ -1644,7 +1652,7 @@ export default function App() {
                                 <div className="mt-auto pt-2 flex items-center gap-2">
                                   <button onClick={() => { void handleSelectJob(job); }}
                                     disabled={selectingJobId === job.id}
-                                    className="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] transition-all shadow-sm shadow-violet-500/20">
+                                    className="flex-1 py-2 rounded-xl text-xs font-semibold text-white btn-primary active:scale-[0.98] transition-all shadow-sm">
                                     {selectingJobId === job.id ? <span className="inline-flex items-center gap-1"><Loader2 className="w-3.5 h-3.5 animate-spin" />Loading full JD…</span> : 'Use This Job →'}
                                   </button>
                                   {job.url && (
@@ -1668,7 +1676,7 @@ export default function App() {
                         <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-400">No results returned</p>
                         <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1 mb-4">Try adjusting your preferences or skip to enter a specific job description.</p>
                         <button onClick={() => { setJobSearchResults([]); setCandidateProfile(null); setSelectedJob(null); }}
-                          className="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline">
+                          className="text-xs font-semibold text-accent hover:underline">
                           ← Search Again
                         </button>
                       </motion.div>
@@ -1695,22 +1703,22 @@ export default function App() {
                         className="w-7 h-7 rounded-lg flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
                         <ArrowLeft className="w-3.5 h-3.5 text-zinc-500" />
                       </button>
-                      <span className="text-[10px] font-medium text-violet-500 dark:text-violet-400 uppercase tracking-[0.25em]">Phase 02</span>
-                      <span className="w-8 h-px bg-violet-400/40" />
+                      <span className="text-[10px] font-medium text-accent uppercase tracking-[0.25em]">Phase 02</span>
+                      <span className="w-8 h-px bg-accent-soft" />
                       <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Target job description</span>
                     </div>
 
                     {/* Selected job banner */}
                     {selectedJob && (
                       <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
-                        className="flex items-center gap-3 px-4 py-3 mb-5 rounded-xl bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20">
-                        <Briefcase className="w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0" />
+                        className="flex items-center gap-3 px-4 py-3 mb-5 rounded-xl bg-accent-soft dark:bg-[var(--rt-accent-soft)] border border-accent-soft">
+                        <Briefcase className="w-4 h-4 text-accent shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-violet-700 dark:text-violet-300 truncate">{selectedJob.title} at {selectedJob.company}</p>
-                          <p className="text-[10px] text-violet-500/70 dark:text-violet-400/60">Pre-filled from job search</p>
+                          <p className="text-xs font-bold text-accent truncate">{selectedJob.title} at {selectedJob.company}</p>
+                          <p className="text-[10px] text-accent/70 dark:text-accent/60">Pre-filled from job search</p>
                         </div>
                         <button onClick={() => { setSelectedJob(null); setJdText(''); setJdType('paste'); }}
-                          className="w-5 h-5 flex items-center justify-center text-violet-400 hover:text-violet-600 transition-colors shrink-0">
+                          className="w-5 h-5 flex items-center justify-center text-[var(--rt-accent-soft)] hover:text-accent transition-colors shrink-0">
                           <X className="w-3.5 h-3.5" />
                         </button>
                       </motion.div>
@@ -1718,7 +1726,7 @@ export default function App() {
 
                     <h2 className="text-2xl font-semibold tracking-tight mb-3">
                       Target Job{' '}
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-violet-500 to-indigo-400 dark:from-violet-400 dark:via-violet-300 dark:to-indigo-300">
+                      <span className="text-[var(--rt-accent)]">
                         Description
                       </span>
                     </h2>
@@ -1761,15 +1769,15 @@ export default function App() {
                             onClick={() => jdFileRef.current?.click()}
                             className={`relative rounded-2xl border-2 border-dashed p-12 text-center cursor-pointer transition-all duration-300 ${
                               isDraggingJd
-                                ? 'border-violet-500 bg-violet-50/80 dark:bg-violet-500/8'
-                                : 'border-zinc-200 dark:border-zinc-800 hover:border-violet-400/60 dark:hover:border-violet-700'
+                                ? 'border-accent bg-[var(--rt-accent-soft)]'
+                                : 'border-zinc-200 dark:border-zinc-800 hover:border-accent-soft'
                             }`}
                           >
                             <input ref={jdFileRef} type="file" accept=".pdf,.docx,.txt"
                               onChange={e => { setJdFile(e.target.files?.[0] || null); setIsDraggingJd(false); }}
                               className="hidden" />
-                            <div className={`w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center transition-all ${isDraggingJd ? 'bg-violet-100 dark:bg-violet-500/20 rotate-6' : 'bg-zinc-100 dark:bg-zinc-800'}`}>
-                              <Upload className={`w-5 h-5 ${isDraggingJd ? 'text-violet-600 dark:text-violet-400' : 'text-zinc-400'}`} />
+                            <div className={`w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center transition-all ${isDraggingJd ? 'bg-accent-soft rotate-6' : 'bg-zinc-100 dark:bg-zinc-800'}`}>
+                              <Upload className={`w-5 h-5 ${isDraggingJd ? 'text-accent' : 'text-zinc-400'}`} />
                             </div>
                             <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">{jdFile ? jdFile.name : 'Drop or click to browse'}</p>
                             <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1">PDF · DOCX · TXT</p>
@@ -1787,8 +1795,8 @@ export default function App() {
                               <div className="space-y-1.5">
                                 {jdHistory.map(h => (
                                   <button key={h.id} onClick={() => setJdText(h.cleanText)}
-                                    className="w-full text-left px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-violet-400/60 dark:hover:border-violet-700 hover:bg-violet-50/40 dark:hover:bg-violet-500/5 transition-colors group">
-                                    <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200 truncate group-hover:text-violet-700 dark:group-hover:text-violet-400">{h.title}</p>
+                                    className="w-full text-left px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-accent-soft hover:bg-accent-soft/40 dark:hover:bg-[var(--rt-accent-soft)] transition-colors group">
+                                    <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200 truncate group-hover:text-accent dark:group-hover:text-accent">{h.title}</p>
                                     <p className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-0.5">{new Date(h.savedAt).toLocaleDateString()}</p>
                                   </button>
                                 ))}
@@ -1803,19 +1811,19 @@ export default function App() {
                       <motion.div
                         initial={{ opacity: 0, y: -6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 mt-5"
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-accent-soft dark:bg-[var(--rt-accent-soft)] border border-accent-soft mt-5"
                       >
-                        <Loader2 className="w-4 h-4 text-violet-500 animate-spin shrink-0" />
+                        <Loader2 className="w-4 h-4 text-accent animate-spin shrink-0" />
                         <div>
-                          <p className="text-xs font-semibold text-violet-700 dark:text-violet-300">Extracting job description…</p>
-                          <p className="text-[11px] text-violet-500/70 dark:text-violet-400/60 mt-0.5">Parsing requirements, keywords, and must-haves</p>
+                          <p className="text-xs font-semibold text-accent">Extracting job description…</p>
+                          <p className="text-[11px] text-accent/70 dark:text-accent/60 mt-0.5">Parsing requirements, keywords, and must-haves</p>
                         </div>
                       </motion.div>
                     )}
                     <button
                       onClick={handleExtractJd}
                       disabled={isLoading || (jdType === 'url' && !jdUrl) || (jdType === 'file' && !jdFile) || (jdType === 'paste' && !jdText)}
-                      className="mt-3 w-full relative flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-violet-500/25"
+                      className="mt-3 w-full relative flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm text-white btn-primary active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
                     >
                       {isLoading
                         ? <><Loader2 className="w-4 h-4 animate-spin" />Extracting...</>
@@ -1846,14 +1854,14 @@ export default function App() {
                         className="w-7 h-7 rounded-lg flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
                         <ArrowLeft className="w-3.5 h-3.5 text-zinc-500" />
                       </button>
-                      <span className="text-[10px] font-medium text-violet-500 dark:text-violet-400 uppercase tracking-[0.25em]">Phase 03</span>
-                      <span className="w-8 h-px bg-violet-400/40" />
+                      <span className="text-[10px] font-medium text-accent uppercase tracking-[0.25em]">Phase 03</span>
+                      <span className="w-8 h-px bg-accent-soft" />
                       <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Resume & prefs</span>
                     </div>
 
                     <h2 className="text-2xl font-semibold tracking-tight mb-2">
                       Reference Resume{' '}
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-500 dark:from-violet-400 dark:to-indigo-400">
+                      <span className="text-[var(--rt-accent)]">
                         &amp; Preferences
                       </span>
                     </h2>
@@ -1935,7 +1943,7 @@ export default function App() {
                               <p className="text-[10px] text-emerald-500/70 dark:text-emerald-400/60">Carried over from job search</p>
                             </div>
                             <button onClick={() => setSearchResumeFile(null)}
-                              className="px-3 py-1.5 rounded-xl text-xs font-semibold text-violet-600 bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors border border-violet-200 dark:border-violet-500/20 shrink-0">
+                              className="px-3 py-1.5 rounded-xl text-xs font-semibold text-accent bg-accent-soft dark:bg-[var(--rt-accent-soft)] hover:bg-accent-soft dark:hover:bg-[var(--rt-accent-soft)] transition-colors border border-accent-soft shrink-0">
                               Change
                             </button>
                           </motion.div>
@@ -1958,7 +1966,7 @@ export default function App() {
                             </div>
                             <div className="flex flex-wrap gap-2">
                               <button onClick={() => resumeFileRef.current?.click()}
-                                className="px-3 py-2 rounded-xl text-xs font-semibold text-violet-600 bg-white dark:bg-zinc-900 border border-violet-200 dark:border-violet-500/20 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors">
+                                className="px-3 py-2 rounded-xl text-xs font-semibold text-accent bg-white dark:bg-zinc-900 border border-accent-soft hover:bg-accent-soft dark:hover:bg-[var(--rt-accent-soft)] transition-colors">
                                 Upload Override
                               </button>
                             </div>
@@ -1974,10 +1982,10 @@ export default function App() {
                           onClick={() => resumeFileRef.current?.click()}
                           className={`relative rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-all duration-300 flex-1 flex flex-col items-center justify-center min-h-[180px] ${
                             isDraggingResume
-                              ? 'border-violet-500 bg-violet-500/5 dark:bg-violet-500/8'
+                              ? 'border-accent bg-[var(--rt-accent-soft)] dark:bg-[var(--rt-accent-soft)]'
                               : resumeFile
                               ? 'border-emerald-400 dark:border-emerald-600 bg-emerald-50/40 dark:bg-emerald-500/5'
-                              : 'border-zinc-200 dark:border-zinc-800 hover:border-violet-400/60 dark:hover:border-violet-700'
+                              : 'border-zinc-200 dark:border-zinc-800 hover:border-accent-soft'
                           }`}
                         >
                           {resumeFile ? (
@@ -1992,8 +2000,8 @@ export default function App() {
                             </div>
                           ) : (
                             <>
-                              <div className={`w-12 h-12 rounded-2xl mb-4 flex items-center justify-center transition-all duration-300 ${isDraggingResume ? 'bg-violet-100 dark:bg-violet-500/20 scale-110 rotate-3' : 'bg-zinc-100 dark:bg-zinc-800'}`}>
-                                <Upload className={`w-5 h-5 transition-colors ${isDraggingResume ? 'text-violet-600 dark:text-violet-400' : 'text-zinc-400'}`} />
+                              <div className={`w-12 h-12 rounded-2xl mb-4 flex items-center justify-center transition-all duration-300 ${isDraggingResume ? 'bg-accent-soft dark:bg-[var(--rt-accent-soft)] scale-110 rotate-3' : 'bg-zinc-100 dark:bg-zinc-800'}`}>
+                                <Upload className={`w-5 h-5 transition-colors ${isDraggingResume ? 'text-accent' : 'text-zinc-400'}`} />
                               </div>
                               <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">Drop your resume or click to browse</p>
                               <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1">DOCX only</p>
@@ -2058,7 +2066,7 @@ export default function App() {
                           </div>
                           <div className="h-1 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                             <motion.div
-                              className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full"
+                              className="h-full bg-[var(--rt-accent)] rounded-full"
                               style={{ width: `${progress}%` }}
                               transition={{ duration: 0.3 }}
                             />
@@ -2071,7 +2079,7 @@ export default function App() {
                     ) : (
                       <div className="space-y-2.5 max-w-sm mx-auto w-full">
                         <button onClick={handleTailorResume} disabled={isLoading || (!resumeFile && !searchResumeFile && !defaultResume)}
-                          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-violet-500/20">
+                          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white btn-primary active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-lg">
                           {isLoading ? <><Loader2 className="w-4 h-4 animate-spin" />Preparing...</> : 'Tailor Resume →'}
                         </button>
                       </div>
@@ -2173,7 +2181,7 @@ export default function App() {
 
                                   {/* Repositioning angle */}
                                   {gapAnalysis.repositioningAngle && (
-                                    <p className="text-[11px] italic text-zinc-500 dark:text-zinc-500 leading-relaxed border-l-2 border-violet-300 dark:border-violet-700 pl-2.5">
+                                    <p className="text-[11px] italic text-zinc-500 dark:text-zinc-500 leading-relaxed border-l-2 border-accent-soft pl-2.5">
                                       {gapAnalysis.repositioningAngle}
                                     </p>
                                   )}
@@ -2388,7 +2396,7 @@ export default function App() {
                           <div className="space-y-2.5 mt-auto pt-4 border-t border-zinc-100 dark:border-zinc-800">
                             <button
                               onClick={blocked ? () => setShowBlockedConfirm(true) : handleDownload}
-                              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-violet-500/20">
+                              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white btn-primary active:scale-[0.98] transition-all duration-200 shadow-lg">
                               <Download className="w-4 h-4" />
                               {blocked ? 'Download with Warnings ↓' : 'Download Tailored Resume (DOCX)'}
                             </button>
@@ -2417,14 +2425,14 @@ export default function App() {
                                 hasDownloaded
                                   ? blocked
                                     ? 'border-amber-400/40 bg-amber-500/10 dark:bg-amber-500/10'
-                                    : 'border-violet-400/40 bg-violet-500/10 dark:bg-violet-500/10'
+                                    : 'border-accent-soft bg-[var(--rt-accent-soft)] dark:bg-[var(--rt-accent-soft)]'
                                   : blocked
                                     ? 'border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10'
                                     : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50'
                               }`}>
                                 {hasDownloaded ? (
                                   <>
-                                    <p className={`font-bold mb-1 ${blocked ? 'text-amber-700 dark:text-amber-400' : 'text-violet-600 dark:text-violet-400'}`}>
+                                    <p className={`font-bold mb-1 ${blocked ? 'text-amber-700 dark:text-amber-400' : 'text-accent'}`}>
                                       {blocked ? 'Resume ready — review required in Apply stage' : '✓ Resume ready — next step'}
                                     </p>
                                     <p className="text-zinc-600 dark:text-zinc-400">
@@ -2450,7 +2458,7 @@ export default function App() {
 
                             {blocked && (
                               <button data-testid="retry-resume" onClick={handleRetryResume}
-                                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-violet-500/20">
+                                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white btn-primary active:scale-[0.98] transition-all duration-200 shadow-lg">
                                 Try a Different Resume →
                               </button>
                             )}
@@ -2485,14 +2493,14 @@ export default function App() {
                                     transition={{ delay: i * 0.05, ease: 'easeOut' }}
                                     className="flex gap-3 p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800"
                                   >
-                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0" />
+                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-accent-soft0 shrink-0" />
                                     <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{rec}</p>
                                   </motion.div>
                                 ))}
                               </div>
                               {recs.length > 3 && (
                                 <button data-testid="show-more-recs" onClick={() => setShowAllRecs(!showAllRecs)}
-                                  className="mt-4 text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-500 uppercase tracking-wide transition-colors">
+                                  className="mt-4 text-xs font-semibold text-accent hover:text-accent uppercase tracking-wide transition-colors">
                                   {showAllRecs ? '↑ Show less' : `↓ +${recs.length - 3} more recommendations`}
                                 </button>
                               )}
@@ -2525,14 +2533,14 @@ export default function App() {
                           className="w-7 h-7 rounded-lg flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
                           <ArrowLeft className="w-3.5 h-3.5 text-zinc-500" />
                         </button>
-                        <span className="text-[10px] font-medium text-violet-500 dark:text-violet-400 uppercase tracking-[0.25em]">Phase 05</span>
-                        <span className="w-8 h-px bg-violet-400/40" />
+                        <span className="text-[10px] font-medium text-accent uppercase tracking-[0.25em]">Phase 05</span>
+                        <span className="w-8 h-px bg-accent-soft" />
                         <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest">Submit Application</span>
                       </div>
 
                       <h2 className="text-2xl font-semibold tracking-tight mb-2">
                         Apply to{' '}
-                        <span className="bg-gradient-to-r from-violet-500 to-indigo-500 bg-clip-text text-transparent">
+                        <span className="text-[var(--rt-accent)]">
                           {company}
                         </span>
                       </h2>
@@ -2584,13 +2592,13 @@ export default function App() {
                             <button
                               onClick={handleAgentApply}
                               disabled={!applyUrl.trim() || applyStarting || !extensionInstalled}
-                              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-violet-600 hover:bg-violet-500 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-violet-500/25"
+                              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white btn-primary active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
                             >
                               {applyStarting && <Loader2 className="w-4 h-4 animate-spin" />}
                               Start Hybrid Apply →
                             </button>
                           ) : ['created', 'queued', 'starting', 'filling', 'submitting'].includes(applySession.status) ? (
-                            <div className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-sm text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20">
+                            <div className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-sm text-accent bg-accent-soft dark:bg-[var(--rt-accent-soft)] border border-accent-soft">
                               <Loader2 className="w-4 h-4 animate-spin" />
                               {applySession.latestMessage || 'Opening the form and filling supported fields…'}
                             </div>
@@ -2769,7 +2777,7 @@ export default function App() {
                   <input
                     type="email" required value={authEmail}
                     onChange={e => setAuthEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/25 focus:border-violet-500 transition-all"
+                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--rt-accent-soft)] focus:border-accent transition-all"
                     placeholder="you@example.com"
                     autoFocus
                   />
@@ -2779,7 +2787,7 @@ export default function App() {
                   <input
                     type="password" required value={authPassword}
                     onChange={e => setAuthPassword(e.target.value)}
-                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/25 focus:border-violet-500 transition-all"
+                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--rt-accent-soft)] focus:border-accent transition-all"
                     placeholder="••••••••"
                   />
                 </div>
@@ -2788,7 +2796,7 @@ export default function App() {
                 )}
                 <button
                   type="submit" disabled={authLoading}
-                  className="w-full py-3 rounded-xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-500 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-xl btn-primary text-sm font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {authLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                   Sign In & Continue

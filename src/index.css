@@ -1,6 +1,122 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ════════════════════════════════════════
+   V11 Design Tokens
+════════════════════════════════════════ */
+
+/* ── Light (default) ── */
+:root {
+  --rt-bg:            #E8EEF7;
+  --rt-surface:       #FFFFFF;
+  --rt-surface-2:     #F4F7FC;
+  --rt-border:        rgba(17,32,68,0.08);
+  --rt-text:          #0F1C34;
+  --rt-text-2:        #4A5A72;
+  --rt-text-3:        #8A97AB;
+  --rt-accent:        #4C6FFF;
+  --rt-accent-soft:   rgba(76,111,255,0.12);
+  --rt-green:         #0FA870;
+  --rt-green-soft:    rgba(15,168,112,0.12);
+  --rt-cyan:          #0891B2;
+  --rt-amber:         #D97706;
+  --rt-shadow-card:   0 2px 16px rgba(17,32,68,0.07), 0 1px 4px rgba(17,32,68,0.04);
+  --rt-sidebar-bg:    rgba(255,255,255,0.85);
+}
+
+/* ── Dark ── */
+.dark {
+  --rt-bg:            #0B0F1A;
+  --rt-surface:       rgba(255,255,255,0.055);
+  --rt-surface-2:     rgba(255,255,255,0.03);
+  --rt-border:        rgba(255,255,255,0.08);
+  --rt-text:          #F1F5FB;
+  --rt-text-2:        #8A9BB2;
+  --rt-text-3:        #5C6B80;
+  --rt-accent:        #4F7CFF;
+  --rt-accent-soft:   rgba(79,124,255,0.18);
+  --rt-green:         #22C55E;
+  --rt-green-soft:    rgba(34,197,94,0.15);
+  --rt-cyan:          #14B8A6;
+  --rt-amber:         #F59E0B;
+  --rt-shadow-card:   none;
+  --rt-sidebar-bg:    rgba(11,15,26,0.85);
+}
+
+/* ── Legacy UI fallback (violet/zinc) ── */
+.legacy-ui {
+  --rt-bg:            transparent;
+  --rt-surface:       #FFFFFF;
+  --rt-surface-2:     #fafafa;
+  --rt-border:        rgba(0,0,0,0.08);
+  --rt-text:          #09090b;
+  --rt-text-2:        #52525b;
+  --rt-text-3:        #a1a1aa;
+  --rt-accent:        #7c3aed;
+  --rt-accent-soft:   rgba(124,58,237,0.12);
+  --rt-shadow-card:   none;
+  --rt-sidebar-bg:    rgba(255,255,255,0.8);
+}
+.legacy-ui.dark {
+  --rt-bg:            transparent;
+  --rt-surface:       #18181b;
+  --rt-surface-2:     #09090b;
+  --rt-border:        rgba(255,255,255,0.08);
+  --rt-text:          #fafafa;
+  --rt-text-2:        #a1a1aa;
+  --rt-text-3:        #71717a;
+  --rt-accent:        #8b5cf6;
+  --rt-accent-soft:   rgba(139,92,246,0.15);
+  --rt-shadow-card:   none;
+  --rt-sidebar-bg:    rgba(9,9,11,0.8);
+}
+
+/* ── Semantic accent utilities (used in place of violet-* classes) ── */
+.text-accent          { color: var(--rt-accent); }
+.bg-accent            { background-color: var(--rt-accent); }
+.bg-accent-soft       { background-color: var(--rt-accent-soft); }
+.border-accent        { border-color: var(--rt-accent); }
+.border-accent-soft   { border-color: color-mix(in srgb, var(--rt-accent) 25%, transparent); }
+
+/* Primary action button */
+.btn-primary {
+  background-color: var(--rt-accent);
+  color: white;
+}
+.btn-primary:hover:not(:disabled) { opacity: 0.88; }
+
+/* Accent outline button */
+.btn-accent-outline {
+  color: var(--rt-accent);
+  border-color: color-mix(in srgb, var(--rt-accent) 35%, transparent);
+  background-color: transparent;
+}
+.btn-accent-outline:hover {
+  background-color: var(--rt-accent-soft);
+}
+
+/* ── V11 page background (dark: radial gradient orbs) ── */
+.rt-page {
+  background-color: var(--rt-bg);
+}
+.dark .rt-page {
+  background-color: var(--rt-bg);
+  background-image:
+    radial-gradient(ellipse 65% 55% at 10% 0%, rgba(79,124,255,0.14) 0%, transparent 70%),
+    radial-gradient(ellipse 55% 45% at 90% 5%, rgba(20,184,166,0.09) 0%, transparent 70%);
+  background-attachment: fixed;
+}
+/* Legacy: clear gradient, let zinc body color show */
+.legacy-ui .rt-page,
+.legacy-ui.dark .rt-page {
+  background-color: transparent;
+  background-image: none;
+}
+
+/* Hide V11 ambient orb divs in legacy mode; hide legacy orb divs in V11 mode */
+html:not(.legacy-ui) .legacy-orbs { display: none; }
+.legacy-ui .v11-orbs { display: none; }
+
 /* ── Geist font-face declarations ── */
 @font-face {
   font-family: "Geist";

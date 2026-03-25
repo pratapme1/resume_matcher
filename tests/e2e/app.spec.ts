@@ -182,11 +182,11 @@ Required qualifications:
 
   const zone = page.getByTestId('drag-zone-resume');
   await zone.dispatchEvent('dragenter');
-  await expect(zone).toHaveClass(/border-violet-500/);
-  await expect(zone).toHaveClass(/bg-violet-500/);
+  await expect(zone).toHaveClass(/border-accent/);
+  await expect(zone).toHaveClass(/bg-\[var\(--rt-accent-soft\)\]/);
 
   await zone.dispatchEvent('dragleave');
-  await expect(zone).not.toHaveClass(/border-violet-500/);
+  await expect(zone).not.toHaveClass(/border-accent bg/);
 });
 
 test('recommendations show-more button behaviour is consistent with item count', async ({ page }) => {
