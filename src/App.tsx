@@ -219,8 +219,8 @@ function ResumePreview({ resume }: { resume: TailoredResumeDocument }) {
 /* ─────────────────────────────────────────
    Topbar — sticky top nav (V11 Studio)
 ───────────────────────────────────────── */
-function Topbar({ isDark, onToggleDark, onSignOut, userEmail }: {
-  isDark: boolean; onToggleDark: () => void; onSignOut: () => void; userEmail?: string;
+function Topbar({ isDark, onToggleDark, onSignOut, userEmail, onHome }: {
+  isDark: boolean; onToggleDark: () => void; onSignOut: () => void; userEmail?: string; onHome?: () => void;
 }) {
   const initials = userEmail
     ? userEmail.split('@')[0].slice(0, 2).toUpperCase()
@@ -228,13 +228,17 @@ function Topbar({ isDark, onToggleDark, onSignOut, userEmail }: {
 
   return (
     <header className="sticky top-0 z-30 h-[52px] bg-[var(--rt-bg)]/90 backdrop-blur-xl border-b border-[var(--rt-border)] flex items-center justify-between px-7">
-      {/* Left: logo wordmark */}
-      <div className="flex items-center gap-2">
+      {/* Left: logo wordmark — click to go home */}
+      <button
+        onClick={onHome}
+        className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+        title="Back to home"
+      >
         <div className="w-[26px] h-[26px] rounded-[7px] bg-[var(--rt-accent)] flex items-center justify-center text-[10px] font-black text-white tracking-tight shadow-md">
           RT
         </div>
         <span className="text-sm font-bold tracking-tight">Resume Tailor</span>
-      </div>
+      </button>
 
       {/* Right: dark mode toggle + user pill */}
       <div className="flex items-center gap-3">
@@ -268,7 +272,7 @@ function Topbar({ isDark, onToggleDark, onSignOut, userEmail }: {
 /* ─────────────────────────────────────────
    StepProgress — horizontal steps bar
 ───────────────────────────────────────── */
-function StepProgress({ step, onStepClick }: { step: number; onStepClick: (n: number) => void }) {
+function StepProgress({ step, onStepClick, onHome }: { step: number; onStepClick: (n: number) => void; onHome?: () => void }) {
   const steps = [
     { n: 1, label: 'Find roles' },
     { n: 2, label: 'Add JD' },
@@ -277,7 +281,16 @@ function StepProgress({ step, onStepClick }: { step: number; onStepClick: (n: nu
   ];
 
   return (
-    <div className="flex justify-center px-6 pt-4 pb-2">
+    <div className="flex flex-col items-center px-6 pt-4 pb-2 gap-1.5">
+      {onHome && (
+        <button
+          onClick={onHome}
+          className="flex items-center gap-1 text-[11px] text-[var(--rt-text-3)] hover:text-[var(--rt-accent)] transition-colors"
+          title="Switch mode"
+        >
+          <ArrowLeft className="w-3 h-3" /> Switch mode
+        </button>
+      )}
       <div className="bg-[var(--rt-surface)] rounded-xl px-10 py-5 [box-shadow:var(--rt-shadow-card)] border border-[var(--rt-border)] max-w-[640px] w-full">
         <div className="flex items-start">
           {steps.map(({ n, label }, i) => {
@@ -290,13 +303,13 @@ function StepProgress({ step, onStepClick }: { step: number; onStepClick: (n: nu
                     data-testid={`step-indicator-${n}`}
                     data-testid-mobile={`step-indicator-${n}-mobile`}
                     aria-current={isCurrent ? 'step' : undefined}
-                    onClick={isDone ? () => onStepClick(n) : undefined}
-                    className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+                    onClick={() => onStepClick(n)}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 cursor-pointer hover:scale-110 ${
                       isCurrent
                         ? 'bg-[var(--rt-accent)] text-white shadow-[0_0_0_4px_var(--rt-accent-soft)]'
                         : isDone
-                        ? 'bg-emerald-500 text-white cursor-pointer'
-                        : 'bg-[var(--rt-surface)] border-2 border-[var(--rt-border)] text-[var(--rt-text-3)]'
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-[var(--rt-surface)] border-2 border-[var(--rt-border)] text-[var(--rt-text-3)] hover:border-[var(--rt-accent)] hover:text-[var(--rt-accent)]'
                     }`}
                   >
                     {isDone ? <CheckCircle2 className="w-4 h-4" /> : n}
@@ -1219,11 +1232,11 @@ export default function App() {
         </div>
 
         {/* ── Topbar ── */}
-        <Topbar isDark={isDark} onToggleDark={toggleDark} onSignOut={() => supabase.auth.signOut()} userEmail={session?.user?.email} />
+        <Topbar isDark={isDark} onToggleDark={toggleDark} onSignOut={() => supabase.auth.signOut()} userEmail={session?.user?.email} onHome={() => setStep(0)} />
 
         {/* ── Step progress bar (shown when on a workflow step) ── */}
         {step >= 1 && step <= 4 && (
-          <StepProgress step={step} onStepClick={n => setStep(n)} />
+          <StepProgress step={step} onStepClick={n => setStep(n)} onHome={() => setStep(0)} />
         )}
 
         {/* ── Alerts ── */}
