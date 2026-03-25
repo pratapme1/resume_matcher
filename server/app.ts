@@ -59,14 +59,18 @@ import {
   type StoredResumeRecord,
 } from './db/queries/uploaded-resumes.ts';
 import { createJobSearchSession, getLatestJobSearchSession } from './db/queries/sessions.ts';
+import { getApplicationsForUser, updateApplicationStatus, type ApplicationStatus } from './db/queries/applications.ts';
+import { getJobsForUser } from './db/queries/jobs.ts';
 import { supabase } from './db/client.ts';
 import { logger } from './logger.ts';
 import type {
   ApplicantProfile,
+  ApplicationRecord,
   ApplySessionEvent,
   CandidateProfile,
   DefaultResumeResponse,
   ExtractionWarning,
+  JobRecord,
   JobSearchResult,
   LatestJobSearchSessionResponse,
   PageSnapshot,
@@ -1042,6 +1046,50 @@ Instructions:
       res.json(result);
     } catch (error) {
       sendErrorResponse(res, error, 'auto-apply-submit');
+    }
+  });
+
+  app.get('/api/applications', auth, async (req, res) => {
+    try {
+      if (deps.skipAuth || !req.internalUserId) {
+        const body: { applications: ApplicationRecord[] } = { applications: [] };
+        res.json(body);
+        return;
+      }
+      const applications = await getApplicationsForUser(req.internalUserId);
+      const body: { applications: ApplicationRecord[] } = { applications };
+      res.json(body);
+    } catch (error) {
+      sendErrorResponse(res, error, 'applications-list');
+    }
+  });
+
+  app.patch('/api/applications/:id', auth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, notes } = z.object({
+        status: z.enum(['pending', 'applied', 'rejected', 'review', 'interview', 'offered', 'in_progress', 'failed']),
+        notes: z.string().optional(),
+      }).parse(req.body);
+      await updateApplicationStatus(id, status as ApplicationStatus, notes);
+      res.json({ success: true });
+    } catch (error) {
+      sendErrorResponse(res, error, 'applications-patch');
+    }
+  });
+
+  app.get('/api/jobs', auth, async (req, res) => {
+    try {
+      if (deps.skipAuth || !req.internalUserId) {
+        const body: { jobs: JobRecord[] } = { jobs: [] };
+        res.json(body);
+        return;
+      }
+      const jobs = await getJobsForUser(req.internalUserId);
+      const body: { jobs: JobRecord[] } = { jobs };
+      res.json(body);
+    } catch (error) {
+      sendErrorResponse(res, error, 'jobs-list');
     }
   });
 

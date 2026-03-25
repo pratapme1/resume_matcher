@@ -627,3 +627,43 @@ export interface ApplySessionEvent {
   stepKind?: StepKind;
   stepSignature?: string;
 }
+
+/* ─────────────────────────────────────────
+   Applications & Jobs
+───────────────────────────────────────── */
+
+export type ApplicationStatus =
+  | 'pending'
+  | 'applied'
+  | 'rejected'
+  | 'review'
+  | 'interview'
+  | 'offered'
+  | 'in_progress'
+  | 'failed';
+
+export interface JobRecord {
+  id: string;
+  userId: string;
+  title?: string | null;
+  company?: string | null;
+  location?: string | null;
+  url?: string | null;
+  description?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApplicationRecord {
+  id: string;
+  userId: string;
+  jobId: string;
+  sessionId?: string | null;
+  applyUrl?: string | null;
+  status: ApplicationStatus;
+  notes?: string | null;
+  errorMessage?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  job?: JobRecord | null;
+}

@@ -21,6 +21,8 @@ import { detectPortalTypeFromUrl, isWidgetSupported } from './apply-capabilities
 import { deriveApplicantProfile, mergeApplicantProfiles } from './application-profile.ts';
 import { generateTailoredDocx } from './docx-render.ts';
 import { badRequest, internalServerError, notFound, unauthorized } from './errors.ts';
+import { createApplication, updateApplicationStatus, upsertJob, type ApplicationStatus } from './db/queries/applications.ts';
+import { logger } from './logger.ts';
 
 type ApplySessionRecord = {
   id: string;
@@ -251,6 +253,18 @@ export async function createApplySession(params: {
   };
 
   applySessions.set(id, session);
+
+  if (params.userId) {
+    const userId = params.userId;
+    const applyUrl = params.applyUrl;
+    Promise.resolve()
+      .then(async () => {
+        const jobId = await upsertJob(userId, { url: applyUrl });
+        await createApplication(userId, jobId, id, applyUrl);
+      })
+      .catch((err) => logger.error({ err }, 'Failed to persist apply session to DB'));
+  }
+
   return { session: sessionSummary(session), executorToken };
 }
 
@@ -448,6 +462,12 @@ export function confirmApplySessionSubmit(sessionId: string, userId?: string): A
   return sessionSummary(session);
 }
 
+function outcomeToApplicationStatus(outcome: ApplySessionStatus): ApplicationStatus {
+  if (outcome === 'submitted') return 'applied';
+  if (outcome === 'protected' || outcome === 'unsupported' || outcome === 'manual_required') return 'review';
+  return 'failed';
+}
+
 export function completeApplySession(sessionId: string, executorToken: string, outcome: ApplySessionStatus, message?: string): ApplySessionSummary {
   const session = getApplySessionByToken(sessionId, executorToken);
   if (!['submitted', 'protected', 'unsupported', 'manual_required', 'failed'].includes(outcome)) {
@@ -462,5 +482,17 @@ export function completeApplySession(sessionId: string, executorToken: string, o
       ? (session.latestPauseReason && session.latestPauseReason !== 'none' ? session.latestPauseReason : 'manual_required')
       : 'none',
   });
+
+  const applicationStatus = outcomeToApplicationStatus(outcome);
+  Promise.resolve()
+    .then(async () => {
+      const { getApplicationBySessionId } = await import('./db/queries/applications.ts');
+      const application = await getApplicationBySessionId(sessionId);
+      if (application) {
+        await updateApplicationStatus(application.id, applicationStatus, undefined, outcome === 'failed' ? (message ?? undefined) : undefined);
+      }
+    })
+    .catch((err) => logger.error({ err }, 'Failed to update application status in DB'));
+
   return sessionSummary(session);
 }
