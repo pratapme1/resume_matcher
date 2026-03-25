@@ -217,102 +217,107 @@ function ResumePreview({ resume }: { resume: TailoredResumeDocument }) {
 }
 
 /* ─────────────────────────────────────────
-   Sidebar — fixed left nav
+   Topbar — sticky top nav (V11 Studio)
 ───────────────────────────────────────── */
-function Sidebar({ step, isDark, onToggleDark, onSignOut, userEmail, onStepClick }: {
-  step: number; isDark: boolean; onToggleDark: () => void; onSignOut: () => void; userEmail?: string; onStepClick: (n: number) => void;
+function Topbar({ isDark, onToggleDark, onSignOut, userEmail }: {
+  isDark: boolean; onToggleDark: () => void; onSignOut: () => void; userEmail?: string;
 }) {
+  const initials = userEmail
+    ? userEmail.split('@')[0].slice(0, 2).toUpperCase()
+    : 'RT';
+
+  return (
+    <header className="sticky top-0 z-30 h-[52px] bg-[var(--rt-bg)]/90 backdrop-blur-xl border-b border-[var(--rt-border)] flex items-center justify-between px-7">
+      {/* Left: logo wordmark */}
+      <div className="flex items-center gap-2">
+        <div className="w-[26px] h-[26px] rounded-[7px] bg-[var(--rt-accent)] flex items-center justify-center text-[10px] font-black text-white tracking-tight shadow-md">
+          RT
+        </div>
+        <span className="text-sm font-bold tracking-tight">Resume Tailor</span>
+      </div>
+
+      {/* Right: dark mode toggle + user pill */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onToggleDark}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[var(--rt-text-2)] hover:bg-[var(--rt-surface-2)] transition-colors text-xs font-medium"
+        >
+          {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+          <span>{isDark ? 'Light mode' : 'Dark mode'}</span>
+        </button>
+        {userEmail && (
+          <div className="flex items-center gap-2 bg-[var(--rt-surface)] rounded-[20px] py-1 pl-1 pr-3 shadow-sm border border-[var(--rt-border)]">
+            <div className="w-[26px] h-[26px] rounded-full bg-[var(--rt-accent)] flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+              {initials}
+            </div>
+            <span className="text-xs font-semibold text-[var(--rt-text)] max-w-[120px] truncate">{userEmail.split('@')[0]}</span>
+            <button
+              onClick={onSignOut}
+              title="Sign out"
+              className="ml-1 text-[var(--rt-text-3)] hover:text-red-500 transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+}
+
+/* ─────────────────────────────────────────
+   StepProgress — horizontal steps bar
+───────────────────────────────────────── */
+function StepProgress({ step, onStepClick }: { step: number; onStepClick: (n: number) => void }) {
   const steps = [
-    { n: 1, label: 'Discover',   sublabel: 'Find opportunities' },
-    { n: 2, label: 'The Source', sublabel: 'Job description' },
-    { n: 3, label: 'The Profile', sublabel: 'Resume & prefs' },
-    { n: 4, label: 'The Output', sublabel: 'Results & download' },
-    { n: 5, label: 'Apply',      sublabel: 'Auto-fill form' },
+    { n: 1, label: 'Find roles' },
+    { n: 2, label: 'Add JD' },
+    { n: 3, label: 'Resume' },
+    { n: 4, label: 'Results' },
   ];
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-[200px] hidden lg:flex flex-col bg-[var(--rt-sidebar-bg)] border-r border-[var(--rt-border)] backdrop-blur-xl z-30">
-      {/* Logo */}
-      <div className="px-5 py-5 border-b border-[var(--rt-border)]">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-[var(--rt-accent)] flex items-center justify-center shadow-lg">
-            <FileText className="w-3.5 h-3.5 text-white" />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold tracking-tight leading-none">Resume Tailor</p>
-            <p className="text-[9px] text-zinc-400 dark:text-zinc-600 tracking-widest uppercase mt-0.5">Pro</p>
-          </div>
+    <div className="flex justify-center px-6 pt-4 pb-2">
+      <div className="bg-[var(--rt-surface)] rounded-xl px-10 py-5 [box-shadow:var(--rt-shadow-card)] border border-[var(--rt-border)] max-w-[640px] w-full">
+        <div className="flex items-start">
+          {steps.map(({ n, label }, i) => {
+            const isDone = step > n;
+            const isCurrent = step === n;
+            return (
+              <React.Fragment key={n}>
+                <div className="flex flex-col items-center gap-2 flex-1 relative z-10">
+                  <div
+                    data-testid={`step-indicator-${n}`}
+                    data-testid-mobile={`step-indicator-${n}-mobile`}
+                    aria-current={isCurrent ? 'step' : undefined}
+                    onClick={isDone ? () => onStepClick(n) : undefined}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+                      isCurrent
+                        ? 'bg-[var(--rt-accent)] text-white shadow-[0_0_0_4px_var(--rt-accent-soft)]'
+                        : isDone
+                        ? 'bg-emerald-500 text-white cursor-pointer'
+                        : 'bg-[var(--rt-surface)] border-2 border-[var(--rt-border)] text-[var(--rt-text-3)]'
+                    }`}
+                  >
+                    {isDone ? <CheckCircle2 className="w-4 h-4" /> : n}
+                  </div>
+                  <span className={`text-[11px] font-medium whitespace-nowrap text-center ${
+                    isCurrent ? 'text-[var(--rt-accent)] font-bold'
+                    : isDone ? 'text-emerald-500'
+                    : 'text-[var(--rt-text-3)]'
+                  }`}>{label}</span>
+                </div>
+                {i < steps.length - 1 && (
+                  <div className={`flex-1 h-0.5 mt-[18px] relative z-0 transition-colors duration-300 ${
+                    step > n + 1 || (step > n && step <= steps.length) ? 'bg-emerald-500' : 'bg-[var(--rt-border)]'
+                  }`} />
+                )}
+              </React.Fragment>
+            );
+          })}
         </div>
       </div>
-
-      {/* Steps */}
-      <nav className="px-3 flex-1 space-y-1">
-        {steps.map(({ n, label, sublabel }) => {
-          const isDone = step > n;
-          const isCurrent = step === n;
-          const isLocked = step < n;
-          return (
-            <div
-              key={n}
-              data-testid={`step-indicator-${n}`}
-              aria-current={isCurrent ? 'step' : undefined}
-              onClick={isDone ? () => onStepClick(n) : undefined}
-              title={isLocked ? 'Complete previous steps first' : undefined}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${
-                isCurrent
-                  ? 'bg-accent-soft'
-                  : isLocked
-                  ? 'opacity-35'
-                  : isDone
-                  ? 'hover:bg-[var(--rt-surface-2)] cursor-pointer'
-                  : 'cursor-default'
-              }`}
-            >
-              <motion.div
-                animate={isCurrent ? { scale: 1.1 } : { scale: 1 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium shrink-0 transition-colors duration-300 ${
-                  isDone
-                    ? 'bg-accent-soft text-accent'
-                    : isCurrent
-                    ? 'bg-accent text-white shadow-md'
-                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400'
-                }`}
-              >
-                {isDone ? <CheckCircle2 className="w-3.5 h-3.5" /> : `0${n}`}
-              </motion.div>
-              <div className="min-w-0">
-                <p className={`text-xs font-bold truncate transition-colors ${isCurrent ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 dark:text-zinc-500'}`}>
-                  {label}
-                </p>
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-600 truncate">{sublabel}</p>
-              </div>
-            </div>
-          );
-        })}
-      </nav>
-
-      {/* Bottom */}
-      <div className="p-3 border-t border-[var(--rt-border)] space-y-1">
-        <button
-          onClick={onToggleDark}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[var(--rt-text-2)] hover:bg-[var(--rt-surface-2)] transition-colors"
-        >
-          {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-          <span className="text-xs font-medium">{isDark ? 'Light mode' : 'Dark mode'}</span>
-        </button>
-        {userEmail && (
-          <div className="px-3 py-1 text-[10px] text-[var(--rt-text-3)] truncate">{userEmail}</div>
-        )}
-        <button
-          onClick={onSignOut}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[var(--rt-text-2)] hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          <span className="text-xs font-medium">Sign out</span>
-        </button>
-      </div>
-    </aside>
+    </div>
   );
 }
 
@@ -479,7 +484,7 @@ export default function App() {
     return r;
   }
 
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('theme');
     if (saved === 'dark') return true;
@@ -1197,7 +1202,7 @@ export default function App() {
 
   return (
     <div className={isDark ? 'dark' : ''}>
-      <div className="rt-page relative min-h-screen text-[var(--rt-text)] transition-colors duration-500 overflow-x-hidden">
+      <div className="rt-page min-h-screen text-[var(--rt-text)] transition-colors duration-500 overflow-x-hidden">
 
         {/* ── Ambient gradient orbs ── */}
         <div className="pointer-events-none fixed inset-0 overflow-hidden z-0" aria-hidden>
@@ -1213,44 +1218,16 @@ export default function App() {
           </div>
         </div>
 
-        {/* ── Sidebar (desktop) ── */}
-        <Sidebar step={step} isDark={isDark} onToggleDark={toggleDark} onSignOut={() => supabase.auth.signOut()} userEmail={session?.user?.email} onStepClick={n => setStep(n)} />
+        {/* ── Topbar ── */}
+        <Topbar isDark={isDark} onToggleDark={toggleDark} onSignOut={() => supabase.auth.signOut()} userEmail={session?.user?.email} />
 
-        {/* ── Mobile header ── */}
-        <header className="lg:hidden fixed inset-x-0 top-0 z-30 h-13 border-b border-[var(--rt-border)] bg-[var(--rt-sidebar-bg)] backdrop-blur-xl">
-          <div className="px-5 h-13 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-[var(--rt-accent)] flex items-center justify-center">
-                <FileText className="w-3 h-3 text-white" />
-              </div>
-              <span className="text-sm font-bold">Resume Tailor Pro</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((n, i) => (
-                  <React.Fragment key={n}>
-                    {i > 0 && <div className={`w-5 h-px ${step > i ? 'bg-accent' : 'bg-zinc-300 dark:bg-zinc-700'}`} />}
-                    <div
-                      data-testid={`step-indicator-${n}-mobile`}
-                      aria-current={step === n ? 'step' : undefined}
-                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold transition-colors ${
-                        step === n ? 'bg-accent text-white' : step > n ? 'bg-accent-soft text-accent' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400'
-                      }`}
-                    >
-                      {step > n ? <CheckCircle2 className="w-3 h-3" /> : n}
-                    </div>
-                  </React.Fragment>
-                ))}
-              </div>
-              <button onClick={toggleDark} className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-                {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-          </div>
-        </header>
+        {/* ── Step progress bar (shown when on a workflow step) ── */}
+        {step >= 1 && step <= 4 && (
+          <StepProgress step={step} onStepClick={n => setStep(n)} />
+        )}
 
         {/* ── Alerts ── */}
-        <div className="fixed top-14 lg:top-4 inset-x-0 lg:left-[216px] lg:right-4 z-20 flex flex-col items-center gap-2 px-5 lg:px-0 pointer-events-none">
+        <div className="fixed top-[60px] inset-x-0 z-20 flex flex-col items-center gap-2 px-5 pointer-events-none">
           <AnimatePresence>
             {error && (
               <motion.div key="err"
@@ -1288,9 +1265,108 @@ export default function App() {
         </div>
 
         {/* ── Main content ── */}
-        <main className="relative z-10 lg:ml-[200px] pt-13 lg:pt-0">
+        <main className="relative z-10 max-w-[1100px] mx-auto px-6 pb-16 pt-6">
           <AnimatePresence mode="wait">
             {(() => {
+
+              /* ════════════════ ENTRY — MODE PICKER ════════════════ */
+              if (step === 0) return (
+                <motion.div key="s0"
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -16 }}
+                  transition={transition}
+                  className="py-12"
+                >
+                  <div className="text-center mb-10">
+                    <h1 className="text-3xl font-bold tracking-tight mb-2">How would you like to start?</h1>
+                    <p className="text-[var(--rt-text-2)] text-sm">Pick a path — you can always switch.</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+
+                    {/* Card 1 — Discover Roles */}
+                    <div
+                      className="bg-[var(--rt-surface)] border border-[var(--rt-border)] rounded-2xl p-6 [box-shadow:var(--rt-shadow-card)] flex flex-col gap-4 hover:border-[var(--rt-accent)] transition-all duration-200 cursor-pointer group"
+                      onClick={() => setStep(1)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="w-12 h-12 rounded-xl bg-[var(--rt-accent-soft)] flex items-center justify-center text-2xl">🔍</div>
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[var(--rt-green-soft)] text-[var(--rt-green)]">Recommended</span>
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold mb-1">Discover Roles</h3>
+                        <p className="text-sm text-[var(--rt-text-2)] leading-relaxed">AI scans thousands of listings and surfaces the best matches for your background.</p>
+                      </div>
+                      <div className="flex flex-col gap-1.5 flex-1">
+                        {['Scored by fit', 'Real-time listings', 'One-click select'].map(b => (
+                          <span key={b} className="text-sm text-[var(--rt-green)] flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />{b}
+                          </span>
+                        ))}
+                      </div>
+                      <button
+                        className="btn-primary w-full py-2.5 rounded-xl text-sm font-semibold transition-all"
+                        onClick={e => { e.stopPropagation(); setStep(1); }}
+                      >
+                        Start discovering →
+                      </button>
+                    </div>
+
+                    {/* Card 2 — I have a role in mind */}
+                    <div
+                      className="bg-[var(--rt-surface)] border border-[var(--rt-border)] rounded-2xl p-6 [box-shadow:var(--rt-shadow-card)] flex flex-col gap-4 hover:border-[var(--rt-accent)] transition-all duration-200 cursor-pointer group"
+                      onClick={() => setStep(2)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="w-12 h-12 rounded-xl bg-[var(--rt-accent-soft)] flex items-center justify-center text-2xl">📄</div>
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[var(--rt-accent-soft)] text-[var(--rt-accent)]">Most popular</span>
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold mb-1">I have a role in mind</h3>
+                        <p className="text-sm text-[var(--rt-text-2)] leading-relaxed">Paste a URL or job description. We'll extract the requirements and tailor your resume instantly.</p>
+                      </div>
+                      <div className="flex flex-col gap-1.5 flex-1">
+                        {['Paste or URL fetch', 'Instant extraction', 'Ready in 60s'].map(b => (
+                          <span key={b} className="text-sm text-[var(--rt-green)] flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />{b}
+                          </span>
+                        ))}
+                      </div>
+                      <button
+                        className="btn-primary w-full py-2.5 rounded-xl text-sm font-semibold transition-all"
+                        onClick={e => { e.stopPropagation(); setStep(2); }}
+                      >
+                        Paste a job →
+                      </button>
+                    </div>
+
+                    {/* Card 3 — Auto Apply */}
+                    <div className="bg-[var(--rt-surface)] border border-[var(--rt-border)] rounded-2xl p-6 [box-shadow:var(--rt-shadow-card)] flex flex-col gap-4 opacity-80">
+                      <div className="flex items-start justify-between">
+                        <div className="w-12 h-12 rounded-xl bg-[rgba(217,119,6,0.1)] flex items-center justify-center text-2xl">⚡</div>
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[rgba(217,119,6,0.1)] text-[var(--rt-amber)]">Beta</span>
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold mb-1">Auto Apply</h3>
+                        <p className="text-sm text-[var(--rt-text-2)] leading-relaxed">We handle applications automatically. Your tailored resume, sent to matching roles while you sleep.</p>
+                      </div>
+                      <div className="flex flex-col gap-1.5 flex-1">
+                        {['Set your filters', 'Auto-tailor each app', 'Track status'].map(b => (
+                          <span key={b} className="text-sm text-[var(--rt-green)] flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />{b}
+                          </span>
+                        ))}
+                      </div>
+                      <button
+                        className="w-full py-2.5 rounded-xl text-sm font-semibold border border-[var(--rt-border)] text-[var(--rt-text-2)] hover:bg-[var(--rt-surface-2)] transition-all"
+                        onClick={() => setStep(1)}
+                      >
+                        Set up auto apply →
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              );
 
               /* ════════════════ STEP 1 — DISCOVER ════════════════ */
               if (step === 1) return (
@@ -1299,7 +1375,7 @@ export default function App() {
                   animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                   exit={{ opacity: 0, y: -16, filter: 'blur(4px)' }}
                   transition={transition}
-                  className="min-h-screen px-6 py-20"
+                  className="py-8"
                 >
                   <div className="w-full max-w-5xl mx-auto">
 
@@ -1693,7 +1769,7 @@ export default function App() {
                   animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                   exit={{ opacity: 0, y: -16, filter: 'blur(4px)' }}
                   transition={transition}
-                  className="min-h-screen flex items-center justify-center px-6 py-20"
+                  className="flex items-center justify-center py-8"
                 >
                   <div className="w-full max-w-md">
 
@@ -1844,7 +1920,7 @@ export default function App() {
                   animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                   exit={{ opacity: 0, y: -16, filter: 'blur(4px)' }}
                   transition={transition}
-                  className="min-h-screen px-6 py-20 flex flex-col items-center justify-center"
+                  className="py-8"
                 >
                   <div className="w-full max-w-4xl">
 
@@ -2110,7 +2186,7 @@ export default function App() {
                     initial={{ opacity: 0, y: 24, filter: 'blur(6px)' }}
                     animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                     transition={transition}
-                    className="min-h-screen px-5 py-16"
+                    className="py-8"
                   >
                     <div className="max-w-[1300px] mx-auto">
 
@@ -2523,7 +2599,7 @@ export default function App() {
                     animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                     exit={{ opacity: 0, y: -16, filter: 'blur(4px)' }}
                     transition={transition}
-                    className="min-h-screen flex items-center justify-center px-6 py-20"
+                    className="flex items-center justify-center py-8"
                   >
                     <div className="w-full max-w-2xl">
 

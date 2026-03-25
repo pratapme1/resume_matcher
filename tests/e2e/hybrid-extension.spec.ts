@@ -6,6 +6,13 @@ const resumePath = sampleResumePath();
 const portalBaseUrl = 'http://127.0.0.1:3100';
 
 async function skipToJDStep(page: Page) {
+  // V11: Entry screen shows "Paste a job →" which goes directly to Step 2
+  const pasteBtn = page.getByRole('button', { name: /Paste a job/i });
+  if (await pasteBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await pasteBtn.click();
+    return;
+  }
+  // Legacy / Step 1 already visible: use Skip button
   await page.getByRole('button', { name: /Skip.*specific job/i }).click();
 }
 

@@ -3,8 +3,25 @@ import { sampleResumePath } from '../helpers/fixture-path.ts';
 
 const resumePath = sampleResumePath();
 
-/** Step 1 is Job Search — click Skip to jump directly to JD input (Step 2) */
+/** Navigate to Step 1 (Discover) from Entry screen and wait for it to fully render */
+async function goToStep1(page: Page) {
+  const discoverBtn = page.getByRole('button', { name: /Start discovering/i });
+  if (await discoverBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await discoverBtn.click();
+    // Wait for Step 1 heading to confirm navigation complete (entry screen fully exited)
+    await page.getByRole('heading', { name: 'Find Your Best Matches' }).waitFor({ state: 'visible', timeout: 5000 });
+  }
+}
+
+/** Navigate to JD input (Step 2) — handles both Entry screen and Step 1 skip button */
 async function skipToJDStep(page: Page) {
+  // V11: Entry screen shows "Paste a job →" which goes directly to Step 2
+  const pasteBtn = page.getByRole('button', { name: /Paste a job/i });
+  if (await pasteBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await pasteBtn.click();
+    return;
+  }
+  // Legacy / Step 1 already visible: use Skip button
   await page.getByRole('button', { name: /Skip.*specific job/i }).click();
 }
 
@@ -103,6 +120,7 @@ test('retry-resume from blocked state goes to step 3 with JD preserved', async (
 
 test('step indicator shows aria-current on active step and advances', async ({ page }) => {
   await page.goto('/');
+  await goToStep1(page);
   // Step 1 (Discover) active at load
   await expect(page.getByTestId('step-indicator-1')).toHaveAttribute('aria-current', 'step');
   await expect(page.getByTestId('step-indicator-2')).not.toHaveAttribute('aria-current', 'step');
@@ -227,11 +245,13 @@ test('URL tab shows URL input and enables Continue when URL is filled', async ({
 
 test('Step 1: Find Your Best Matches heading visible on load', async ({ page }) => {
   await page.goto('/');
+  await goToStep1(page);
   await expect(page.getByRole('heading', { name: 'Find Your Best Matches' })).toBeVisible();
 });
 
 test('Step 1: Search Jobs button disabled before resume uploaded', async ({ page }) => {
   await page.goto('/');
+  await goToStep1(page);
   await expect(page.getByRole('button', { name: 'Search Jobs' })).toBeDisabled();
 });
 
@@ -328,6 +348,7 @@ test('dark mode toggle changes button label between Dark mode and Light mode', a
 
 test('active step indicator advances correctly through steps 1→2→3', async ({ page }) => {
   await page.goto('/');
+  await goToStep1(page);
   // On step 1: step-indicator-1 is active, step-indicator-2 is not
   await expect(page.getByTestId('step-indicator-1').first()).toHaveAttribute('aria-current', 'step');
   await expect(page.getByTestId('step-indicator-2').first()).not.toHaveAttribute('aria-current', 'step');
