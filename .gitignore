@@ -11,3 +11,4 @@ prod-*.png
 *.txt
 api/index.cjs
 .vercel
+fileds.md

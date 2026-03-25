@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Tailor Pro — V3 Glassmorphism</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Nunito+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg1: #1a0533;
+    --bg2: #0e1a5c;
+    --bg3: #0a3042;
+    --glass: rgba(255,255,255,0.07);
+    --glass-border: rgba(255,255,255,0.12);
+    --glass-hover: rgba(255,255,255,0.11);
+    --white: #ffffff;
+    --text: rgba(255,255,255,0.92);
+    --muted: rgba(255,255,255,0.5);
+    --subtle: rgba(255,255,255,0.25);
+    --purple: #a855f7;
+    --pink: #ec4899;
+    --cyan: #22d3ee;
+    --green: #4ade80;
+    --amber: #fbbf24;
+    --grad1: linear-gradient(135deg, #a855f7, #ec4899);
+    --grad2: linear-gradient(135deg, #22d3ee, #a855f7);
+    --grad3: linear-gradient(135deg, #4ade80, #22d3ee);
+    --font: 'Nunito', system-ui, sans-serif;
+    --font-sans: 'Nunito Sans', system-ui, sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg1);
+    color: var(--text);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Gradient mesh background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(168,85,247,0.35) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 20%, rgba(236,72,153,0.25) 0%, transparent 55%),
+      radial-gradient(ellipse 70% 60% at 60% 80%, rgba(34,211,238,0.20) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 10% 70%, rgba(74,222,128,0.15) 0%, transparent 50%),
+      linear-gradient(135deg, #1a0533 0%, #0e1a5c 40%, #0a3042 100%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Floating orbs */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: 0;
+    animation: float 8s ease-in-out infinite;
+  }
+  .orb-1 { width: 400px; height: 400px; background: rgba(168,85,247,0.2); top: -100px; left: -100px; animation-delay: 0s; }
+  .orb-2 { width: 300px; height: 300px; background: rgba(236,72,153,0.15); top: 30%; right: -80px; animation-delay: -3s; }
+  .orb-3 { width: 350px; height: 350px; background: rgba(34,211,238,0.12); bottom: -80px; left: 30%; animation-delay: -5s; }
+  @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
+
+  /* ─── TAB SWITCHER ─── */
+  .demo-tabs {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 2000;
+    background: rgba(10,5,20,0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0 24px;
+    height: 44px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .demo-tabs span { font-family: 'Nunito Sans', sans-serif; font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; margin-right: 16px; text-transform: uppercase; }
+  .demo-tab { font-family: 'Nunito Sans', sans-serif; font-size: 11px; color: rgba(255,255,255,0.4); padding: 0 16px; height: 100%; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; letter-spacing: 0.05em; transition: all 0.15s; }
+  .demo-tab:hover { color: rgba(255,255,255,0.75); }
+  .demo-tab.active { color: white; border-bottom-color: var(--purple); }
+
+  /* ─── SCREENS ─── */
+  .screen { display: none; min-height: calc(100vh - 44px); margin-top: 44px; position: relative; z-index: 1; }
+  .screen.active { display: flex; }
+  .auth-screen { display: none; min-height: calc(100vh - 44px); margin-top: 44px; position: relative; z-index: 1; align-items: center; justify-content: center; }
+  .auth-screen.active { display: flex; }
+
+  /* ─── GLASS mixin ─── */
+  .glass {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+  }
+  .glass-sm {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 12px;
+  }
+
+  /* ═══════════════════════════════════════
+     AUTH
+  ═══════════════════════════════════════ */
+  .auth-card {
+    width: 440px;
+    padding: 48px 44px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 28px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  .auth-brand {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .auth-logo-icon {
+    width: 52px; height: 52px;
+    background: var(--grad1);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 24px;
+    box-shadow: 0 8px 32px rgba(168,85,247,0.4);
+  }
+  .auth-brand-name {
+    font-size: 22px;
+    font-weight: 800;
+    background: var(--grad1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .auth-brand-sub { font-size: 13px; color: var(--muted); margin-top: 4px; font-weight: 500; }
+
+  .auth-title { font-size: 26px; font-weight: 800; margin-bottom: 28px; }
+  .auth-title span { background: var(--grad2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  .glass-input-group { margin-bottom: 18px; }
+  .glass-label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .glass-input {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--white);
+    outline: none;
+    transition: all 0.2s;
+  }
+  .glass-input:focus { border-color: var(--purple); background: rgba(168,85,247,0.08); box-shadow: 0 0 0 3px rgba(168,85,247,0.15); }
+  .glass-input::placeholder { color: rgba(255,255,255,0.25); }
+
+  .btn-grad {
+    width: 100%;
+    background: var(--grad1);
+    border: none;
+    border-radius: 14px;
+    padding: 14px;
+    font-family: var(--font);
+    font-size: 15px;
+    font-weight: 800;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 8px 24px rgba(168,85,247,0.35);
+    margin-bottom: 16px;
+  }
+  .btn-grad:hover { transform: translateY(-1px); box-shadow: 0 12px 32px rgba(168,85,247,0.45); }
+  .btn-grad:active { transform: translateY(0); }
+
+  .divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.08); }
+  .divider span { font-size: 12px; color: var(--muted); font-weight: 600; }
+
+  .btn-google {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 12px;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .btn-google:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.18); }
+
+  /* ═══════════════════════════════════════
+     MAIN APP LAYOUT
+  ═══════════════════════════════════════ */
+  .app-layout {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Top header bar */
+  .app-header {
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 0 32px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .app-logo {
+    font-size: 18px;
+    font-weight: 900;
+    background: var(--grad1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--grad1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .user-name { font-size: 13px; font-weight: 600; color: var(--text); }
+
+  /* Content area: main + floating right stepper */
+  .app-content {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 24px;
+    padding: 28px 28px 28px 32px;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .main-area { min-width: 0; }
+
+  /* ─── FLOATING STEP STEPPER (right rail) ─── */
+  .step-rail {
+    position: sticky;
+    top: 0;
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 8px;
+  }
+  .step-pill {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .step-pill:hover { background: rgba(255,255,255,0.07); }
+  .step-pill.active {
+    background: rgba(168,85,247,0.12);
+    border-color: rgba(168,85,247,0.3);
+    box-shadow: 0 4px 16px rgba(168,85,247,0.15);
+  }
+  .step-pill.done {
+    background: rgba(74,222,128,0.06);
+    border-color: rgba(74,222,128,0.15);
+  }
+  .step-pill.locked { opacity: 0.4; cursor: not-allowed; }
+
+  .sp-icon {
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .step-pill.active .sp-icon { background: var(--grad1); border-color: transparent; box-shadow: 0 4px 12px rgba(168,85,247,0.4); }
+  .step-pill.done .sp-icon { background: rgba(74,222,128,0.2); border-color: rgba(74,222,128,0.3); }
+
+  .sp-text { flex: 1; min-width: 0; }
+  .sp-num { font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+  .step-pill.active .sp-num { color: var(--purple); }
+  .sp-label { font-size: 12px; font-weight: 700; color: var(--text); line-height: 1.2; margin-top: 1px; }
+  .step-pill:not(.active) .sp-label { color: var(--muted); }
+
+  .sp-badge {
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .sp-badge.current { background: rgba(168,85,247,0.2); color: var(--purple); }
+  .sp-badge.done { background: rgba(74,222,128,0.15); color: var(--green); }
+
+  /* Section header */
+  .page-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--purple);
+    margin-bottom: 10px;
+  }
+  .page-kicker .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--grad1); }
+  .page-title { font-size: 32px; font-weight: 900; line-height: 1.1; margin-bottom: 6px; }
+  .page-title .grad { background: var(--grad1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .page-sub { font-size: 14px; color: var(--muted); font-weight: 500; line-height: 1.5; margin-bottom: 28px; }
+
+  /* ─── SEARCH CARD ─── */
+  .search-glass {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 20px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+  }
+  .search-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .search-grid .span-2 { grid-column: span 2; }
+
+  .btn-purple {
+    width: 100%;
+    background: var(--grad1);
+    border: none;
+    border-radius: 14px;
+    padding: 13px;
+    font-family: var(--font);
+    font-size: 15px;
+    font-weight: 800;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 6px 20px rgba(168,85,247,0.3);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-purple:hover { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(168,85,247,0.45); }
+
+  /* ─── JOB CARDS ─── */
+  .job-cards { display: flex; flex-direction: column; gap: 12px; }
+  .job-glass {
+    background: rgba(255,255,255,0.055);
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 18px;
+    padding: 20px 22px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .job-glass:hover { background: rgba(255,255,255,0.09); transform: translateY(-2px); box-shadow: 0 16px 40px rgba(0,0,0,0.25); }
+
+  .company-logo {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    font-weight: 800;
+    color: white;
+  }
+  .job-glass-body { flex: 1; min-width: 0; }
+  .job-company { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px; }
+  .job-title { font-size: 16px; font-weight: 800; line-height: 1.3; margin-bottom: 6px; }
+  .job-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .job-pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--muted);
+  }
+  .match-ring {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+  .match-circle {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: conic-gradient(var(--purple) 0% 92%, rgba(255,255,255,0.08) 92% 100%);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .match-circle::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: rgba(15,5,30,0.9);
+  }
+  .match-num {
+    font-size: 13px;
+    font-weight: 900;
+    color: var(--purple);
+    position: relative;
+    z-index: 1;
+  }
+  .match-text { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* ─── JD TAB BAR ─── */
+  .tab-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    padding: 4px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    width: fit-content;
+  }
+  .tab-btn {
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 7px 18px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.15s;
+  }
+  .tab-btn.active { background: rgba(168,85,247,0.2); color: var(--purple); border: 1px solid rgba(168,85,247,0.25); }
+  .tab-btn:not(.active):hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+  .glass-textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 16px 18px;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    resize: none;
+    outline: none;
+    transition: all 0.2s;
+    line-height: 1.7;
+  }
+  .glass-textarea:focus { border-color: var(--purple); background: rgba(168,85,247,0.05); box-shadow: 0 0 0 3px rgba(168,85,247,0.1); }
+  .glass-textarea::placeholder { color: rgba(255,255,255,0.2); }
+
+  /* ─── RESULTS ─── */
+  .results-header-glass {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    backdrop-filter: blur(16px);
+  }
+  .big-score {
+    font-size: 64px;
+    font-weight: 900;
+    background: var(--grad1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+  .score-sub { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+
+  .resume-glass {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 28px 32px;
+    backdrop-filter: blur(16px);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .resume-name {
+    font-size: 24px;
+    font-weight: 900;
+    background: var(--grad2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px;
+  }
+  .resume-contact { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+  .resume-section-header {
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--purple);
+    margin: 16px 0 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .resume-section-header::after { content: ''; flex: 1; height: 1px; background: rgba(168,85,247,0.2); }
+  .rg-title { font-size: 14px; font-weight: 800; }
+  .rg-sub { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .rg-bullet { font-size: 12px; color: rgba(255,255,255,0.75); padding-left: 14px; position: relative; margin-bottom: 4px; }
+  .rg-bullet::before { content: '›'; position: absolute; left: 0; color: var(--purple); font-weight: 800; }
+
+  .right-panel { display: flex; flex-direction: column; gap: 14px; }
+
+  .panel-glass {
+    background: rgba(255,255,255,0.055);
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 18px;
+    padding: 18px 20px;
+  }
+  .panel-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 14px; }
+
+  .kw-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin: 3px 3px 3px 0;
+  }
+  .kw-chip.hit { background: rgba(168,85,247,0.15); color: var(--purple); border: 1px solid rgba(168,85,247,0.25); }
+  .kw-chip.miss { background: rgba(255,255,255,0.04); color: var(--muted); border: 1px solid rgba(255,255,255,0.08); }
+
+  .verified-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: rgba(74,222,128,0.08);
+    border: 1px solid rgba(74,222,128,0.2);
+    border-radius: 14px;
+  }
+  .vb-icon { font-size: 22px; flex-shrink: 0; }
+  .vb-title { font-size: 12px; font-weight: 800; color: var(--green); margin-bottom: 2px; }
+  .vb-sub { font-size: 11px; color: rgba(74,222,128,0.6); }
+
+  .btn-download-grad {
+    width: 100%;
+    background: var(--grad1);
+    border: none;
+    border-radius: 14px;
+    padding: 14px;
+    font-family: var(--font);
+    font-size: 15px;
+    font-weight: 800;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 6px 20px rgba(168,85,247,0.35);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-download-grad:hover { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(168,85,247,0.5); }
+
+  .change-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .change-item:last-child { border-bottom: none; }
+  .change-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- DEMO TABS -->
+<div class="demo-tabs">
+  <span>V3 · GLASS</span>
+  <button class="demo-tab active" onclick="showScreen('auth')">Auth</button>
+  <button class="demo-tab" onclick="showScreen('step1')">Step 1 · Jobs</button>
+  <button class="demo-tab" onclick="showScreen('step2')">Step 2 · JD</button>
+  <button class="demo-tab" onclick="showScreen('results')">Results</button>
+</div>
+
+<!-- ═══════ AUTH ═══════ -->
+<div class="auth-screen active" id="s-auth">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-logo-icon">✦</div>
+      <div class="auth-brand-name">ResumeTailorPro</div>
+      <div class="auth-brand-sub">AI-powered · Provenance-verified</div>
+    </div>
+    <div class="auth-title">Welcome <span>back.</span></div>
+    <div class="glass-input-group">
+      <label class="glass-label">Email</label>
+      <input class="glass-input" type="email" placeholder="you@company.com">
+    </div>
+    <div class="glass-input-group" style="margin-bottom:24px;">
+      <label class="glass-label">Password</label>
+      <input class="glass-input" type="password" placeholder="••••••••••">
+    </div>
+    <button class="btn-grad">Sign In →</button>
+    <div class="divider"><span>or continue with</span></div>
+    <button class="btn-google">
+      <svg width="16" height="16" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+      Google
+    </button>
+  </div>
+</div>
+
+<!-- ═══════ STEP 1 ═══════ -->
+<div class="screen" id="s-step1">
+  <div class="app-layout" style="flex:1">
+    <div class="app-header">
+      <div class="app-logo">✦ ResumeTailorPro</div>
+      <div class="header-user"><div class="avatar">A</div><span class="user-name">Arjun</span></div>
+    </div>
+    <div class="app-content">
+      <div class="main-area">
+        <div class="page-kicker"><span class="dot"></span> Step 01</div>
+        <div class="page-title">Discover <span class="grad">roles</span> that fit you.</div>
+        <div class="page-sub">AI-scored against your profile. No noise, just your best matches.</div>
+
+        <div class="search-glass">
+          <div class="search-grid">
+            <div class="glass-input-group" style="margin-bottom:0;"><label class="glass-label">Role</label><input class="glass-input" placeholder="Senior Product Manager" style="border-radius:10px;padding:10px 14px;"></div>
+            <div class="glass-input-group" style="margin-bottom:0;"><label class="glass-label">Location</label><input class="glass-input" placeholder="Remote or SF Bay Area" style="border-radius:10px;padding:10px 14px;"></div>
+            <div class="glass-input-group span-2" style="margin-bottom:0;"><button class="btn-purple" style="border-radius:12px;">🔍 Search Jobs</button></div>
+          </div>
+        </div>
+
+        <div class="job-cards">
+          <div class="job-glass">
+            <div class="company-logo" style="background:linear-gradient(135deg,#6772e5,#8a96f5);">S</div>
+            <div class="job-glass-body">
+              <div class="job-company">Stripe · San Francisco</div>
+              <div class="job-title">Senior PM, Payments Infrastructure</div>
+              <div class="job-meta">
+                <span class="job-pill">$180–220k</span>
+                <span class="job-pill">Full-time</span>
+                <span class="job-pill">Hybrid</span>
+              </div>
+            </div>
+            <div class="match-ring">
+              <div class="match-circle"><span class="match-num">92</span></div>
+              <div class="match-text">match</div>
+            </div>
+          </div>
+          <div class="job-glass">
+            <div class="company-logo" style="background:linear-gradient(135deg,#e05c3a,#f09354);">A</div>
+            <div class="job-glass-body">
+              <div class="job-company">Anthropic · Remote</div>
+              <div class="job-title">PM, Developer Experience &amp; Tooling</div>
+              <div class="job-meta">
+                <span class="job-pill">$170–210k</span>
+                <span class="job-pill">Full-time</span>
+                <span class="job-pill">Remote</span>
+              </div>
+            </div>
+            <div class="match-ring">
+              <div class="match-circle" style="background:conic-gradient(var(--purple) 0% 88%, rgba(255,255,255,0.08) 88% 100%);"><span class="match-num">88</span></div>
+              <div class="match-text">match</div>
+            </div>
+          </div>
+          <div class="job-glass">
+            <div class="company-logo" style="background:linear-gradient(135deg,#5e6ad2,#8a56f0);">L</div>
+            <div class="job-glass-body">
+              <div class="job-company">Linear · New York</div>
+              <div class="job-title">Product Lead, Enterprise Growth</div>
+              <div class="job-meta">
+                <span class="job-pill">$160–200k</span>
+                <span class="job-pill">Full-time</span>
+                <span class="job-pill">Hybrid</span>
+              </div>
+            </div>
+            <div class="match-ring">
+              <div class="match-circle" style="background:conic-gradient(var(--cyan) 0% 85%, rgba(255,255,255,0.08) 85% 100%);"><span class="match-num" style="color:var(--cyan);">85</span></div>
+              <div class="match-text">match</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-rail">
+        <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:8px;padding:0 4px;">Progress</div>
+        <div class="step-pill active">
+          <div class="sp-icon">🔍</div>
+          <div class="sp-text"><div class="sp-num">Step 01</div><div class="sp-label">Find Roles</div></div>
+          <div class="sp-badge current">now</div>
+        </div>
+        <div class="step-pill locked">
+          <div class="sp-icon">📋</div>
+          <div class="sp-text"><div class="sp-num">Step 02</div><div class="sp-label">Job Brief</div></div>
+        </div>
+        <div class="step-pill locked">
+          <div class="sp-icon">📄</div>
+          <div class="sp-text"><div class="sp-num">Step 03</div><div class="sp-label">Upload Resume</div></div>
+        </div>
+        <div class="step-pill locked">
+          <div class="sp-icon">✨</div>
+          <div class="sp-text"><div class="sp-num">Step 04</div><div class="sp-label">AI Tailoring</div></div>
+        </div>
+        <div class="step-pill locked">
+          <div class="sp-icon">⬇️</div>
+          <div class="sp-text"><div class="sp-num">Step 05</div><div class="sp-label">Download</div></div>
+        </div>
+
+        <div class="panel-glass" style="margin-top:16px;">
+          <div class="panel-title">Market Stats</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:12px;color:var(--muted);font-weight:600;">Roles found</span>
+              <span style="font-size:20px;font-weight:900;background:var(--grad1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">247</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:12px;color:var(--muted);font-weight:600;">80%+ match</span>
+              <span style="font-size:20px;font-weight:900;background:var(--grad2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">34</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ STEP 2 ═══════ -->
+<div class="screen" id="s-step2">
+  <div class="app-layout" style="flex:1">
+    <div class="app-header">
+      <div class="app-logo">✦ ResumeTailorPro</div>
+      <div class="header-user"><div class="avatar">A</div><span class="user-name">Arjun</span></div>
+    </div>
+    <div class="app-content">
+      <div class="main-area">
+        <div class="page-kicker"><span class="dot"></span> Step 02</div>
+        <div class="page-title">Add the <span class="grad">job brief.</span></div>
+        <div class="page-sub">Paste, link, or upload. We'll extract every keyword and signal.</div>
+
+        <div class="tab-bar">
+          <button class="tab-btn active">Paste Text</button>
+          <button class="tab-btn">URL</button>
+          <button class="tab-btn">Upload File</button>
+        </div>
+
+        <textarea class="glass-textarea" rows="8" placeholder="Paste the full job description here…
+
+We're looking for a Senior Product Manager with 5+ years of experience building API-first developer products…"></textarea>
+
+        <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+          <button class="btn-purple" style="width:auto;padding:13px 32px;">Extract &amp; Continue →</button>
+        </div>
+      </div>
+
+      <div class="step-rail">
+        <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:8px;padding:0 4px;">Progress</div>
+        <div class="step-pill done">
+          <div class="sp-icon">🔍</div>
+          <div class="sp-text"><div class="sp-num">Step 01</div><div class="sp-label">Find Roles</div></div>
+          <div class="sp-badge done">✓</div>
+        </div>
+        <div class="step-pill active">
+          <div class="sp-icon">📋</div>
+          <div class="sp-text"><div class="sp-num">Step 02</div><div class="sp-label">Job Brief</div></div>
+          <div class="sp-badge current">now</div>
+        </div>
+        <div class="step-pill locked"><div class="sp-icon">📄</div><div class="sp-text"><div class="sp-num">Step 03</div><div class="sp-label">Upload Resume</div></div></div>
+        <div class="step-pill locked"><div class="sp-icon">✨</div><div class="sp-text"><div class="sp-num">Step 04</div><div class="sp-label">AI Tailoring</div></div></div>
+        <div class="step-pill locked"><div class="sp-icon">⬇️</div><div class="sp-text"><div class="sp-num">Step 05</div><div class="sp-label">Download</div></div></div>
+
+        <div class="panel-glass" style="margin-top:16px;">
+          <div class="panel-title">Selected Role</div>
+          <div style="font-size:14px;font-weight:800;margin-bottom:6px;line-height:1.3;">Senior PM, Payments Infrastructure</div>
+          <div style="font-size:12px;color:var(--muted);font-weight:600;">Stripe · SF · $180–220k</div>
+          <div style="margin-top:10px;display:inline-block;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;background:rgba(168,85,247,0.15);color:var(--purple);border:1px solid rgba(168,85,247,0.25);">92% match</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ RESULTS ═══════ -->
+<div class="screen" id="s-results">
+  <div class="app-layout" style="flex:1">
+    <div class="app-header">
+      <div class="app-logo">✦ ResumeTailorPro</div>
+      <div class="header-user"><div class="avatar">A</div><span class="user-name">Arjun</span></div>
+    </div>
+    <div class="app-content">
+      <div class="main-area">
+        <div class="page-kicker"><span class="dot"></span> Step 05</div>
+        <div class="page-title">Your tailored <span class="grad">résumé.</span></div>
+        <div class="page-sub">Stripe · Senior PM, Payments Infrastructure · Tailored just now</div>
+
+        <div class="results-header-glass">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--muted);margin-bottom:4px;">Match Score</div>
+            <div class="big-score">92</div>
+            <div style="font-size:12px;color:var(--muted);font-weight:600;margin-top:4px;">+18 points from baseline</div>
+          </div>
+          <div style="display:flex;gap:20px;">
+            <div style="text-align:center;">
+              <div style="font-size:26px;font-weight:900;background:var(--grad2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">23</div>
+              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Claims</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:26px;font-weight:900;background:var(--grad3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">8</div>
+              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Keywords</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="resume-glass">
+          <div class="resume-name">Arjun Sharma</div>
+          <div class="resume-contact">arjun@example.com · San Francisco, CA</div>
+          <div class="resume-section-header">Experience</div>
+          <div class="rg-title">Senior Product Manager, Platform</div>
+          <div class="rg-sub">Acme Corp · 2021–Present</div>
+          <div class="rg-bullet">Led payments infrastructure roadmap, increasing API throughput 40%</div>
+          <div class="rg-bullet">Defined OKRs tying developer platform adoption to $12M ARR</div>
+          <div class="rg-bullet">Shipped Stripe-compatible webhook spec across 4 time zones</div>
+          <div class="resume-section-header">Education</div>
+          <div class="rg-title">B.S. Computer Science, UC Berkeley</div>
+          <div class="rg-sub">2016</div>
+          <div class="resume-section-header">Skills</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.65);line-height:1.9;font-weight:500;">Product Strategy · API Design · Payments Systems · OKRs · Agile · Stakeholder Management</div>
+        </div>
+      </div>
+
+      <div class="step-rail">
+        <div class="right-panel">
+          <div class="panel-glass">
+            <div class="panel-title">Keywords</div>
+            <div>
+              <span class="kw-chip hit">payments API</span>
+              <span class="kw-chip hit">infrastructure</span>
+              <span class="kw-chip hit">developer platform</span>
+              <span class="kw-chip hit">OKRs</span>
+              <span class="kw-chip hit">cross-functional</span>
+              <span class="kw-chip miss">fraud detection</span>
+              <span class="kw-chip miss">compliance</span>
+            </div>
+          </div>
+          <div class="verified-banner">
+            <div class="vb-icon">🛡️</div>
+            <div>
+              <div class="vb-title">Integrity Verified</div>
+              <div class="vb-sub">23 claims — 0 fabrications</div>
+            </div>
+          </div>
+          <button class="btn-download-grad">⬇ Download DOCX</button>
+          <div class="panel-glass">
+            <div class="panel-title">Changes</div>
+            <div class="change-item"><span class="change-dot" style="background:var(--amber);"></span><span>Promoted payments metric to lead bullet</span></div>
+            <div class="change-item"><span class="change-dot" style="background:var(--purple);"></span><span>Added Stripe-compatible webhook context</span></div>
+            <div class="change-item"><span class="change-dot" style="background:var(--cyan);"></span><span>Reordered skills to match JD priority</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showScreen(id) {
+  document.querySelectorAll('.screen, .auth-screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.demo-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

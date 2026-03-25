@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Tailor Pro — V7 Swiss Brutalist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500;600;700;800;900&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --white: #FFFFFF;
+  --black: #080808;
+  --grey: #F0F0F0;
+  --mid: #C8C8C8;
+  --muted: #7A7A7A;
+  --lime: #CAFF00;
+  --lime2: #B0E800;
+  --accent: var(--lime);
+  --font-display: 'Unbounded', system-ui, sans-serif;
+  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--white);
+  color: var(--black);
+  min-height: 100vh;
+}
+
+/* ─── DEMO TABS ─── */
+.demo-tabs {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 9000;
+  background: var(--black);
+  display: flex; align-items: center; padding: 0 20px; height: 40px;
+  border-bottom: 2px solid var(--lime);
+}
+.demo-tabs > span { font-family: var(--font-mono); font-size: 9px; color: #555; letter-spacing: 0.2em; margin-right: 14px; text-transform: uppercase; }
+.demo-tab { font-family: var(--font-mono); font-size: 10px; color: #555; padding: 0 14px; height: 100%; border: none; background: none; cursor: pointer; border-bottom: 3px solid transparent; letter-spacing: 0.1em; transition: all 0.1s; }
+.demo-tab:hover { color: #aaa; }
+.demo-tab.active { color: var(--lime); border-bottom-color: var(--lime); }
+
+/* ─── SCREENS ─── */
+.screen { display: none; min-height: calc(100vh - 40px); margin-top: 40px; flex-direction: column; }
+.screen.active { display: flex; }
+.auth-s { display: none; min-height: calc(100vh - 40px); margin-top: 40px; }
+.auth-s.active { display: flex; }
+
+/* ═══════════ AUTH ═══════════ */
+.auth-s {
+  flex-direction: row;
+}
+.auth-left {
+  width: 50%;
+  background: var(--black);
+  padding: 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 3px solid var(--lime);
+}
+.al-logo { font-family: var(--font-display); font-size: 11px; font-weight: 600; color: var(--lime); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 80px; }
+.al-big {
+  font-family: var(--font-display);
+  font-size: 52px;
+  font-weight: 900;
+  color: var(--white);
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.al-big span { color: var(--lime); }
+.al-tagline { font-family: var(--font-body); font-size: 14px; color: #999; line-height: 1.65; font-weight: 400; margin-top: 20px; max-width: 380px; }
+.al-bottom { display: flex; align-items: center; gap: 20px; }
+.al-stat { display: flex; flex-direction: column; gap: 2px; }
+.al-stat-num { font-family: var(--font-display); font-size: 28px; font-weight: 700; color: var(--lime); line-height: 1; }
+.al-stat-label { font-family: var(--font-mono); font-size: 9px; color: #555; letter-spacing: 0.1em; text-transform: uppercase; }
+.al-stat-div { width: 1px; height: 40px; background: #333; }
+
+.auth-right {
+  width: 50%;
+  background: var(--white);
+  padding: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ar-form { width: 100%; max-width: 420px; }
+.ar-eyebrow { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+.ar-title { font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 40px; line-height: 1.1; text-transform: uppercase; }
+
+.ar-field { margin-bottom: 0; }
+.ar-label { display: block; font-family: var(--font-mono); font-size: 9px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+.ar-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--black);
+  padding: 10px 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--black);
+  outline: none;
+  transition: border-color 0.15s;
+  margin-bottom: 24px;
+}
+.ar-input:focus { border-color: var(--lime2); }
+.ar-input::placeholder { color: var(--mid); }
+
+.ar-btn {
+  width: 100%;
+  background: var(--black);
+  color: var(--lime);
+  border: none;
+  padding: 16px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: all 0.12s;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.ar-btn:hover { background: var(--lime); color: var(--black); }
+
+.ar-google {
+  width: 100%;
+  background: transparent;
+  border: 2px solid var(--black);
+  padding: 14px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--black);
+  cursor: pointer;
+  transition: all 0.12s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.ar-google:hover { background: var(--black); color: var(--white); }
+
+/* ═══════════ APP SCREENS ═══════════ */
+.app-topbar {
+  background: var(--white);
+  border-bottom: 2px solid var(--black);
+  padding: 0 40px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.atb-logo { font-family: var(--font-display); font-size: 10px; font-weight: 700; color: var(--black); letter-spacing: 0.06em; text-transform: uppercase; }
+
+.step-counter-big { font-family: var(--font-display); font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 0.06em; }
+.step-counter-big strong { color: var(--black); }
+
+.atb-user { font-family: var(--font-mono); font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.u-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--lime); border: 2px solid var(--black); }
+
+/* Steps bar */
+.steps-bar {
+  background: var(--grey);
+  border-bottom: 2px solid var(--black);
+  display: flex;
+  height: 40px;
+  flex-shrink: 0;
+}
+.sb-step {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-right: 1px solid var(--mid);
+  cursor: pointer;
+  transition: background 0.1s;
+  position: relative;
+}
+.sb-step:last-child { border-right: none; }
+.sb-step:hover:not(.active):not(.locked) { background: #E8E8E8; }
+.sb-step.active { background: var(--lime); border-bottom: 2px solid var(--black); margin-bottom: -2px; }
+.sb-step.done { background: var(--white); }
+.sb-step.locked { opacity: 0.4; cursor: not-allowed; }
+.sb-num { font-family: var(--font-display); font-size: 10px; font-weight: 700; color: var(--black); }
+.sb-label { font-family: var(--font-body); font-size: 11px; font-weight: 600; color: var(--muted); }
+.sb-step.active .sb-label { color: var(--black); font-weight: 700; }
+.sb-step.done .sb-label { color: var(--muted); }
+.sb-check { font-size: 12px; color: var(--black); }
+
+/* Main layout */
+.main-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  min-height: 0;
+}
+
+/* Big step number column */
+.step-num-col {
+  width: 120px;
+  background: var(--lime);
+  border-right: 2px solid var(--black);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 16px 20px;
+  position: relative;
+  overflow: hidden;
+}
+.giant-num {
+  font-family: var(--font-display);
+  font-size: 160px;
+  font-weight: 900;
+  color: rgba(0,0,0,0.12);
+  line-height: 0.85;
+  position: absolute;
+  bottom: -10px;
+  left: -8px;
+  letter-spacing: -0.05em;
+}
+.step-label-vert {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--black);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
+  position: relative;
+  z-index: 1;
+}
+
+.content-area { overflow-y: auto; padding: 40px 52px; }
+
+.pg-label { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.pg-label::after { content: ''; flex:1; height: 2px; background: var(--black); }
+.pg-title { font-family: var(--font-display); font-size: 36px; font-weight: 900; line-height: 1.05; letter-spacing: -0.025em; text-transform: uppercase; margin-bottom: 4px; }
+.pg-title .lime { color: var(--lime2); background: var(--black); padding: 0 6px; }
+.pg-sub { font-size: 14px; color: var(--muted); font-weight: 400; line-height: 1.55; margin-bottom: 36px; max-width: 600px; }
+
+/* Search */
+.search-block { display: flex; gap: 0; border: 2px solid var(--black); margin-bottom: 32px; }
+.sb-input-field { flex: 1; padding: 0; border-right: 2px solid var(--black); }
+.sb-input-field label { display: block; font-family: var(--font-mono); font-size: 8px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 14px 0; }
+.sb-input-field input, .sb-input-field select {
+  display: block; width: 100%;
+  background: transparent; border: none;
+  padding: 4px 14px 10px;
+  font-family: var(--font-body); font-size: 14px; font-weight: 500; color: var(--black);
+  outline: none;
+}
+.sb-input-field input::placeholder { color: var(--mid); }
+.sb-input-field select { appearance: none; cursor: pointer; }
+.sb-go {
+  background: var(--black); color: var(--lime); border: none;
+  padding: 0 32px;
+  font-family: var(--font-display); font-size: 11px; font-weight: 700;
+  cursor: pointer; letter-spacing: 0.1em; text-transform: uppercase;
+  transition: all 0.1s; white-space: nowrap;
+}
+.sb-go:hover { background: var(--lime); color: var(--black); }
+
+/* Job rows */
+.job-header-row {
+  display: grid; grid-template-columns: 2fr 3fr 1fr 1fr auto;
+  gap: 0; background: var(--black); color: var(--lime);
+  border: 2px solid var(--black);
+}
+.jhr-cell { font-family: var(--font-display); font-size: 8px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; padding: 8px 14px; border-right: 1px solid #333; }
+.jhr-cell:last-child { border-right: none; }
+
+.job-row {
+  display: grid; grid-template-columns: 2fr 3fr 1fr 1fr auto;
+  gap: 0; border: 2px solid var(--black); border-top: none;
+  cursor: pointer; transition: background 0.1s;
+}
+.job-row:hover { background: #F5FF99; }
+.job-row.featured { background: #FAFF80; }
+.jr-cell { padding: 14px; border-right: 1px solid var(--mid); display: flex; flex-direction: column; justify-content: center; }
+.jr-cell:last-child { border-right: none; }
+.jr-co { font-family: var(--font-display); font-size: 12px; font-weight: 700; line-height: 1.2; text-transform: uppercase; margin-bottom: 2px; }
+.jr-loc { font-family: var(--font-mono); font-size: 9px; color: var(--muted); }
+.jr-title { font-size: 13px; font-weight: 600; line-height: 1.35; color: var(--black); }
+.jr-comp { font-family: var(--font-mono); font-size: 12px; color: var(--black); font-weight: 500; }
+.jr-match-num { font-family: var(--font-display); font-size: 22px; font-weight: 900; color: var(--black); line-height: 1; }
+.jr-match-bar { height: 3px; background: var(--mid); margin-top: 4px; }
+.jr-match-fill { height: 3px; background: var(--black); }
+.jr-btn { background: var(--black); color: var(--white); border: none; padding: 8px 16px; font-family: var(--font-display); font-size: 9px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 0.1em; transition: all 0.1s; white-space: nowrap; }
+.jr-btn:hover { background: var(--lime); color: var(--black); }
+
+/* JD step */
+.jd-two { display: grid; grid-template-columns: 1fr 300px; gap: 0; border: 2px solid var(--black); }
+.jd-main { border-right: 2px solid var(--black); padding: 28px 32px; }
+.jd-side { padding: 24px 28px; background: var(--grey); }
+
+.jd-tab-row { display: flex; border-bottom: 2px solid var(--black); margin-bottom: 20px; }
+.jd-t { font-family: var(--font-display); font-size: 9px; font-weight: 700; padding: 10px 20px; border: none; background: transparent; cursor: pointer; letter-spacing: 0.1em; text-transform: uppercase; border-right: 1px solid var(--mid); transition: all 0.1s; color: var(--muted); }
+.jd-t:last-child { border-right: none; }
+.jd-t.active { background: var(--lime); color: var(--black); border-bottom: 2px solid var(--black); margin-bottom: -2px; }
+
+.sw-textarea {
+  width: 100%;
+  background: var(--white);
+  border: 2px solid var(--black);
+  padding: 16px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--black);
+  resize: none;
+  outline: none;
+  transition: border-color 0.1s;
+  line-height: 1.7;
+}
+.sw-textarea:focus { border-color: var(--lime2); }
+.sw-textarea::placeholder { color: var(--mid); }
+
+.action-row { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+.step-label { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 0.1em; }
+.big-btn {
+  background: var(--black); color: var(--lime); border: none;
+  padding: 14px 32px;
+  font-family: var(--font-display); font-size: 11px; font-weight: 700;
+  cursor: pointer; letter-spacing: 0.1em; text-transform: uppercase;
+  transition: all 0.12s; display: flex; align-items: center; gap: 10px;
+}
+.big-btn:hover { background: var(--lime); color: var(--black); }
+
+.jd-s-header { font-family: var(--font-display); font-size: 9px; font-weight: 700; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--black); }
+.jd-s-role { font-family: var(--font-display); font-size: 15px; font-weight: 800; text-transform: uppercase; line-height: 1.2; margin-bottom: 6px; letter-spacing: -0.01em; }
+.jd-s-sub { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-bottom: 12px; }
+.jd-s-badge { display: inline-block; background: var(--black); color: var(--lime); font-family: var(--font-display); font-size: 10px; font-weight: 700; padding: 5px 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* Results */
+.results-topbar {
+  background: var(--black);
+  padding: 16px 52px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 2px solid var(--lime);
+  flex-shrink: 0;
+}
+.rtb-left { display: flex; align-items: center; gap: 28px; }
+.rtb-score { font-family: var(--font-display); font-size: 48px; font-weight: 900; color: var(--lime); line-height: 1; letter-spacing: -0.04em; }
+.rtb-score-label { font-family: var(--font-mono); font-size: 9px; color: #555; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 3px; }
+.rtb-divider { width: 2px; height: 48px; background: #333; }
+.rtb-stat { display: flex; flex-direction: column; gap: 2px; }
+.rtb-val { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--white); line-height: 1; }
+.rtb-label { font-family: var(--font-mono); font-size: 9px; color: #555; letter-spacing: 0.1em; text-transform: uppercase; }
+.rtb-dl { background: var(--lime); color: var(--black); border: none; padding: 14px 28px; font-family: var(--font-display); font-size: 11px; font-weight: 800; cursor: pointer; letter-spacing: 0.1em; text-transform: uppercase; transition: all 0.1s; }
+.rtb-dl:hover { background: var(--white); }
+
+.results-grid { flex: 1; display: grid; grid-template-columns: 1fr 340px; border-top: none; overflow: hidden; }
+.rg-main { overflow-y: auto; padding: 40px 52px; border-right: 2px solid var(--black); }
+.rg-side { overflow-y: auto; padding: 28px 32px; background: var(--grey); }
+
+.resume-block-sw {
+  border: 2px solid var(--black);
+  padding: 32px 36px;
+  font-size: 13px; line-height: 1.7;
+  background: var(--white);
+}
+.rbs-name { font-family: var(--font-display); font-size: 22px; font-weight: 900; letter-spacing: -0.02em; text-transform: uppercase; border-bottom: 3px solid var(--black); padding-bottom: 10px; margin-bottom: 14px; }
+.rbs-contact { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-bottom: 18px; }
+.rbs-section { font-family: var(--font-display); font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; color: var(--muted); margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--black); }
+.rbs-role { font-family: var(--font-display); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
+.rbs-sub { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-bottom: 6px; }
+.rbs-bullet { font-size: 12px; color: #333; padding-left: 14px; position: relative; margin-bottom: 4px; line-height: 1.55; }
+.rbs-bullet::before { content: '—'; position: absolute; left: 0; color: var(--black); font-weight: 700; }
+
+.side-section { margin-bottom: 24px; }
+.side-header { font-family: var(--font-display); font-size: 8px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid var(--black); }
+
+.kw-sw { display: inline-block; font-family: var(--font-mono); font-size: 9px; padding: 3px 8px; border: 1px solid; margin: 2px 2px 2px 0; letter-spacing: 0.06em; text-transform: uppercase; }
+.kw-sw.hit { border-color: var(--black); color: var(--black); background: var(--lime); }
+.kw-sw.miss { border-color: var(--mid); color: var(--muted); }
+
+.integrity-sw { background: var(--black); padding: 14px 16px; display: flex; gap: 12px; align-items: center; margin-bottom: 14px; }
+.is-icon { font-size: 18px; }
+.is-text .is-t { font-family: var(--font-display); font-size: 10px; font-weight: 800; color: var(--lime); letter-spacing: 0.06em; text-transform: uppercase; }
+.is-text .is-s { font-size: 10px; color: #555; margin-top: 2px; font-family: var(--font-mono); }
+
+.change-sw { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--mid); font-size: 11px; color: #555; }
+.change-sw:last-child { border-bottom: none; }
+.csw-badge { font-family: var(--font-display); font-size: 7px; font-weight: 800; padding: 2px 5px; letter-spacing: 0.1em; text-transform: uppercase; flex-shrink: 0; margin-top: 2px; }
+.csw-badge.mod { background: var(--lime); color: var(--black); }
+.csw-badge.add { background: var(--black); color: var(--lime); }
+.csw-badge.kw { background: var(--mid); color: var(--black); }
+</style>
+</head>
+<body>
+
+<!-- DEMO TABS -->
+<div class="demo-tabs">
+  <span>V7 · SWISS</span>
+  <button class="demo-tab active" onclick="showScreen('auth')">Auth</button>
+  <button class="demo-tab" onclick="showScreen('step1')">Step 1 · Jobs</button>
+  <button class="demo-tab" onclick="showScreen('step2')">Step 2 · JD</button>
+  <button class="demo-tab" onclick="showScreen('results')">Results</button>
+</div>
+
+<!-- ═══ AUTH ═══ -->
+<div class="auth-s active" id="s-auth">
+  <div class="auth-left">
+    <div class="al-logo">ResumeTailorPro ◼ v3</div>
+    <div>
+      <div class="al-big">PRECISION<br>TAILORED<br><span>RÉSUMÉS.</span></div>
+      <div class="al-tagline">AI reads the job description. You keep every fact. Provenance-verified output. Zero fabrications.</div>
+    </div>
+    <div class="al-bottom">
+      <div class="al-stat"><div class="al-stat-num">247</div><div class="al-stat-label">roles_indexed</div></div>
+      <div class="al-stat-div"></div>
+      <div class="al-stat"><div class="al-stat-num">0</div><div class="al-stat-label">fabrications</div></div>
+      <div class="al-stat-div"></div>
+      <div class="al-stat"><div class="al-stat-num">1.8s</div><div class="al-stat-label">avg_runtime</div></div>
+    </div>
+  </div>
+  <div class="auth-right">
+    <div class="ar-form">
+      <div class="ar-eyebrow">Authentication</div>
+      <div class="ar-title">Sign in.</div>
+      <label class="ar-label">Email address</label>
+      <input class="ar-input" type="email" placeholder="you@company.com">
+      <label class="ar-label">Password</label>
+      <input class="ar-input" type="password" placeholder="••••••••••" style="margin-bottom:32px;">
+      <button class="ar-btn"><span>Continue →</span><span style="font-size:10px;opacity:0.6;">⌘↵</span></button>
+      <button class="ar-google">
+        <svg width="14" height="14" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Continue with Google
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STEP 1 ═══ -->
+<div class="screen" id="s-step1">
+  <div class="app-topbar">
+    <div class="atb-logo">ResumeTailorPro</div>
+    <div class="step-counter-big"><strong>01</strong> / 05</div>
+    <div class="atb-user"><div class="u-dot"></div>arjun@acme.com</div>
+  </div>
+  <div class="steps-bar">
+    <div class="sb-step active"><div class="sb-num">01</div><div class="sb-label">Find Roles</div></div>
+    <div class="sb-step locked"><div class="sb-num">02</div><div class="sb-label">Job Brief</div></div>
+    <div class="sb-step locked"><div class="sb-num">03</div><div class="sb-label">Resume</div></div>
+    <div class="sb-step locked"><div class="sb-num">04</div><div class="sb-label">Tailoring</div></div>
+    <div class="sb-step locked"><div class="sb-num">05</div><div class="sb-label">Download</div></div>
+  </div>
+  <div class="main-layout">
+    <div class="step-num-col">
+      <div class="giant-num">01</div>
+      <div class="step-label-vert">Find Roles</div>
+    </div>
+    <div class="content-area">
+      <div class="pg-label">Step 01 of 05</div>
+      <div class="pg-title">Find roles that <span class="lime">FIT.</span></div>
+      <div class="pg-sub">AI-scored against your profile. 247 matches indexed. Ranked by fit coefficient, not recency.</div>
+
+      <div class="search-block">
+        <div class="sb-input-field"><label>Role / Title</label><input type="text" placeholder="Senior Product Manager"></div>
+        <div class="sb-input-field"><label>Location</label><input type="text" placeholder="Remote or Bay Area"></div>
+        <div class="sb-input-field" style="max-width:180px;"><label>Seniority</label><select><option>Any Level</option><option>Senior</option><option>Principal</option></select></div>
+        <button class="sb-go">Search →</button>
+      </div>
+
+      <div class="job-header-row">
+        <div class="jhr-cell">Company / Location</div>
+        <div class="jhr-cell">Role</div>
+        <div class="jhr-cell">Comp</div>
+        <div class="jhr-cell">Fit</div>
+        <div class="jhr-cell">Action</div>
+      </div>
+      <div class="job-row featured">
+        <td class="jr-cell"><div class="jr-co">Stripe</div><div class="jr-loc">SFO · Hybrid</div></td>
+        <td class="jr-cell"><div class="jr-title">Senior PM, Payments Infrastructure</div></td>
+        <td class="jr-cell"><div class="jr-comp">$180–220k</div></td>
+        <td class="jr-cell"><div class="jr-match-num">92%</div><div class="jr-match-bar"><div class="jr-match-fill" style="width:92%;"></div></div></td>
+        <td class="jr-cell"><button class="jr-btn">Select →</button></td>
+      </div>
+      <div class="job-row">
+        <td class="jr-cell"><div class="jr-co">Anthropic</div><div class="jr-loc">Remote</div></td>
+        <td class="jr-cell"><div class="jr-title">PM, Developer Experience &amp; Tooling</div></td>
+        <td class="jr-cell"><div class="jr-comp">$170–210k</div></td>
+        <td class="jr-cell"><div class="jr-match-num">88%</div><div class="jr-match-bar"><div class="jr-match-fill" style="width:88%;"></div></div></td>
+        <td class="jr-cell"><button class="jr-btn">Select →</button></td>
+      </div>
+      <div class="job-row">
+        <td class="jr-cell"><div class="jr-co">Linear</div><div class="jr-loc">NYC · Hybrid</div></td>
+        <td class="jr-cell"><div class="jr-title">Product Lead, Enterprise Growth</div></td>
+        <td class="jr-cell"><div class="jr-comp">$160–200k</div></td>
+        <td class="jr-cell"><div class="jr-match-num">85%</div><div class="jr-match-bar"><div class="jr-match-fill" style="width:85%;"></div></div></td>
+        <td class="jr-cell"><button class="jr-btn">Select →</button></td>
+      </div>
+      <div class="job-row">
+        <td class="jr-cell"><div class="jr-co">Vercel</div><div class="jr-loc">SFO · On-site</div></td>
+        <td class="jr-cell"><div class="jr-title">Senior PM, Platform &amp; DX</div></td>
+        <td class="jr-cell"><div class="jr-comp">$175–215k</div></td>
+        <td class="jr-cell"><div class="jr-match-num">81%</div><div class="jr-match-bar"><div class="jr-match-fill" style="width:81%;"></div></div></td>
+        <td class="jr-cell"><button class="jr-btn">Select →</button></td>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STEP 2 ═══ -->
+<div class="screen" id="s-step2">
+  <div class="app-topbar">
+    <div class="atb-logo">ResumeTailorPro</div>
+    <div class="step-counter-big"><strong>02</strong> / 05</div>
+    <div class="atb-user"><div class="u-dot"></div>arjun@acme.com</div>
+  </div>
+  <div class="steps-bar">
+    <div class="sb-step done"><div class="sb-check">✓</div><div class="sb-label">Find Roles</div></div>
+    <div class="sb-step active"><div class="sb-num">02</div><div class="sb-label">Job Brief</div></div>
+    <div class="sb-step locked"><div class="sb-num">03</div><div class="sb-label">Resume</div></div>
+    <div class="sb-step locked"><div class="sb-num">04</div><div class="sb-label">Tailoring</div></div>
+    <div class="sb-step locked"><div class="sb-num">05</div><div class="sb-label">Download</div></div>
+  </div>
+  <div class="main-layout">
+    <div class="step-num-col">
+      <div class="giant-num">02</div>
+      <div class="step-label-vert">Job Brief</div>
+    </div>
+    <div class="content-area">
+      <div class="pg-label">Step 02 of 05</div>
+      <div class="pg-title">The <span class="lime">JOB BRIEF.</span></div>
+      <div class="pg-sub">Paste the full description, enter a URL, or upload a file. AI extracts every keyword and signal.</div>
+
+      <div class="jd-two">
+        <div class="jd-main">
+          <div class="jd-tab-row">
+            <button class="jd-t active">Paste Text</button>
+            <button class="jd-t">URL</button>
+            <button class="jd-t">Upload</button>
+          </div>
+          <textarea class="sw-textarea" rows="9" placeholder="Paste the full job description here…
+
+We're looking for a Senior Product Manager with 5+ years experience in API-first developer products. You'll own the roadmap for our developer platform, collaborate with engineering and design, and define success metrics tied to revenue…"></textarea>
+          <div class="action-row">
+            <span class="step-label">02 / 05 — JD_INPUT</span>
+            <button class="big-btn">Extract &amp; Continue →</button>
+          </div>
+        </div>
+        <div class="jd-side">
+          <div class="jd-s-header">Selected Role</div>
+          <div class="jd-s-role">Senior PM,<br>Payments Infrastructure</div>
+          <div class="jd-s-sub">Stripe · San Francisco · $180–220k</div>
+          <div class="jd-s-badge">92% FIT</div>
+          <div style="margin-top:28px;">
+            <div class="jd-s-header">Extracts</div>
+            <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);line-height:2.4;">
+              → must_have_keywords<br>
+              → seniority_signals<br>
+              → tech_stack<br>
+              → culture_cues<br>
+              → comp_hints
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RESULTS ═══ -->
+<div class="screen" id="s-results">
+  <div class="results-topbar">
+    <div class="rtb-left">
+      <div>
+        <div class="rtb-score">92</div>
+        <div class="rtb-score-label">match_score</div>
+      </div>
+      <div class="rtb-divider"></div>
+      <div class="rtb-stat"><div class="rtb-val">23</div><div class="rtb-label">claims_ok</div></div>
+      <div class="rtb-divider"></div>
+      <div class="rtb-stat"><div class="rtb-val">0</div><div class="rtb-label">fabrications</div></div>
+      <div class="rtb-divider"></div>
+      <div class="rtb-stat"><div class="rtb-val" style="font-size:14px;color:#aaa;margin-top:4px;">Stripe · Senior PM, Payments</div><div class="rtb-label">target_role</div></div>
+    </div>
+    <button class="rtb-dl">↓ Download DOCX</button>
+  </div>
+  <div class="results-grid">
+    <div class="rg-main">
+      <div class="pg-label" style="margin-bottom:16px;">Output · tailored_resume.docx</div>
+      <div class="resume-block-sw">
+        <div class="rbs-name">Arjun Sharma</div>
+        <div class="rbs-contact">arjun@example.com · San Francisco, CA · linkedin.com/in/arjunsharma</div>
+        <div class="rbs-section">Experience</div>
+        <div class="rbs-role">Senior Product Manager, Platform</div>
+        <div class="rbs-sub">Acme Corp · 2021–Present</div>
+        <div class="rbs-bullet">Led payments infrastructure roadmap, increasing API throughput 40% serving 2M daily transactions</div>
+        <div class="rbs-bullet">Defined OKRs tying developer platform adoption to $12M net-new ARR</div>
+        <div class="rbs-bullet">Shipped Stripe-compatible webhook spec across 4 engineering teams</div>
+        <div class="rbs-section">Education</div>
+        <div class="rbs-role">B.S. Computer Science · UC Berkeley</div>
+        <div class="rbs-sub">2016</div>
+        <div class="rbs-section">Skills</div>
+        <div style="font-size:11px;color:#444;line-height:2;font-family:var(--font-mono);">Product Strategy · API Design · Payments Systems · OKRs · Agile · Data Analytics</div>
+      </div>
+    </div>
+    <div class="rg-side">
+      <div class="side-section">
+        <div class="side-header">Keyword Coverage</div>
+        <span class="kw-sw hit">payments_api</span>
+        <span class="kw-sw hit">infrastructure</span>
+        <span class="kw-sw hit">dev_platform</span>
+        <span class="kw-sw hit">okrs</span>
+        <span class="kw-sw hit">x-functional</span>
+        <span class="kw-sw miss">fraud_detect</span>
+        <span class="kw-sw miss">compliance</span>
+      </div>
+      <div class="integrity-sw">
+        <div class="is-icon">◼</div>
+        <div class="is-text">
+          <div class="is-t">Integrity Verified</div>
+          <div class="is-s">23 claims · 0 fabrications</div>
+        </div>
+      </div>
+      <div class="side-section">
+        <div class="side-header">Change Log</div>
+        <div class="change-sw"><span class="csw-badge mod">MOD</span><span>Promoted payments metric to lead bullet</span></div>
+        <div class="change-sw"><span class="csw-badge add">ADD</span><span>Added Stripe-compatible webhook spec</span></div>
+        <div class="change-sw"><span class="csw-badge kw">KW</span><span>Reordered skills: API Design first</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showScreen(id) {
+  document.querySelectorAll('.screen, .auth-s').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.demo-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
