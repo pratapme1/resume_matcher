@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Tailor Pro — V6 Mission Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #000000;
+  --bg1: #070A0F;
+  --bg2: #0A0F1A;
+  --bg3: #0F1624;
+  --panel: #0C1320;
+  --border: rgba(0,150,255,0.12);
+  --border-hi: rgba(0,150,255,0.25);
+  --blue: #00A8FF;
+  --blue2: #0080FF;
+  --cyan: #00D4E8;
+  --amber: #FFB800;
+  --green: #00E87A;
+  --red: #FF3355;
+  --text: #C8D8F0;
+  --text2: #8899BB;
+  --text3: #4A5A7A;
+  --font: 'IBM Plex Mono', 'Courier New', monospace;
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  position: relative;
+}
+
+/* subtle grid overlay */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,100,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,100,255,0.018) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none; z-index: 0;
+}
+
+/* Corner bracket decoration */
+.corner-tl, .corner-tr, .corner-bl, .corner-br {
+  position: fixed; width: 20px; height: 20px; z-index: 100; pointer-events: none;
+}
+.corner-tl { top: 44px; left: 0; border-top: 1px solid var(--blue); border-left: 1px solid var(--blue); }
+.corner-tr { top: 44px; right: 0; border-top: 1px solid var(--blue); border-right: 1px solid var(--blue); }
+.corner-bl { bottom: 0; left: 0; border-bottom: 1px solid var(--blue); border-left: 1px solid var(--blue); }
+.corner-br { bottom: 0; right: 0; border-bottom: 1px solid var(--blue); border-right: 1px solid var(--blue); }
+
+/* ─── DEMO TABS ─── */
+.demo-tabs {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 9000;
+  background: #000;
+  display: flex; align-items: center; padding: 0 16px; height: 44px;
+  border-bottom: 1px solid var(--border);
+}
+.demo-tabs > span { font-size: 9px; color: var(--text3); letter-spacing: 0.2em; margin-right: 16px; text-transform: uppercase; }
+.demo-tab { font-size: 10px; color: var(--text3); padding: 0 14px; height: 100%; border: none; background: none; cursor: pointer; border-bottom: 1px solid transparent; letter-spacing: 0.1em; text-transform: uppercase; transition: all 0.15s; font-family: var(--font); }
+.demo-tab:hover { color: var(--text2); }
+.demo-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+/* ─── SCREENS ─── */
+.screen { display: none; min-height: calc(100vh - 44px); margin-top: 44px; position: relative; z-index: 1; flex-direction: column; }
+.screen.active { display: flex; }
+.auth-s { display: none; min-height: calc(100vh - 44px); margin-top: 44px; position: relative; z-index: 1; align-items: center; justify-content: center; }
+.auth-s.active { display: flex; }
+
+/* ═══════════ AUTH — CRT Terminal ═══════════ */
+.terminal-window {
+  width: 100%;
+  max-width: 560px;
+  margin: 24px;
+  border: 1px solid var(--blue);
+  background: var(--bg1);
+  box-shadow: 0 0 40px rgba(0,168,255,0.12), inset 0 0 40px rgba(0,0,0,0.5);
+  position: relative;
+}
+.terminal-window::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px);
+  pointer-events: none; z-index: 10;
+}
+.tw-titlebar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tw-title { font-size: 11px; color: var(--blue); letter-spacing: 0.12em; text-transform: uppercase; }
+.tw-controls { display: flex; gap: 7px; }
+.tw-ctrl { width: 10px; height: 10px; border-radius: 50%; }
+.tw-ctrl.r { background: #FF3355; box-shadow: 0 0 4px #FF3355; }
+.tw-ctrl.y { background: #FFB800; box-shadow: 0 0 4px #FFB800; }
+.tw-ctrl.g { background: #00E87A; box-shadow: 0 0 4px #00E87A; }
+
+.tw-body { padding: 24px 28px; }
+.tw-line { margin-bottom: 4px; font-size: 12px; line-height: 1.6; }
+.tw-prompt { color: var(--blue2); }
+.tw-cmd { color: var(--cyan); }
+.tw-comment { color: var(--text3); font-style: italic; }
+.tw-output { color: var(--text2); padding-left: 16px; }
+.tw-header { color: var(--amber); letter-spacing: 0.08em; margin-bottom: 8px; }
+
+.tw-input-group { margin: 20px 0 0; }
+.tw-input-row { display: flex; align-items: center; gap: 0; margin-bottom: 10px; }
+.tw-input-label { color: var(--blue2); font-size: 12px; white-space: nowrap; min-width: 80px; }
+.tw-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 4px 8px;
+  font-family: var(--font);
+  font-size: 12px;
+  color: var(--cyan);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.tw-input:focus { border-bottom-color: var(--blue); }
+.tw-input::placeholder { color: var(--text3); }
+
+.tw-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--blue);
+  padding: 10px;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue);
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  margin-top: 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.tw-btn:hover { background: rgba(0,168,255,0.1); box-shadow: 0 0 16px rgba(0,168,255,0.15); }
+.tw-btn span { color: var(--text3); font-size: 10px; }
+
+.tw-or { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
+.tw-or::before, .tw-or::after { content:''; flex:1; height:1px; background:var(--border); }
+.tw-or span { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; }
+
+.tw-google {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border);
+  padding: 9px;
+  font-family: var(--font);
+  font-size: 11px;
+  color: var(--text2);
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.tw-google:hover { border-color: var(--border-hi); color: var(--text); }
+
+.cursor { display: inline-block; width: 8px; height: 14px; background: var(--blue); animation: blink 1s step-end infinite; vertical-align: -2px; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ═══════════ TOP NAV (app screens) ═══════════ */
+.topnav {
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  height: 44px;
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  position: sticky; top: 44px; z-index: 100;
+}
+.tn-brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 20px 0 0;
+  border-right: 1px solid var(--border);
+  margin-right: 4px;
+}
+.tn-logo { font-size: 11px; font-weight: 600; color: var(--blue); letter-spacing: 0.06em; text-transform: uppercase; }
+.tn-status { font-size: 9px; color: var(--text3); letter-spacing: 0.06em; }
+
+.nav-steps { display: flex; align-items: stretch; flex: 1; }
+.ns-tab {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 16px;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.1s;
+  position: relative;
+}
+.ns-tab:hover { background: rgba(0,168,255,0.04); }
+.ns-tab.active { background: rgba(0,168,255,0.06); }
+.ns-tab.active::bottom { content:''; position:absolute; bottom:0; left:0; right:0; height:1px; background:var(--blue); }
+.ns-tab::after { content: attr(data-after); position:absolute; bottom:0; left:0; right:0; height:1px; background:var(--blue); display:none; }
+.ns-tab.active::after { display:block; }
+.ns-tab.locked { opacity: 0.3; cursor: not-allowed; }
+.ns-tab.done { opacity: 0.65; }
+.ns-tab.done:hover { opacity: 1; }
+
+.ns-num { font-size: 9px; color: var(--text3); letter-spacing: 0.08em; flex-shrink: 0; }
+.ns-tab.active .ns-num { color: var(--blue2); }
+.ns-tab.done .ns-num { color: var(--green); }
+.ns-label { font-size: 11px; color: var(--text2); letter-spacing: 0.04em; }
+.ns-tab.active .ns-label { color: var(--blue); }
+.ns-check { color: var(--green); font-size: 10px; }
+
+.tn-right { display: flex; align-items: center; gap: 14px; padding-left: 16px; border-left: 1px solid var(--border); }
+.tn-stat { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text3); }
+.tn-stat-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 4px var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
+.kbd { font-size: 9px; background: var(--bg2); border: 1px solid var(--border); padding: 1px 5px; color: var(--text3); border-radius: 2px; }
+
+/* ─── BODY ─── */
+.mc-body { flex: 1; display: flex; overflow: hidden; }
+.mc-main { flex: 1; overflow-y: auto; padding: 24px 28px; border-right: 1px solid var(--border); }
+.mc-panel { width: 280px; overflow-y: auto; padding: 16px 18px; background: var(--bg1); flex-shrink: 0; }
+
+/* Page header */
+.mc-kicker { font-size: 9px; color: var(--blue); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.mc-kicker::after { content:''; flex:1; height:1px; background:var(--border); }
+.mc-h1 { font-size: 22px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; line-height: 1.2; margin-bottom: 4px; }
+.mc-h1 .hi { color: var(--blue); }
+.mc-sub { font-size: 11px; color: var(--text2); line-height: 1.55; margin-bottom: 24px; }
+
+/* ─── SEARCH ROW ─── */
+.search-row {
+  display: flex; gap: 1px; margin-bottom: 20px;
+  border: 1px solid var(--border);
+  background: var(--border);
+}
+.sr-field {
+  flex: 1;
+  background: var(--bg2);
+  padding: 12px 14px;
+}
+.sr-field label { display: block; font-size: 9px; color: var(--text3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+.sr-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-family: var(--font);
+  font-size: 12px;
+  color: var(--cyan);
+  outline: none;
+}
+.sr-input::placeholder { color: var(--text3); }
+select.sr-input { appearance: none; cursor: pointer; }
+.sr-btn {
+  background: var(--blue2);
+  border: none;
+  padding: 12px 20px;
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  display: flex; align-items: center; gap: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sr-btn:hover { background: var(--blue); }
+
+/* ─── DATA TABLE ─── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table thead tr { border-bottom: 1px solid var(--border); }
+.data-table thead th {
+  font-size: 9px; color: var(--text3); letter-spacing: 0.15em; text-transform: uppercase;
+  padding: 8px 10px; text-align: left; font-weight: 600;
+}
+.data-table tbody tr {
+  border-bottom: 1px solid rgba(0,100,255,0.06);
+  cursor: pointer; transition: background 0.1s;
+}
+.data-table tbody tr:hover { background: rgba(0,150,255,0.04); }
+.data-table tbody tr.featured { background: rgba(0,100,255,0.04); border-left: 2px solid var(--blue2); }
+.data-table td { padding: 12px 10px; }
+
+.tc-co { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; }
+.tc-loc { font-size: 10px; color: var(--text3); }
+.tc-role { font-size: 12px; color: var(--text2); max-width: 220px; line-height: 1.35; }
+.tc-salary { font-size: 11px; color: var(--text2); white-space: nowrap; font-weight: 500; }
+.tc-type span { font-size: 9px; padding: 2px 6px; border: 1px solid var(--border); color: var(--text3); margin-right: 4px; letter-spacing: 0.06em; }
+.tc-match { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.tm-pct { font-size: 13px; font-weight: 600; color: var(--blue); }
+.tm-bar { width: 48px; height: 2px; background: rgba(0,168,255,0.1); }
+.tm-fill { height: 2px; }
+.tc-action { text-align: right; }
+.tc-action button {
+  font-family: var(--font); font-size: 10px; font-weight: 600;
+  padding: 5px 12px; background: transparent; border: 1px solid var(--border);
+  color: var(--text2); cursor: pointer; letter-spacing: 0.06em; text-transform: uppercase;
+  transition: all 0.15s; white-space: nowrap;
+}
+.tc-action button:hover { border-color: var(--blue); color: var(--blue); background: rgba(0,168,255,0.06); }
+.tc-kbd { font-size: 9px; color: var(--text3); margin-top: 2px; }
+
+/* ─── SIDE PANEL ─── */
+.panel-section { margin-bottom: 20px; }
+.ps-header { font-size: 9px; color: var(--text3); letter-spacing: 0.15em; text-transform: uppercase; padding-bottom: 6px; border-bottom: 1px solid var(--border); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.ps-header .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--blue); }
+
+.metric-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid rgba(0,100,255,0.05); }
+.metric-row:last-child { border-bottom: none; }
+.mr-label { font-size: 10px; color: var(--text3); }
+.mr-val { font-size: 16px; font-weight: 600; color: var(--blue); }
+
+.pref-tag { display: inline-block; font-size: 9px; padding: 3px 8px; border: 1px solid var(--border); color: var(--text3); margin: 2px 2px 2px 0; cursor: pointer; transition: all 0.12s; letter-spacing: 0.06em; text-transform: uppercase; }
+.pref-tag.on { border-color: var(--blue2); color: var(--blue); background: rgba(0,128,255,0.08); }
+.pref-tag:hover:not(.on) { border-color: var(--border-hi); color: var(--text2); }
+
+/* ─── JD STEP ─── */
+.jd-layout { display: grid; grid-template-columns: 1fr 240px; gap: 1px; background: var(--border); flex: 1; }
+.jd-col { background: var(--bg); padding: 24px 28px; overflow-y: auto; }
+.jd-col.panel { background: var(--bg1); padding: 16px 18px; }
+
+.jd-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.jd-tab { font-family: var(--font); font-size: 10px; color: var(--text3); padding: 8px 16px; border: none; background: transparent; cursor: pointer; letter-spacing: 0.1em; text-transform: uppercase; border-bottom: 1px solid transparent; margin-bottom: -1px; transition: all 0.1s; }
+.jd-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+.mc-textarea {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  font-family: var(--font);
+  font-size: 12px;
+  color: var(--text2);
+  resize: none;
+  outline: none;
+  transition: all 0.15s;
+  line-height: 1.7;
+}
+.mc-textarea:focus { border-color: var(--blue2); background: rgba(0,100,255,0.03); }
+.mc-textarea::placeholder { color: var(--text3); }
+
+.action-row { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+.step-txt { font-size: 10px; color: var(--text3); letter-spacing: 0.08em; }
+.mc-btn {
+  font-family: var(--font); font-size: 11px; font-weight: 600;
+  padding: 9px 22px; background: var(--blue2); border: none;
+  color: #fff; cursor: pointer; letter-spacing: 0.08em; text-transform: uppercase;
+  transition: all 0.15s; display: flex; align-items: center; gap: 10px;
+}
+.mc-btn:hover { background: var(--blue); }
+.mc-btn .k { color: rgba(255,255,255,0.5); font-size: 10px; background: rgba(0,0,0,0.2); padding: 1px 5px; }
+
+/* ─── RESULTS ─── */
+.results-layout { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.results-header-bar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.rhb-left { display: flex; align-items: center; gap: 24px; }
+.rhb-stat { display: flex; flex-direction: column; gap: 2px; }
+.rhb-val { font-size: 28px; font-weight: 700; color: var(--blue); line-height: 1; }
+.rhb-label { font-size: 9px; color: var(--text3); letter-spacing: 0.12em; text-transform: uppercase; }
+.divider-v { width: 1px; background: var(--border); height: 40px; }
+
+.results-body { flex: 1; display: grid; grid-template-columns: 1fr 280px; gap: 1px; background: var(--border); overflow: hidden; }
+.res-main { overflow-y: auto; padding: 20px 28px; background: var(--bg); }
+.res-panel { overflow-y: auto; padding: 16px 18px; background: var(--bg1); }
+
+.resume-terminal {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  padding: 24px 28px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.rt-name { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 2px; letter-spacing: -0.01em; }
+.rt-contact { font-size: 10px; color: var(--text3); margin-bottom: 16px; }
+.rt-section { font-size: 9px; color: var(--blue2); letter-spacing: 0.18em; text-transform: uppercase; margin: 14px 0 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+.rt-role { font-size: 12px; font-weight: 600; color: var(--text); }
+.rt-sub { font-size: 10px; color: var(--text3); margin-bottom: 5px; }
+.rt-bullet { color: var(--text2); padding-left: 12px; position: relative; margin-bottom: 3px; }
+.rt-bullet::before { content: '>'; position: absolute; left: 0; color: var(--blue2); font-weight: 700; font-size: 10px; }
+
+.kw-line { display: flex; flex-wrap: wrap; gap: 5px; }
+.kw-t { font-size: 9px; padding: 2px 7px; border: 1px solid; letter-spacing: 0.06em; text-transform: uppercase; }
+.kw-t.hit { border-color: var(--blue2); color: var(--blue); }
+.kw-t.miss { border-color: var(--border); color: var(--text3); }
+
+.verified-bar {
+  background: rgba(0,232,122,0.06);
+  border: 1px solid rgba(0,232,122,0.15);
+  padding: 10px 14px;
+  display: flex; gap: 10px; align-items: center;
+  margin-top: 14px;
+}
+.vb-txt .vb-t { font-size: 11px; font-weight: 600; color: var(--green); letter-spacing: 0.04em; }
+.vb-txt .vb-s { font-size: 10px; color: rgba(0,232,122,0.5); margin-top: 1px; }
+
+.download-btn {
+  width: 100%;
+  background: var(--blue2);
+  border: none;
+  padding: 12px;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  margin-top: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.download-btn:hover { background: var(--blue); box-shadow: 0 0 20px rgba(0,168,255,0.2); }
+.download-btn .dk { font-size: 10px; color: rgba(255,255,255,0.5); font-weight: 400; }
+
+.change-entry { display: flex; gap: 8px; padding: 7px 0; border-bottom: 1px solid rgba(0,100,255,0.05); font-size: 10px; }
+.change-entry:last-child { border-bottom: none; }
+.ce-type { font-size: 8px; font-weight: 700; padding: 2px 5px; letter-spacing: 0.08em; flex-shrink: 0; margin-top: 1px; text-transform: uppercase; }
+.ce-type.mod { border: 1px solid var(--amber); color: var(--amber); }
+.ce-type.add { border: 1px solid var(--green); color: var(--green); }
+.ce-type.kw { border: 1px solid var(--blue); color: var(--blue); }
+.ce-text { color: var(--text2); line-height: 1.45; }
+</style>
+</head>
+<body>
+
+<div class="corner-tl"></div><div class="corner-tr"></div>
+<div class="corner-bl"></div><div class="corner-br"></div>
+
+<!-- DEMO TABS -->
+<div class="demo-tabs">
+  <span>V6 · MISSION CTRL</span>
+  <button class="demo-tab active" onclick="showScreen('auth')">Auth</button>
+  <button class="demo-tab" onclick="showScreen('step1')">Step 1 · Jobs</button>
+  <button class="demo-tab" onclick="showScreen('step2')">Step 2 · JD</button>
+  <button class="demo-tab" onclick="showScreen('results')">Results</button>
+</div>
+
+<!-- ═══ AUTH ═══ -->
+<div class="auth-s active" id="s-auth">
+  <div class="terminal-window">
+    <div class="tw-titlebar">
+      <div class="tw-controls">
+        <div class="tw-ctrl r"></div>
+        <div class="tw-ctrl y"></div>
+        <div class="tw-ctrl g"></div>
+      </div>
+      <div class="tw-title">RESUMETAILORPRO — v3.2.1 — AUTH</div>
+      <div style="width:42px;"></div>
+    </div>
+    <div class="tw-body">
+      <div class="tw-line tw-prompt">$ resumetailor <span class="tw-cmd">auth login</span> <span class="tw-comment">--mode interactive</span></div>
+      <div class="tw-line tw-output" style="margin-bottom:12px;">Initializing secure session… <span style="color:var(--green);">OK</span></div>
+      <div class="tw-line tw-header">── AUTHENTICATION REQUIRED ──────────────────</div>
+      <div class="tw-line tw-output">AI-powered resume tailoring · Provenance-verified output</div>
+      <div class="tw-line tw-output" style="margin-bottom:16px;">Zero fabrication guarantee · DOCX export ready</div>
+      <div class="tw-input-group">
+        <div class="tw-input-row">
+          <div class="tw-input-label">email<span style="color:var(--blue2);">:</span></div>
+          <input class="tw-input" type="email" placeholder="user@company.com">
+        </div>
+        <div class="tw-input-row">
+          <div class="tw-input-label">password<span style="color:var(--blue2);">:</span></div>
+          <input class="tw-input" type="password" placeholder="••••••••••">
+        </div>
+      </div>
+      <button class="tw-btn">
+        <span>$ authenticate --proceed</span>
+        <span>[⌘↵]</span>
+      </button>
+      <div class="tw-or"><span>── OR ──</span></div>
+      <button class="tw-google">
+        <svg width="13" height="13" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        oauth2 --provider google
+      </button>
+      <div class="tw-line tw-comment" style="margin-top:14px;font-size:10px;">[ press ESC to cancel · TAB to switch fields ]<span class="cursor"></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STEP 1 ═══ -->
+<div class="screen" id="s-step1">
+  <div class="topnav">
+    <div class="tn-brand">
+      <div>
+        <div class="tn-logo">ResumeTailorPro</div>
+        <div class="tn-status">sys.online · v3.2.1</div>
+      </div>
+    </div>
+    <div class="nav-steps">
+      <div class="ns-tab active" data-after="">
+        <span class="ns-num">01</span>
+        <span class="ns-label">FIND_ROLES</span>
+      </div>
+      <div class="ns-tab locked"><span class="ns-num">02</span><span class="ns-label">JD_INPUT</span></div>
+      <div class="ns-tab locked"><span class="ns-num">03</span><span class="ns-label">RESUME_UPLOAD</span></div>
+      <div class="ns-tab locked"><span class="ns-num">04</span><span class="ns-label">TAILORING</span></div>
+      <div class="ns-tab locked"><span class="ns-num">05</span><span class="ns-label">DOWNLOAD</span></div>
+    </div>
+    <div class="tn-right">
+      <div class="tn-stat"><div class="tn-stat-dot"></div><span>LIVE</span></div>
+      <span class="kbd">⌘K</span>
+      <span style="font-size:11px;color:var(--text2);">arjun@</span>
+    </div>
+  </div>
+  <div class="mc-body">
+    <div class="mc-main">
+      <div class="mc-kicker">CMD: search-jobs ──</div>
+      <div class="mc-h1">Find roles that <span class="hi">fit.</span></div>
+      <div class="mc-sub">AI-scored against your profile. 247 results indexed. Sorted by fit coefficient.</div>
+
+      <div class="search-row">
+        <div class="sr-field"><label>ROLE_QUERY</label><input class="sr-input" type="text" placeholder="Senior Product Manager"></div>
+        <div class="sr-field"><label>LOCATION</label><input class="sr-input" type="text" placeholder="Remote | Bay Area"></div>
+        <div class="sr-field"><label>SENIORITY</label><select class="sr-input"><option>ANY</option><option>SENIOR</option><option>PRINCIPAL</option></select></div>
+        <button class="sr-btn">RUN <span class="kbd" style="font-size:9px;margin-left:4px;">⌘↵</span></button>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:9px;color:var(--text3);letter-spacing:0.1em;">RESULTS: 247 · SORTED_BY: fit_score DESC · FILTER: active</span>
+        <span style="font-size:9px;color:var(--text3);">showing 4 of 247</span>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>COMPANY</th>
+            <th>ROLE</th>
+            <th>COMP</th>
+            <th>TYPE</th>
+            <th style="text-align:right;">FIT%</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="featured">
+            <td><div class="tc-co">Stripe</div><div class="tc-loc">SFO · Hybrid</div></td>
+            <td class="tc-role">Senior PM, Payments Infrastructure</td>
+            <td class="tc-salary">$180–220k</td>
+            <td class="tc-type"><span>FT</span><span>Series D+</span></td>
+            <td class="tc-match">
+              <div class="tm-pct">92%</div>
+              <div class="tm-bar"><div class="tm-fill" style="width:92%;background:var(--blue2);"></div></div>
+              <div class="tc-kbd">⌘1</div>
+            </td>
+            <td class="tc-action"><button>SELECT</button></td>
+          </tr>
+          <tr>
+            <td><div class="tc-co">Anthropic</div><div class="tc-loc">Remote</div></td>
+            <td class="tc-role">PM, Developer Experience &amp; Tooling</td>
+            <td class="tc-salary">$170–210k</td>
+            <td class="tc-type"><span>FT</span><span>Remote</span></td>
+            <td class="tc-match">
+              <div class="tm-pct">88%</div>
+              <div class="tm-bar"><div class="tm-fill" style="width:88%;background:var(--amber);"></div></div>
+              <div class="tc-kbd">⌘2</div>
+            </td>
+            <td class="tc-action"><button>SELECT</button></td>
+          </tr>
+          <tr>
+            <td><div class="tc-co">Linear</div><div class="tc-loc">NYC · Hybrid</div></td>
+            <td class="tc-role">Product Lead, Enterprise Growth</td>
+            <td class="tc-salary">$160–200k</td>
+            <td class="tc-type"><span>FT</span></td>
+            <td class="tc-match">
+              <div class="tm-pct">85%</div>
+              <div class="tm-bar"><div class="tm-fill" style="width:85%;background:var(--cyan);"></div></div>
+              <div class="tc-kbd">⌘3</div>
+            </td>
+            <td class="tc-action"><button>SELECT</button></td>
+          </tr>
+          <tr>
+            <td><div class="tc-co">Vercel</div><div class="tc-loc">SFO · On-site</div></td>
+            <td class="tc-role">Senior PM, Platform &amp; DX</td>
+            <td class="tc-salary">$175–215k</td>
+            <td class="tc-type"><span>FT</span></td>
+            <td class="tc-match">
+              <div class="tm-pct">81%</div>
+              <div class="tm-bar"><div class="tm-fill" style="width:81%;background:var(--green);"></div></div>
+              <div class="tc-kbd">⌘4</div>
+            </td>
+            <td class="tc-action"><button>SELECT</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="mc-panel">
+      <div class="panel-section">
+        <div class="ps-header"><div class="dot"></div>MARKET_STATS</div>
+        <div class="metric-row"><div class="mr-label">total_results</div><div class="mr-val">247</div></div>
+        <div class="metric-row"><div class="mr-label">fit_above_80%</div><div class="mr-val">34</div></div>
+        <div class="metric-row"><div class="mr-label">new_24h</div><div class="mr-val">12</div></div>
+        <div class="metric-row"><div class="mr-label">avg_comp</div><div class="mr-val" style="font-size:13px;color:var(--amber);">$192k</div></div>
+      </div>
+      <div class="panel-section">
+        <div class="ps-header"><div class="dot"></div>ACTIVE_FILTERS</div>
+        <div class="pref-tag on">remote</div>
+        <div class="pref-tag on">$150k+</div>
+        <div class="pref-tag on">startup</div>
+        <div class="pref-tag">series-a</div>
+        <div class="pref-tag">equity</div>
+        <div class="pref-tag">no-reloc</div>
+      </div>
+      <div class="panel-section">
+        <div class="ps-header"><div class="dot"></div>TOP_SKILLS_SOUGHT</div>
+        <div style="font-size:10px;color:var(--text2);line-height:2.2;">
+          product_strategy<br>api_design<br>data_analytics<br>stakeholder_mgmt<br>go_to_market<br>okrs · agile
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STEP 2 ═══ -->
+<div class="screen" id="s-step2">
+  <div class="topnav">
+    <div class="tn-brand"><div><div class="tn-logo">ResumeTailorPro</div><div class="tn-status">sys.online · v3.2.1</div></div></div>
+    <div class="nav-steps">
+      <div class="ns-tab done"><span class="ns-num">01</span><span class="ns-label">FIND_ROLES</span><span class="ns-check">✓</span></div>
+      <div class="ns-tab active"><span class="ns-num">02</span><span class="ns-label">JD_INPUT</span></div>
+      <div class="ns-tab locked"><span class="ns-num">03</span><span class="ns-label">RESUME_UPLOAD</span></div>
+      <div class="ns-tab locked"><span class="ns-num">04</span><span class="ns-label">TAILORING</span></div>
+      <div class="ns-tab locked"><span class="ns-num">05</span><span class="ns-label">DOWNLOAD</span></div>
+    </div>
+    <div class="tn-right"><div class="tn-stat"><div class="tn-stat-dot"></div><span>LIVE</span></div><span class="kbd">⌘K</span><span style="font-size:11px;color:var(--text2);">arjun@</span></div>
+  </div>
+  <div class="jd-layout">
+    <div class="jd-col">
+      <div class="mc-kicker">CMD: extract-jd ──</div>
+      <div class="mc-h1">Input <span class="hi">job description.</span></div>
+      <div class="mc-sub">Paste · URL · File. AI extracts keywords, seniority signals, tech stack.</div>
+      <div class="jd-tabs">
+        <button class="jd-tab active">--paste</button>
+        <button class="jd-tab">--url</button>
+        <button class="jd-tab">--file</button>
+      </div>
+      <textarea class="mc-textarea" rows="10" placeholder="# paste job description below
+# supports: plain text, HTML, markdown
+
+We're looking for a Senior Product Manager with 5+ years experience in API-first developer products. You'll own the roadmap for our developer platform…"></textarea>
+      <div class="action-row">
+        <span class="step-txt">STEP: 02/05</span>
+        <button class="mc-btn">EXTRACT &amp; CONTINUE <span class="k">[⌘↵]</span></button>
+      </div>
+    </div>
+    <div class="jd-col panel">
+      <div class="panel-section">
+        <div class="ps-header"><div class="dot"></div>SELECTED_ROLE</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:6px;">Senior PM,<br>Payments Infrastructure</div>
+        <div style="font-size:10px;color:var(--text3);">Stripe · SFO · $180–220k</div>
+        <div style="margin-top:8px;font-size:10px;font-weight:600;color:var(--blue);padding:3px 8px;border:1px solid var(--border-hi);display:inline-block;">FIT: 92%</div>
+      </div>
+      <div class="panel-section">
+        <div class="ps-header"><div class="dot"></div>EXTRACT_FIELDS</div>
+        <div style="font-size:10px;color:var(--text2);line-height:2.2;">
+          ✓ must_have_keywords<br>
+          ✓ seniority_signals<br>
+          ✓ tech_stack_mentions<br>
+          ✓ culture_cues<br>
+          ✓ compensation_hints
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RESULTS ═══ -->
+<div class="screen" id="s-results">
+  <div class="topnav">
+    <div class="tn-brand"><div><div class="tn-logo">ResumeTailorPro</div><div class="tn-status">sys.online · v3.2.1</div></div></div>
+    <div class="nav-steps">
+      <div class="ns-tab done"><span class="ns-num">01</span><span class="ns-label">FIND_ROLES</span><span class="ns-check">✓</span></div>
+      <div class="ns-tab done"><span class="ns-num">02</span><span class="ns-label">JD_INPUT</span><span class="ns-check">✓</span></div>
+      <div class="ns-tab done"><span class="ns-num">03</span><span class="ns-label">RESUME_UPLOAD</span><span class="ns-check">✓</span></div>
+      <div class="ns-tab done"><span class="ns-num">04</span><span class="ns-label">TAILORING</span><span class="ns-check">✓</span></div>
+      <div class="ns-tab active"><span class="ns-num">05</span><span class="ns-label">DOWNLOAD</span></div>
+    </div>
+    <div class="tn-right"><div class="tn-stat"><div class="tn-stat-dot"></div><span>LIVE</span></div><span class="kbd">⌘K</span><span style="font-size:11px;color:var(--text2);">arjun@</span></div>
+  </div>
+  <div class="results-layout">
+    <div class="results-header-bar">
+      <div class="rhb-left">
+        <div class="rhb-stat"><div class="rhb-val">92</div><div class="rhb-label">match_score</div></div>
+        <div class="divider-v"></div>
+        <div class="rhb-stat"><div class="rhb-val" style="color:var(--green);font-size:20px;">23</div><div class="rhb-label">claims_verified</div></div>
+        <div class="divider-v"></div>
+        <div class="rhb-stat"><div class="rhb-val" style="color:var(--green);font-size:20px;">0</div><div class="rhb-label">fabrications</div></div>
+        <div class="divider-v"></div>
+        <div class="rhb-stat"><div class="rhb-val" style="color:var(--amber);font-size:20px;">7</div><div class="rhb-label">edits_applied</div></div>
+        <div class="divider-v"></div>
+        <div style="font-size:10px;color:var(--text3);line-height:1.6;">
+          Stripe · Senior PM, Payments Infrastructure<br>
+          <span style="color:var(--green);">STATUS: INTEGRITY_VERIFIED</span>
+        </div>
+      </div>
+      <button class="mc-btn" style="height:auto;">EXPORT DOCX <span class="k">[⌘D]</span></button>
+    </div>
+    <div class="results-body">
+      <div class="res-main">
+        <div class="mc-kicker">OUTPUT: tailored_resume.docx ──</div>
+        <div class="resume-terminal">
+          <div class="rt-name">Arjun Sharma</div>
+          <div class="rt-contact">arjun@example.com · San Francisco, CA · linkedin.com/in/arjunsharma</div>
+          <div class="rt-section">// EXPERIENCE</div>
+          <div class="rt-role">Senior Product Manager, Platform</div>
+          <div class="rt-sub">Acme Corp · 2021–Present</div>
+          <div class="rt-bullet">Led payments infrastructure roadmap, increasing API throughput 40% (2M daily txns)</div>
+          <div class="rt-bullet">Defined OKRs tying developer platform adoption to $12M net-new ARR</div>
+          <div class="rt-bullet">Shipped Stripe-compatible webhook spec coordinating 4 engineering teams</div>
+          <div class="rt-section">// EDUCATION</div>
+          <div class="rt-role">B.S. Computer Science · UC Berkeley · 2016</div>
+          <div class="rt-section">// SKILLS</div>
+          <div style="font-size:11px;color:var(--text2);line-height:2.2;">product_strategy · api_design · payments_systems · okrs · agile · data_analytics · stakeholder_mgmt</div>
+        </div>
+      </div>
+      <div class="res-panel">
+        <div class="panel-section">
+          <div class="ps-header"><div class="dot"></div>KEYWORD_COVERAGE</div>
+          <div class="kw-line">
+            <span class="kw-t hit">payments_api</span>
+            <span class="kw-t hit">infrastructure</span>
+            <span class="kw-t hit">dev_platform</span>
+            <span class="kw-t hit">okrs</span>
+            <span class="kw-t hit">x-functional</span>
+            <span class="kw-t miss">fraud_detect</span>
+            <span class="kw-t miss">compliance</span>
+          </div>
+          <div style="margin-top:10px;font-size:10px;color:var(--text3);">coverage: 5/7 · 71.4%</div>
+        </div>
+        <div class="panel-section">
+          <div class="ps-header"><div class="dot"></div>INTEGRITY_CHECK</div>
+          <div class="verified-bar">
+            <div class="vb-txt">
+              <div class="vb-t">VERIFIED: PASS</div>
+              <div class="vb-s">23 claims · 0 fabrications detected</div>
+            </div>
+          </div>
+          <button class="download-btn">DOWNLOAD DOCX<span class="dk">[⌘D]</span></button>
+        </div>
+        <div class="panel-section">
+          <div class="ps-header"><div class="dot"></div>CHANGE_LOG</div>
+          <div class="change-entry"><span class="ce-type mod">MOD</span><span class="ce-text">Promoted payments metric to lead bullet</span></div>
+          <div class="change-entry"><span class="ce-type add">ADD</span><span class="ce-text">Added "Stripe-compatible webhook spec" context</span></div>
+          <div class="change-entry"><span class="ce-type kw">KW</span><span class="ce-text">Reordered skills: API Design → Payments first</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showScreen(id) {
+  document.querySelectorAll('.screen, .auth-s').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.demo-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

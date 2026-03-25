@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Tailor Pro — V10 Signal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0B0F1A;
+      --glass: rgba(255,255,255,0.055);
+      --glass-border: rgba(255,255,255,0.08);
+      --text: #F1F5FB;
+      --text-2: #8A9BB2;
+      --text-3: #5C6B80;
+      --blue: #4F7CFF;
+      --blue-soft: rgba(79,124,255,0.15);
+      --green: #22C55E;
+      --green-soft: rgba(34,197,94,0.12);
+      --teal: #14B8A6;
+      --teal-soft: rgba(20,184,166,0.12);
+      --amber: #F59E0B;
+      --amber-soft: rgba(245,158,11,0.12);
+      --line: rgba(255,255,255,0.07);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 60% 50% at 15% 0%, rgba(79,124,255,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 85% 0%, rgba(20,184,166,0.08) 0%, transparent 70%);
+      background-attachment: fixed;
+    }
+
+    /* ────── TOP PROGRESS BAR ────── */
+    #progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      width: 0%;
+      background: var(--blue);
+      z-index: 1000;
+      transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* ────── TOPBAR ────── */
+    #topbar {
+      position: sticky;
+      top: 0;
+      height: 52px;
+      background: rgba(11,15,26,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 900;
+    }
+
+    .topbar-wordmark {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.02em;
+    }
+
+    .topbar-name {
+      font-size: 13px;
+      color: var(--text-2);
+      font-weight: 500;
+    }
+
+    /* ────── STEP PROGRESS ────── */
+    #step-progress {
+      display: flex;
+      justify-content: center;
+      padding: 20px 16px;
+      background: transparent;
+    }
+
+    .step-progress-inner {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      max-width: 560px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .step-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .step-circle.future {
+      background: transparent;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      color: var(--text-3);
+    }
+
+    .step-circle.active {
+      background: var(--blue);
+      border: none;
+      color: #fff;
+      box-shadow: 0 0 0 4px var(--blue-soft);
+    }
+
+    .step-circle.done {
+      background: var(--green);
+      border: none;
+      color: #fff;
+    }
+
+    .step-label {
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+      color: var(--text-3);
+      transition: color 0.3s;
+    }
+
+    .step-label.active { color: var(--text); font-weight: 600; }
+    .step-label.done { color: var(--text-2); }
+
+    .step-connector {
+      width: 40px;
+      height: 1.5px;
+      background: rgba(255,255,255,0.1);
+      margin-bottom: 22px;
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+
+    .step-connector.done { background: var(--green); }
+
+    /* ────── DEMO STRIP ────── */
+    #demo-strip {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(11,15,26,0.9);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 40px;
+      padding: 6px 8px;
+      display: flex;
+      gap: 4px;
+      z-index: 999;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .demo-btn {
+      padding: 6px 14px;
+      border-radius: 30px;
+      border: none;
+      background: transparent;
+      color: var(--text-2);
+      font-size: 12px;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .demo-btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+    .demo-btn.active { background: var(--blue); color: #fff; }
+
+    /* ────── SCREENS WRAPPER ────── */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ────── GLASS CARD ────── */
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+    }
+
+    /* ────── BUTTONS ────── */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 20px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-primary:hover { background: #5f8aff; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(79,124,255,0.3); }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 20px;
+      background: transparent;
+      color: var(--text-2);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.18); color: var(--text); }
+
+    .btn-outline-dim {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.03);
+      color: var(--text-3);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-outline-dim:hover { background: rgba(255,255,255,0.06); color: var(--text-2); }
+
+    /* ────── CHIPS ────── */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .chip-teal { background: var(--teal-soft); color: var(--teal); }
+    .chip-blue { background: var(--blue-soft); color: var(--blue); }
+    .chip-amber { background: var(--amber-soft); color: var(--amber); }
+    .chip-green { background: var(--green-soft); color: var(--green); }
+    .chip-gray { background: rgba(255,255,255,0.05); color: var(--text-3); border: 1px solid var(--line); }
+
+    /* ────── FORM ELEMENTS ────── */
+    .form-input {
+      width: 100%;
+      padding: 11px 14px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-input::placeholder { color: var(--text-3); }
+    .form-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft); }
+
+    textarea.form-input { resize: vertical; line-height: 1.6; }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      margin-bottom: 6px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    /* ════════════════════════════════
+       SCREEN: AUTH
+    ════════════════════════════════ */
+    #screen-auth {
+      min-height: calc(100vh - 52px);
+      display: none;
+    }
+
+    #screen-auth.active { display: flex; }
+
+    .auth-left {
+      flex: 1;
+      background: rgba(255,255,255,0.03);
+      border-right: 1px solid var(--line);
+      padding: 60px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-left-wordmark {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-2);
+      letter-spacing: -0.01em;
+      margin-bottom: 40px;
+    }
+
+    .auth-headline {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.03em;
+      line-height: 1.25;
+      margin-bottom: 32px;
+    }
+
+    .auth-features {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      flex: 1;
+    }
+
+    .auth-feature {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--text-2);
+    }
+
+    .auth-feature-check {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--teal-soft);
+      color: var(--teal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .auth-bottom-bar {
+      height: 2px;
+      background: linear-gradient(90deg, var(--blue), var(--teal));
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+    }
+
+    .auth-right {
+      flex: 1;
+      padding: 60px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      max-width: 480px;
+    }
+
+    .auth-right-heading {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .auth-right-sub {
+      font-size: 14px;
+      color: var(--text-2);
+      margin-bottom: 32px;
+    }
+
+    .auth-form { display: flex; flex-direction: column; gap: 16px; }
+
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-3);
+      font-size: 12px;
+      margin: 4px 0;
+    }
+
+    .or-divider::before, .or-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--line);
+    }
+
+    .auth-footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-3);
+    }
+
+    .auth-footer a { color: var(--blue); text-decoration: none; }
+    .auth-footer a:hover { text-decoration: underline; }
+
+    /* ════════════════════════════════
+       SCREEN: ENTRY
+    ════════════════════════════════ */
+    #screen-entry {
+      padding: 48px 24px 100px;
+    }
+
+    .entry-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .entry-heading {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+
+    .entry-sub {
+      font-size: 15px;
+      color: var(--text-2);
+    }
+
+    .entry-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .entry-card {
+      padding: 28px;
+      border-radius: 20px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .entry-card:hover {
+      border-color: rgba(255,255,255,0.14);
+      transform: translateY(-2px);
+    }
+
+    .entry-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .entry-icon-blue { background: var(--blue-soft); }
+    .entry-icon-amber { background: var(--amber-soft); }
+
+    .entry-card-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .entry-card-desc {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    /* ════════════════════════════════
+       SCREEN: STEP 1
+    ════════════════════════════════ */
+    #screen-step1 {
+      padding: 0 24px 100px;
+    }
+
+    .step-content-2col {
+      display: grid;
+      grid-template-columns: 58fr 42fr;
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding-top: 24px;
+      align-items: start;
+    }
+
+    .step-label-tag {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--teal);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .step-heading {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .search-input-wrap {
+      flex: 1;
+      position: relative;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-3);
+      font-size: 15px;
+    }
+
+    .search-input-wrap .form-input {
+      padding-left: 36px;
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .filter-chip {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+      color: var(--text-2);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-chip:hover, .filter-chip.active {
+      background: var(--blue-soft);
+      border-color: rgba(79,124,255,0.3);
+      color: var(--blue);
+    }
+
+    .results-count {
+      font-size: 12px;
+      color: var(--text-3);
+      margin-bottom: 12px;
+    }
+
+    .results-count strong { color: var(--text-2); }
+
+    .job-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .job-card {
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .job-card:hover { border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.07); }
+    .job-card.selected { border-color: var(--blue); background: rgba(79,124,255,0.06); }
+
+    .job-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .job-info { flex: 1; min-width: 0; }
+
+    .job-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .job-company { font-size: 12px; color: var(--text-2); margin-top: 1px; }
+
+    .job-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .job-location {
+      font-size: 11px;
+      color: var(--text-3);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+      padding: 3px 8px;
+      border-radius: 10px;
+    }
+
+    .job-match {
+      font-size: 12px;
+      font-weight: 700;
+      min-width: 36px;
+      text-align: right;
+    }
+
+    .match-high { color: var(--teal); }
+    .match-mid { color: var(--amber); }
+    .match-low { color: var(--text-3); }
+
+    .right-panel-sticky { position: sticky; top: 80px; }
+
+    .detail-card {
+      padding: 24px;
+    }
+
+    .detail-job-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .detail-title { font-size: 18px; font-weight: 600; color: var(--text); letter-spacing: -0.015em; }
+    .detail-company { font-size: 13px; color: var(--text-2); margin-top: 2px; }
+
+    .detail-section-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      margin-top: 16px;
+    }
+
+    .detail-body {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.7;
+    }
+
+    .requirements-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    /* ════════════════════════════════
+       SCREEN: STEP 2
+    ════════════════════════════════ */
+    #screen-step2 {
+      padding: 0 24px 100px;
+    }
+
+    .step2-grid {
+      display: grid;
+      grid-template-columns: 52fr 48fr;
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding-top: 24px;
+      align-items: start;
+    }
+
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-3);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s;
+    }
+
+    .tab:hover { color: var(--text-2); }
+    .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+    .upload-zone {
+      border: 1.5px dashed rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      color: var(--text-3);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 12px;
+    }
+
+    .upload-zone:hover { border-color: rgba(79,124,255,0.3); color: var(--text-2); background: rgba(79,124,255,0.03); }
+
+    .upload-icon { font-size: 24px; margin-bottom: 6px; }
+
+    .prefs-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .select-wrap { position: relative; }
+
+    .form-select {
+      width: 100%;
+      padding: 10px 32px 10px 12px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .form-select:focus { border-color: var(--blue); }
+    .form-select option { background: #1a2035; }
+
+    .select-arrow {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-3);
+      pointer-events: none;
+      font-size: 11px;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    /* Extraction panel */
+    .extraction-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 16px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--blue);
+      animation: pulse-glow 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(79,124,255,0.4); }
+      50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(79,124,255,0); }
+    }
+
+    .extraction-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .extraction-group { margin-bottom: 16px; }
+
+    .extraction-group-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .extraction-footer {
+      margin-top: 20px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ════════════════════════════════
+       SCREEN: RESULTS
+    ════════════════════════════════ */
+    #screen-results {
+      padding: 0 24px 100px;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: 62fr 38fr;
+      gap: 20px;
+      max-width: 1300px;
+      margin: 0 auto;
+      padding-top: 24px;
+      align-items: start;
+    }
+
+    .results-heading {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+
+    .score-strip {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 20px;
+      border-radius: 14px;
+      background: rgba(34,197,94,0.06);
+      border: 1px solid rgba(34,197,94,0.15);
+      margin-bottom: 16px;
+    }
+
+    .score-number {
+      font-size: 42px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    .score-info {}
+
+    .score-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .score-sub { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+
+    .results-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .results-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-green { background: var(--green-soft); color: var(--green); }
+    .badge-blue { background: var(--blue-soft); color: var(--blue); }
+    .badge-teal { background: var(--teal-soft); color: var(--teal); }
+    .badge-gray { background: rgba(255,255,255,0.05); color: var(--text-2); border: 1px solid var(--line); }
+
+    .resume-preview {
+      padding: 24px;
+    }
+
+    .resume-preview-inner {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.8;
+    }
+
+    .resume-name {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      margin-bottom: 2px;
+    }
+
+    .resume-contact {
+      font-size: 12px;
+      color: var(--text-3);
+      margin-bottom: 20px;
+    }
+
+    .resume-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin: 18px 0 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .resume-job-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .resume-job-meta {
+      font-size: 12px;
+      color: var(--text-3);
+      margin-bottom: 6px;
+    }
+
+    .resume-bullet {
+      font-size: 13px;
+      color: var(--text-2);
+      padding-left: 14px;
+      position: relative;
+      margin-bottom: 4px;
+    }
+
+    .resume-bullet::before {
+      content: '·';
+      position: absolute;
+      left: 4px;
+      color: var(--text-3);
+    }
+
+    .kw-highlight {
+      background: rgba(245,158,11,0.18);
+      color: var(--amber);
+      border-radius: 3px;
+      padding: 1px 3px;
+      font-weight: 500;
+    }
+
+    /* Right panel results */
+    .right-results-panel { display: flex; flex-direction: column; gap: 14px; }
+
+    .download-card {
+      padding: 20px;
+    }
+
+    .download-heading {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .download-sub {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-bottom: 14px;
+    }
+
+    .download-btns { display: flex; flex-direction: column; gap: 8px; }
+
+    .integrity-card { padding: 18px 20px; }
+
+    .integrity-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    .integrity-check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-2);
+      margin-bottom: 8px;
+    }
+
+    .integrity-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--green-soft);
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .keywords-card { padding: 18px 20px; }
+
+    .keywords-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    .kw-strikethrough { text-decoration: line-through; opacity: 0.4; }
+
+    .changes-card { padding: 18px 20px; }
+
+    .change-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+    }
+
+    .change-item:last-child { border-bottom: none; }
+
+    .change-type {
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .type-rewrite { background: var(--blue-soft); color: var(--blue); }
+    .type-insert { background: var(--teal-soft); color: var(--teal); }
+
+    .change-text { color: var(--text-2); line-height: 1.5; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+
+    /* Divider */
+    hr.section-divider {
+      border: none;
+      border-top: 1px solid var(--line);
+      margin: 16px 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── TOP PROGRESS BAR ── -->
+<div id="progress-bar"></div>
+
+<!-- ── TOPBAR ── -->
+<div id="topbar">
+  <div class="topbar-wordmark">Resume Tailor</div>
+  <div class="topbar-right">
+    <div class="avatar">VP</div>
+    <span class="topbar-name">Vishnu P.</span>
+  </div>
+</div>
+
+<!-- ── STEP PROGRESS (shown for step screens) ── -->
+<div id="step-progress" style="display:none;">
+  <div class="step-progress-inner">
+    <div class="step-item">
+      <div class="step-circle future" id="sc1">1</div>
+      <div class="step-label future" id="sl1">Find roles</div>
+    </div>
+    <div class="step-connector" id="conn1"></div>
+    <div class="step-item">
+      <div class="step-circle future" id="sc2">2</div>
+      <div class="step-label future" id="sl2">Add JD</div>
+    </div>
+    <div class="step-connector" id="conn2"></div>
+    <div class="step-item">
+      <div class="step-circle future" id="sc3">3</div>
+      <div class="step-label future" id="sl3">Resume</div>
+    </div>
+    <div class="step-connector" id="conn3"></div>
+    <div class="step-item">
+      <div class="step-circle future" id="sc4">4</div>
+      <div class="step-label future" id="sl4">Results</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN: AUTH
+══════════════════════════════════ -->
+<div id="screen-auth" class="screen active" style="display:flex;">
+  <div class="auth-left">
+    <div>
+      <div class="auth-left-wordmark">Resume Tailor</div>
+      <div class="auth-headline">Your next role.<br>Tailored to you.</div>
+    </div>
+    <div class="auth-features">
+      <div class="auth-feature">
+        <div class="auth-feature-check">✓</div>
+        <span>AI matches roles to your background</span>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-check">✓</div>
+        <span>Zero fabrication — only your real experience</span>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-check">✓</div>
+        <span>Download in 30 seconds</span>
+      </div>
+    </div>
+    <div style="height:60px;"></div>
+    <div class="auth-bottom-bar"></div>
+  </div>
+
+  <div class="auth-right">
+    <div class="auth-right-heading">Good to see you.</div>
+    <div class="auth-right-sub">Sign in to continue.</div>
+    <div class="auth-form">
+      <div>
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" placeholder="you@company.com" />
+      </div>
+      <div>
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" placeholder="••••••••" />
+      </div>
+      <button class="btn-primary" onclick="go('entry')" style="width:100%;padding:12px 20px;font-size:15px;">Continue</button>
+      <div class="or-divider">or</div>
+      <button class="btn-ghost" style="width:100%;gap:8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Continue with Google
+      </button>
+    </div>
+    <div class="auth-footer">No account yet? <a href="#">Create one.</a></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN: ENTRY
+══════════════════════════════════ -->
+<div id="screen-entry" class="screen">
+  <div class="entry-header">
+    <div class="entry-heading">How do you want to start?</div>
+    <div class="entry-sub">Choose your path — you can switch anytime.</div>
+  </div>
+  <div class="entry-cards">
+    <!-- Card 1 -->
+    <div class="entry-card">
+      <div class="entry-icon entry-icon-blue">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F7CFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <div>
+        <div class="entry-card-title">Discover Roles</div>
+        <div class="entry-card-desc">Let AI find the best matching roles from thousands of listings based on your profile.</div>
+      </div>
+      <span class="chip chip-teal">12 strong matches today</span>
+      <button class="btn-primary" onclick="go('step1')" style="width:100%;">Start discovery →</button>
+    </div>
+    <!-- Card 2 -->
+    <div class="entry-card">
+      <div class="entry-icon entry-icon-blue">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F7CFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      </div>
+      <div>
+        <div class="entry-card-title">I have a job in mind</div>
+        <div class="entry-card-desc">Paste a URL or job description directly. We'll tailor your resume in under a minute.</div>
+      </div>
+      <span class="chip chip-blue">Most popular</span>
+      <button class="btn-primary" onclick="go('step2')" style="width:100%;">Paste JD →</button>
+    </div>
+    <!-- Card 3 -->
+    <div class="entry-card">
+      <div class="entry-icon entry-icon-amber">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <div>
+        <div class="entry-card-title">Auto Apply</div>
+        <div class="entry-card-desc">Let us apply to matching roles automatically with your tailored resume. Set it and forget it.</div>
+      </div>
+      <span class="chip chip-amber">Beta</span>
+      <button class="btn-outline-dim" onclick="go('step1')" style="width:100%;">Set up →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN: STEP 1 — FIND ROLES
+══════════════════════════════════ -->
+<div id="screen-step1" class="screen">
+  <div class="step-content-2col">
+    <!-- Left: job list -->
+    <div>
+      <div class="step-label-tag">STEP 1 OF 4</div>
+      <div class="step-heading">Where do you want to work?</div>
+      <div class="search-bar">
+        <div class="search-input-wrap">
+          <span class="search-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </span>
+          <input class="form-input" placeholder="Role, company, or keyword…" />
+        </div>
+        <button class="btn-primary">Search</button>
+      </div>
+      <div class="filter-chips">
+        <div class="filter-chip active">All</div>
+        <div class="filter-chip">Remote</div>
+        <div class="filter-chip">Hybrid</div>
+        <div class="filter-chip">$150k+</div>
+        <div class="filter-chip">Series B+</div>
+      </div>
+      <div class="results-count"><strong>847 roles</strong> · <span style="color:var(--teal);font-weight:600;">12 strong matches</span></div>
+
+      <div class="job-list">
+        <!-- Job 1 -->
+        <div class="job-card selected" onclick="selectJob(this)">
+          <div class="job-logo" style="background:rgba(99,91,255,0.15);color:#6366f1;">S</div>
+          <div class="job-info">
+            <div class="job-title">Senior PM, Growth</div>
+            <div class="job-company">Stripe</div>
+          </div>
+          <div class="job-meta">
+            <span class="job-location">Hybrid SF</span>
+            <span class="job-match match-high">94%</span>
+            <button class="btn-primary" style="padding:5px 12px;font-size:12px;" onclick="go('step2')">Select →</button>
+          </div>
+        </div>
+        <!-- Job 2 -->
+        <div class="job-card" onclick="selectJob(this)">
+          <div class="job-logo" style="background:rgba(79,124,255,0.12);color:var(--blue);">L</div>
+          <div class="job-info">
+            <div class="job-title">Lead PM, Dev Ecosystem</div>
+            <div class="job-company">Linear</div>
+          </div>
+          <div class="job-meta">
+            <span class="job-location">Remote</span>
+            <span class="job-match match-high">88%</span>
+            <button class="btn-primary" style="padding:5px 12px;font-size:12px;" onclick="go('step2')">Select →</button>
+          </div>
+        </div>
+        <!-- Job 3 -->
+        <div class="job-card" onclick="selectJob(this)">
+          <div class="job-logo" style="background:rgba(245,158,11,0.1);color:var(--amber);">N</div>
+          <div class="job-info">
+            <div class="job-title">PM, AI Features</div>
+            <div class="job-company">Notion</div>
+          </div>
+          <div class="job-meta">
+            <span class="job-location">NYC Hybrid</span>
+            <span class="job-match match-mid">74%</span>
+            <button class="btn-ghost" style="padding:5px 12px;font-size:12px;" onclick="go('step2')">Select →</button>
+          </div>
+        </div>
+        <!-- Job 4 -->
+        <div class="job-card" onclick="selectJob(this)">
+          <div class="job-logo" style="background:rgba(255,255,255,0.05);color:var(--text-2);">V</div>
+          <div class="job-info">
+            <div class="job-title">Group PM, Platform</div>
+            <div class="job-company">Vercel</div>
+          </div>
+          <div class="job-meta">
+            <span class="job-location">Remote</span>
+            <span class="job-match match-mid">71%</span>
+            <button class="btn-ghost" style="padding:5px 12px;font-size:12px;" onclick="go('step2')">Select →</button>
+          </div>
+        </div>
+        <!-- Job 5 -->
+        <div class="job-card" onclick="selectJob(this)">
+          <div class="job-logo" style="background:rgba(255,255,255,0.04);color:var(--text-3);">R</div>
+          <div class="job-info">
+            <div class="job-title">Senior PM, Core</div>
+            <div class="job-company">Rippling</div>
+          </div>
+          <div class="job-meta">
+            <span class="job-location">NYC Hybrid</span>
+            <span class="job-match match-low">67%</span>
+            <button class="btn-ghost" style="padding:5px 12px;font-size:12px;" onclick="go('step2')">Select →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: job detail -->
+    <div class="right-panel-sticky">
+      <div class="glass detail-card">
+        <div class="detail-job-header">
+          <div class="job-logo" style="width:44px;height:44px;border-radius:10px;background:rgba(99,91,255,0.15);color:#6366f1;font-size:16px;">S</div>
+          <div>
+            <div class="detail-title">Senior PM, Growth</div>
+            <div class="detail-company">Stripe · San Francisco, CA (Hybrid)</div>
+          </div>
+          <span class="chip chip-teal" style="margin-left:auto;">94% match</span>
+        </div>
+
+        <div class="detail-section-label">About the role</div>
+        <div class="detail-body">
+          We're looking for a Senior PM to lead growth initiatives across Stripe's core payment products. You'll work cross-functionally with engineering, design, data science, and marketing to drive user acquisition and revenue growth at scale. This is a high-impact role with direct exposure to the executive team.
+        </div>
+
+        <div class="detail-section-label">Requirements</div>
+        <div class="requirements-chips">
+          <span class="chip chip-blue">5+ years PM</span>
+          <span class="chip chip-blue">B2B SaaS</span>
+          <span class="chip chip-blue">Growth</span>
+          <span class="chip chip-amber">A/B testing</span>
+          <span class="chip chip-amber">SQL</span>
+          <span class="chip chip-amber">Cross-functional</span>
+          <span class="chip chip-gray">Fintech</span>
+          <span class="chip chip-gray">Data-driven</span>
+        </div>
+
+        <div class="detail-section-label">Compensation</div>
+        <div class="detail-body">$195,000 – $240,000 base · Equity · Full benefits</div>
+
+        <hr class="section-divider" />
+        <button class="btn-primary" onclick="go('step2')" style="width:100%;padding:12px;font-size:14px;">Select this role →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN: STEP 2 — JOB DESCRIPTION
+══════════════════════════════════ -->
+<div id="screen-step2" class="screen">
+  <div class="step2-grid">
+    <!-- Left: input -->
+    <div>
+      <div class="step-label-tag">STEP 2 OF 4</div>
+      <div class="step-heading">Tell us about the role.</div>
+
+      <div class="tab-bar">
+        <div class="tab active">Paste text</div>
+        <div class="tab">Fetch URL</div>
+        <div class="tab">Upload file</div>
+      </div>
+
+      <textarea class="form-input" rows="8" placeholder="Paste the full job description here…
+
+We're looking for a Senior Product Manager to join our Growth team. You'll own the end-to-end product strategy for our core payments funnel, partnering closely with engineering, design, and data science to ship impactful features…"></textarea>
+
+      <div class="upload-zone">
+        <div class="upload-icon">📎</div>
+        <div>Drop a PDF or DOCX here, or <span style="color:var(--blue);">browse files</span></div>
+        <div style="margin-top:4px;font-size:11px;color:var(--text-3);">PDF, DOCX, TXT up to 5 MB</div>
+      </div>
+
+      <div class="prefs-row">
+        <div>
+          <label class="form-label">Tone</label>
+          <div class="select-wrap">
+            <select class="form-select">
+              <option>Professional</option>
+              <option>Confident</option>
+              <option>Concise</option>
+              <option>Technical</option>
+            </select>
+            <span class="select-arrow">▾</span>
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Emphasize</label>
+          <div class="select-wrap">
+            <select class="form-select">
+              <option>Leadership</option>
+              <option>Technical skills</option>
+              <option>Achievements</option>
+              <option>Growth impact</option>
+            </select>
+            <span class="select-arrow">▾</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-ghost" onclick="go('step1')">← Back</button>
+        <button class="btn-primary" onclick="go('results')" style="flex:1;padding:12px;">Tailor my resume →</button>
+      </div>
+    </div>
+
+    <!-- Right: extraction panel -->
+    <div class="right-panel-sticky">
+      <div class="glass" style="padding:22px;">
+        <div class="extraction-header">
+          <div class="pulse-dot"></div>
+          <div class="extraction-title">Extracting requirements…</div>
+        </div>
+
+        <div class="extraction-group">
+          <div class="extraction-group-label">Requirements</div>
+          <div class="chips-wrap">
+            <span class="chip chip-blue">5+ years PM</span>
+            <span class="chip chip-blue">B2B SaaS</span>
+            <span class="chip chip-blue">SQL</span>
+            <span class="chip chip-blue">Strategy</span>
+            <span class="chip chip-blue">Roadmapping</span>
+          </div>
+        </div>
+
+        <div class="extraction-group">
+          <div class="extraction-group-label">Must-haves</div>
+          <div class="chips-wrap">
+            <span class="chip chip-amber">A/B testing</span>
+            <span class="chip chip-amber">Cross-functional</span>
+            <span class="chip chip-amber">Growth metrics</span>
+          </div>
+        </div>
+
+        <div class="extraction-group">
+          <div class="extraction-group-label">Nice-to-haves</div>
+          <div class="chips-wrap">
+            <span class="chip chip-gray">Fintech experience</span>
+            <span class="chip chip-gray">Payments domain</span>
+            <span class="chip chip-gray">ML familiarity</span>
+          </div>
+        </div>
+
+        <div class="extraction-footer">
+          <span class="chip chip-green">✓ 14 signals identified</span>
+          <span style="font-size:12px;color:var(--text-3);margin-left:auto;">Seniority: Senior</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN: RESULTS
+══════════════════════════════════ -->
+<div id="screen-results" class="screen">
+  <div class="results-grid">
+    <!-- Left: resume preview -->
+    <div>
+      <div class="results-heading">Here's what we built for you.</div>
+
+      <div class="score-strip">
+        <div class="score-number">90</div>
+        <div class="score-info">
+          <div class="score-label">Strong match</div>
+          <div class="score-sub">Top 15% for this role · Stripe Senior PM, Growth</div>
+        </div>
+      </div>
+
+      <div class="results-badges">
+        <span class="results-badge badge-green">✓ Validated</span>
+        <span class="results-badge badge-blue">9 rewrites</span>
+        <span class="results-badge badge-teal">16 keywords</span>
+        <span class="results-badge badge-gray">0 fabrications</span>
+      </div>
+
+      <div class="glass resume-preview">
+        <div class="resume-preview-inner">
+          <div class="resume-name">Vishnu Pratap</div>
+          <div class="resume-contact">vishnu@email.com · linkedin.com/in/vishnup · San Francisco, CA</div>
+
+          <div class="resume-section-title">Experience</div>
+
+          <div class="resume-job-title">Senior Product Manager, Platform Growth</div>
+          <div class="resume-job-meta">Dell Technologies · Austin, TX · Jan 2022 – Present</div>
+          <div class="resume-bullet">Led <span class="kw-highlight">cross-functional</span> teams of 12 across engineering, design, and data science to deliver a <span class="kw-highlight">growth</span>-focused self-serve upgrade funnel, resulting in a 34% lift in ARR conversion.</div>
+          <div class="resume-bullet">Defined and executed <span class="kw-highlight">roadmap</span> for <span class="kw-highlight">B2B SaaS</span> onboarding product; reduced time-to-value by 40% through iterative <span class="kw-highlight">A/B testing</span> and personalization.</div>
+          <div class="resume-bullet">Partnered with data science to build <span class="kw-highlight">SQL</span>-driven experimentation dashboards; tracked <span class="kw-highlight">growth metrics</span> for a $200M product line.</div>
+          <div class="resume-bullet">Owned the product <span class="kw-highlight">strategy</span> for 3 flagship features shipped to 180K enterprise users globally.</div>
+
+          <div class="resume-job-title" style="margin-top:14px;">Product Manager, Enterprise</div>
+          <div class="resume-job-meta">Dell Technologies · Austin, TX · Jun 2019 – Dec 2021</div>
+          <div class="resume-bullet">Managed end-to-end delivery of <span class="kw-highlight">B2B SaaS</span> capabilities for Dell's cloud infrastructure portfolio, collaborating with <span class="kw-highlight">cross-functional</span> stakeholders across 5 regions.</div>
+          <div class="resume-bullet">Conducted competitive analysis and user research to inform <span class="kw-highlight">roadmapping</span> decisions, influencing a $45M investment in ML-powered recommendations.</div>
+
+          <div class="resume-section-title">Education</div>
+          <div class="resume-job-title">B.S. Computer Science</div>
+          <div class="resume-job-meta">University of Texas at Austin · 2019</div>
+
+          <div class="resume-section-title">Skills</div>
+          <div class="resume-bullet">Product strategy · <span class="kw-highlight">Roadmapping</span> · <span class="kw-highlight">A/B testing</span> · <span class="kw-highlight">SQL</span> · Python · Figma · Amplitude · Mixpanel</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: analysis panel -->
+    <div class="right-results-panel right-panel-sticky">
+      <!-- Download -->
+      <div class="glass download-card">
+        <div class="download-heading">Your resume is ready.</div>
+        <div class="download-sub">Validated and ready for submission.</div>
+        <div class="download-btns">
+          <button class="btn-primary" style="width:100%;padding:12px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download DOCX
+          </button>
+          <button class="btn-ghost" style="width:100%;padding:11px;">Copy plain text</button>
+        </div>
+      </div>
+
+      <!-- Integrity -->
+      <div class="glass integrity-card">
+        <div class="integrity-title">Integrity check</div>
+        <div class="integrity-check">
+          <div class="integrity-icon">✓</div>
+          All companies match source resume
+        </div>
+        <div class="integrity-check">
+          <div class="integrity-icon">✓</div>
+          All dates and titles verified
+        </div>
+        <div class="integrity-check">
+          <div class="integrity-icon">✓</div>
+          Zero unsupported claims detected
+        </div>
+      </div>
+
+      <!-- Keywords -->
+      <div class="glass keywords-card">
+        <div class="keywords-title">Keyword coverage</div>
+        <div class="chips-wrap" style="gap:6px;">
+          <span class="chip chip-teal">Growth</span>
+          <span class="chip chip-teal">B2B SaaS</span>
+          <span class="chip chip-teal">SQL</span>
+          <span class="chip chip-teal">A/B testing</span>
+          <span class="chip chip-teal">Cross-functional</span>
+          <span class="chip chip-teal">Roadmapping</span>
+          <span class="chip chip-teal">Strategy</span>
+          <span class="chip chip-teal">Growth metrics</span>
+          <span class="chip chip-gray kw-strikethrough">Fintech</span>
+          <span class="chip chip-gray kw-strikethrough">Payments domain</span>
+        </div>
+      </div>
+
+      <!-- Changes -->
+      <div class="glass changes-card">
+        <div class="keywords-title">What changed</div>
+        <div class="change-item">
+          <span class="change-type type-rewrite">rewrite</span>
+          <span class="change-text">Bullet 1 rewritten to lead with "cross-functional" and quantified growth impact</span>
+        </div>
+        <div class="change-item">
+          <span class="change-type type-rewrite">rewrite</span>
+          <span class="change-text">Onboarding bullet updated to reference A/B testing methodology explicitly</span>
+        </div>
+        <div class="change-item">
+          <span class="change-type type-insert">insert</span>
+          <span class="change-text">Added SQL-driven dashboards bullet to match data requirements</span>
+        </div>
+        <div class="change-item">
+          <span class="change-type type-rewrite">rewrite</span>
+          <span class="change-text">Skills section reordered to surface strategy and roadmapping first</span>
+        </div>
+        <div class="change-item">
+          <span class="change-type type-insert">insert</span>
+          <span class="change-text">Growth metrics language added to second role for continuity</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── DEMO STRIP ── -->
+<div id="demo-strip">
+  <button class="demo-btn active" onclick="go('auth')">Auth</button>
+  <button class="demo-btn" onclick="go('entry')">Entry</button>
+  <button class="demo-btn" onclick="go('step1')">Step 1</button>
+  <button class="demo-btn" onclick="go('step2')">Step 2</button>
+  <button class="demo-btn" onclick="go('results')">Results</button>
+</div>
+
+<script>
+  const progressMap = {
+    auth:    { progress: '0%',   step: 0 },
+    entry:   { progress: '8%',   step: 0 },
+    step1:   { progress: '30%',  step: 1 },
+    step2:   { progress: '55%',  step: 2 },
+    results: { progress: '100%', step: 4 },
+  };
+
+  const screenIds = ['auth', 'entry', 'step1', 'step2', 'results'];
+  const demoLabels = ['auth', 'entry', 'step1', 'step2', 'results'];
+
+  function go(id) {
+    // Hide all screens
+    screenIds.forEach(sid => {
+      const el = document.getElementById('screen-' + sid);
+      if (el) {
+        el.classList.remove('active');
+        if (sid === 'auth') {
+          el.style.display = 'none';
+        }
+      }
+    });
+
+    // Show target screen
+    const target = document.getElementById('screen-' + id);
+    if (target) {
+      target.classList.add('active');
+      if (id === 'auth') {
+        target.style.display = 'flex';
+      }
+    }
+
+    // Progress bar
+    const cfg = progressMap[id] || { progress: '0%', step: 0 };
+    document.getElementById('progress-bar').style.width = cfg.progress;
+
+    // Step progress visibility
+    const stepProg = document.getElementById('step-progress');
+    const showStep = (id === 'step1' || id === 'step2' || id === 'results');
+    stepProg.style.display = showStep ? 'flex' : 'none';
+
+    // Update step circles
+    if (showStep) {
+      updateStepProgress(cfg.step);
+    }
+
+    // Demo strip active state
+    document.querySelectorAll('.demo-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', demoLabels[i] === id);
+    });
+
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateStepProgress(activeStep) {
+    // activeStep: 1=step1 active, 2=step2 active, 4=results active (all done except 4)
+    const circles = [
+      document.getElementById('sc1'),
+      document.getElementById('sc2'),
+      document.getElementById('sc3'),
+      document.getElementById('sc4'),
+    ];
+    const labels = [
+      document.getElementById('sl1'),
+      document.getElementById('sl2'),
+      document.getElementById('sl3'),
+      document.getElementById('sl4'),
+    ];
+    const connectors = [
+      document.getElementById('conn1'),
+      document.getElementById('conn2'),
+      document.getElementById('conn3'),
+    ];
+
+    // Reset all
+    circles.forEach((c, i) => {
+      c.className = 'step-circle future';
+      c.innerHTML = i + 1;
+      labels[i].className = 'step-label future';
+    });
+    connectors.forEach(c => { c.className = 'step-connector'; });
+
+    // Map: activeStep 1 → step 1 active, 2/3/4 future
+    //       activeStep 2 → step 1 done, 2 active, 3/4 future
+    //       activeStep 4 → 1/2/3 done, 4 active
+    let activeIdx;
+    if (activeStep === 1) activeIdx = 0;
+    else if (activeStep === 2) activeIdx = 1;
+    else if (activeStep === 3) activeIdx = 2;
+    else if (activeStep === 4) activeIdx = 3;
+    else activeIdx = -1;
+
+    circles.forEach((c, i) => {
+      if (i < activeIdx) {
+        c.className = 'step-circle done';
+        c.innerHTML = '✓';
+        labels[i].className = 'step-label done';
+        if (connectors[i]) connectors[i].className = 'step-connector done';
+      } else if (i === activeIdx) {
+        c.className = 'step-circle active';
+        c.innerHTML = i + 1;
+        labels[i].className = 'step-label active';
+      }
+    });
+  }
+
+  function selectJob(el) {
+    document.querySelectorAll('.job-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  // Tab switching in step 2
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      this.closest('.tab-bar').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
+  // Filter chips
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', function() {
+      this.closest('.filter-chips').querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

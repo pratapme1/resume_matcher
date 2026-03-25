@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Tailor Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+
+/* ─── Tokens ── less is more ──────────────────────── */
+:root {
+  --bg:       #FFFFFF;
+  --surface:  #FAFAFA;
+  --border:   #E4E4E7;
+  --text:     #09090B;
+  --text-2:   #52525B;
+  --text-3:   #A1A1AA;
+  --action:   #18181B;
+  --green:    #16A34A;
+  --green-bg: #F0FDF4;
+  --red:      #DC2626;
+  --red-bg:   #FEF2F2;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ─── Progress bar — top of viewport ─────────────── */
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--action);
+  transition: width 0.4s ease;
+  z-index: 1000;
+}
+
+/* ─── App chrome — minimal ────────────────────────── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+}
+
+.wordmark {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.step-indicator {
+  font-size: 0.78rem;
+  color: var(--text-3);
+  font-weight: 400;
+}
+.step-indicator strong {
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.user-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--action);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+}
+
+/* ─── Screen logic ────────────────────────────────── */
+.screen { display: none; }
+.screen.active { display: block; }
+
+.demo-strip {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px;
+  z-index: 999;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.demo-btn {
+  padding: 5px 14px;
+  border-radius: 16px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.demo-btn:hover { background: var(--surface); }
+.demo-btn.on { background: var(--action); color: white; }
+
+/* ─── AUTH ────────────────────────────────────────── */
+/* No display rule here — let .screen / .screen.active control visibility */
+
+.auth-wrap {
+  width: 100%;
+  max-width: 360px;
+}
+
+.auth-brand {
+  margin-bottom: 40px;
+}
+
+.auth-brand-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.auth-heading {
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.auth-sub {
+  font-size: 0.875rem;
+  color: var(--text-2);
+  line-height: 1.5;
+  margin-bottom: 32px;
+}
+
+.field {
+  margin-bottom: 14px;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-2);
+  margin-bottom: 6px;
+}
+
+.field-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+.field-input:focus { border-color: var(--action); }
+.field-input::placeholder { color: var(--text-3); }
+
+.field-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.field-link {
+  font-size: 0.78rem;
+  color: var(--text-3);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.field-link:hover { color: var(--text); }
+
+.btn {
+  width: 100%;
+  padding: 11px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.btn:active { transform: scale(0.99); }
+
+.btn-dark {
+  background: var(--action);
+  color: white;
+}
+.btn-dark:hover { opacity: 0.88; }
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-outline:hover { background: var(--surface); }
+
+.auth-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+.auth-or-line { flex: 1; height: 1px; background: var(--border); }
+.auth-or-text { font-size: 0.75rem; color: var(--text-3); }
+
+.auth-footer {
+  margin-top: 24px;
+  font-size: 0.78rem;
+  color: var(--text-3);
+  text-align: center;
+}
+.auth-footer a { color: var(--text-2); text-decoration: none; }
+.auth-footer a:hover { color: var(--text); }
+
+/* ─── Step pages shared ───────────────────────────── */
+.page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 48px 24px 120px;
+}
+
+.page-wide {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 48px 24px 120px;
+}
+
+.step-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+
+.page-heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.page-sub {
+  font-size: 0.9rem;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin-bottom: 36px;
+}
+
+/* ─── STEP 1 — Find roles ──────────────────────────── */
+.search-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  margin-bottom: 12px;
+}
+.search-wrap:focus-within {
+  border-color: var(--action);
+  box-shadow: 0 0 0 3px rgba(24,24,27,0.06);
+}
+
+.search-ico {
+  padding: 0 12px 0 14px;
+  color: var(--text-3);
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.search-input {
+  flex: 1;
+  padding: 12px 0;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: transparent;
+}
+.search-input::placeholder { color: var(--text-3); }
+
+.search-go {
+  margin: 5px;
+  padding: 7px 16px;
+  background: var(--action);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.search-go:hover { opacity: 0.85; }
+
+/* Filter row */
+.filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+
+.filter {
+  padding: 4px 11px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.12s;
+  background: var(--bg);
+}
+.filter:hover { border-color: var(--text-2); color: var(--text); }
+.filter.on { background: var(--action); color: white; border-color: var(--action); }
+
+/* Results header */
+.list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.list-count {
+  font-size: 0.78rem;
+  color: var(--text-3);
+}
+
+.list-sort {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  background: none;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Job list — Notion-table style */
+.job-list { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+
+.job-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.job-row:last-child { border-bottom: none; }
+.job-row:hover { background: var(--surface); }
+.job-row.top { background: #FAFAF9; }
+
+.job-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.job-info {}
+.job-role {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 1px;
+}
+.job-co {
+  font-size: 0.78rem;
+  color: var(--text-3);
+}
+
+.job-loc {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.job-match {
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.job-match.hi { color: var(--green); }
+.job-match.md { color: #D97706; }
+
+.job-select {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-2);
+  background: none;
+  border: 1px solid var(--border);
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.job-select:hover {
+  border-color: var(--action);
+  color: var(--action);
+  background: var(--bg);
+}
+
+/* ─── STEP 2 — JD ──────────────────────────────────── */
+.tab-row {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+
+.tab {
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  font-family: inherit;
+}
+.tab:hover { color: var(--text-2); }
+.tab.on { color: var(--text); border-bottom-color: var(--action); }
+
+.section-head {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+
+.big-textarea {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--text);
+  line-height: 1.65;
+  resize: none;
+  outline: none;
+  background: var(--surface);
+  transition: border-color 0.15s, background 0.15s;
+}
+.big-textarea:focus {
+  border-color: var(--action);
+  background: var(--bg);
+}
+.big-textarea::placeholder { color: var(--text-3); }
+
+.hint {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  margin-top: 6px;
+}
+.hint a { color: var(--text-2); text-decoration: none; }
+
+/* Upload */
+.upload-area {
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 28px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.upload-area:hover {
+  border-color: var(--text-2);
+  background: var(--surface);
+}
+.upload-main {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-2);
+  margin-bottom: 4px;
+}
+.upload-sub {
+  font-size: 0.78rem;
+  color: var(--text-3);
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 28px 0;
+}
+
+/* Preferences */
+.pref-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.pref-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-2);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.pref-select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--text);
+  background: var(--surface);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23A1A1AA' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+.pref-select:focus { border-color: var(--action); }
+
+/* Action footer */
+.action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 24px;
+}
+
+.btn-back {
+  font-size: 0.875rem;
+  color: var(--text-3);
+  background: none;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+.btn-back:hover { color: var(--text-2); }
+
+.btn-next {
+  padding: 10px 22px;
+  background: var(--action);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn-next:hover { opacity: 0.85; }
+
+/* Inline loading */
+.loading-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.82rem;
+  color: var(--text-2);
+}
+.spin {
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--border);
+  border-top-color: var(--text-2);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── RESULTS ──────────────────────────────────────── */
+.results-grid {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 20px;
+}
+
+/* Score strip */
+.score-strip {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  background: var(--bg);
+}
+
+.score-number {
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  line-height: 1;
+}
+
+.score-label-block {}
+.score-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.score-desc {
+  font-size: 0.78rem;
+  color: var(--text-2);
+}
+
+.score-badges {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+.badge-green { background: var(--green-bg); color: var(--green); }
+.badge-neutral { background: var(--surface); color: var(--text-2); border: 1px solid var(--border); }
+
+/* Resume card */
+.card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.card-title {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.card-action {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+  transition: color 0.12s;
+}
+.card-action:hover { color: var(--text); }
+
+.card-body { padding: 18px 16px; }
+
+/* Resume preview content */
+.rv-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+  letter-spacing: -0.01em;
+}
+.rv-contact {
+  font-size: 0.72rem;
+  color: var(--text-3);
+  margin-bottom: 16px;
+}
+.rv-sec-title {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-3);
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  margin-bottom: 10px;
+}
+.rv-role { margin-bottom: 12px; }
+.rv-role-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 1px;
+}
+.rv-role-sub {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+.rv-bullet {
+  font-size: 0.78rem;
+  color: var(--text-2);
+  padding-left: 12px;
+  position: relative;
+  margin-bottom: 3px;
+  line-height: 1.55;
+}
+.rv-bullet::before { content: '·'; position: absolute; left: 3px; color: var(--text-3); }
+.hl { background: #FEF9C3; border-radius: 2px; padding: 0 2px; }
+
+/* Sidebar */
+.sidebar-section {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.ss-head {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.ss-body { padding: 14px; }
+
+/* Validation */
+.val-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.8rem;
+}
+.val-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.val-dot.ok { background: var(--green); }
+.val-dot.warn { background: #D97706; }
+.val-text { color: var(--text-2); }
+.val-note {
+  font-size: 0.72rem;
+  color: var(--text-3);
+  line-height: 1.5;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  margin-top: 6px;
+}
+
+/* Keywords */
+.kw-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.kw {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+.kw.yes { background: var(--green-bg); color: #15803D; }
+.kw.no { background: var(--surface); color: var(--text-3); border: 1px solid var(--border); text-decoration: line-through; }
+
+/* Changes */
+.change-row {
+  font-size: 0.78rem;
+  color: var(--text-2);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.5;
+}
+.change-row:last-child { border-bottom: none; padding-bottom: 0; }
+.change-type {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 500;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-right: 4px;
+  background: var(--surface);
+  color: var(--text-3);
+  border: 1px solid var(--border);
+}
+
+/* Download */
+.dl-section { padding: 14px; }
+.dl-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 3px;
+  letter-spacing: -0.01em;
+}
+.dl-sub {
+  font-size: 0.75rem;
+  color: var(--text-2);
+  margin-bottom: 14px;
+}
+.btn-dl {
+  width: 100%;
+  padding: 10px;
+  background: var(--action);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-bottom: 6px;
+}
+.btn-dl:hover { opacity: 0.85; }
+.btn-dl-ghost {
+  width: 100%;
+  padding: 9px;
+  background: transparent;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.btn-dl-ghost:hover { background: var(--surface); }
+
+</style>
+</head>
+<body>
+
+<!-- Progress bar -->
+<div class="progress-bar" id="progressBar" style="width: 25%"></div>
+
+<!-- Top bar -->
+<header class="topbar" id="topbar" style="display:none">
+  <div class="wordmark">Resume Tailor</div>
+  <div class="step-indicator" id="stepLabel"><strong>Step 1</strong> of 4 — Find roles</div>
+  <button class="user-btn" title="Vishnu Pratap">VP</button>
+</header>
+
+<!-- Demo switcher -->
+<div class="demo-strip">
+  <button class="demo-btn on"  onclick="go('auth')">Sign in</button>
+  <button class="demo-btn"     onclick="go('step1')">Step 1</button>
+  <button class="demo-btn"     onclick="go('step2')">Step 2</button>
+  <button class="demo-btn"     onclick="go('results')">Results</button>
+</div>
+
+<!-- ════════════════════════════════════════
+     AUTH
+════════════════════════════════════════ -->
+<div class="screen active" id="screen-auth">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
+    <div class="auth-wrap">
+
+      <div class="auth-brand">
+        <span class="auth-brand-name">Resume Tailor</span>
+      </div>
+
+      <h1 class="auth-heading">Good to see you.</h1>
+      <p class="auth-sub">Sign in to pick up where you left off.</p>
+
+      <div class="field">
+        <label class="field-label">Email</label>
+        <input class="field-input" type="email" placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <div class="field-row">
+          <label class="field-label" style="margin:0">Password</label>
+          <a class="field-link" href="#">Forgot?</a>
+        </div>
+        <input class="field-input" type="password" placeholder="••••••••">
+      </div>
+
+      <button class="btn btn-dark" style="margin-top:20px" onclick="go('step1')">Continue</button>
+
+      <div class="auth-or">
+        <div class="auth-or-line"></div>
+        <span class="auth-or-text">or</span>
+        <div class="auth-or-line"></div>
+      </div>
+
+      <button class="btn btn-outline">
+        <svg width="16" height="16" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Continue with Google
+      </button>
+
+      <p class="auth-footer">No account yet? <a href="#">Create one — it's free.</a></p>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     STEP 1 — Find roles
+════════════════════════════════════════ -->
+<div class="screen" id="screen-step1">
+  <div class="page-wide">
+
+    <div class="step-label">Step 1 of 4</div>
+    <h1 class="page-heading">Where do you want to work?</h1>
+    <p class="page-sub">Search roles and we'll score how well each one fits your background.</p>
+
+    <div class="search-wrap">
+      <div class="search-ico">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <input class="search-input" value="Senior Product Manager" placeholder="Role, company, keyword…">
+      <button class="search-go">Search</button>
+    </div>
+
+    <div class="filters">
+      <button class="filter on">All</button>
+      <button class="filter">Remote</button>
+      <button class="filter">Hybrid</button>
+      <button class="filter">$150k+</button>
+      <button class="filter">Series B+</button>
+      <button class="filter">Full-time</button>
+    </div>
+
+    <div class="list-head">
+      <span class="list-count">847 roles · 12 strong matches</span>
+      <button class="list-sort">Sort: Best match ↓</button>
+    </div>
+
+    <div class="job-list">
+
+      <div class="job-row top">
+        <div class="job-logo" style="background:#6366F1">St</div>
+        <div class="job-info">
+          <div class="job-role">Senior PM, Growth</div>
+          <div class="job-co">Stripe</div>
+        </div>
+        <div class="job-loc">Hybrid · SF</div>
+        <div class="job-match hi">94% match</div>
+        <button class="job-select" onclick="go('step2')">Select →</button>
+      </div>
+
+      <div class="job-row">
+        <div class="job-logo" style="background:#0EA5E9">Li</div>
+        <div class="job-info">
+          <div class="job-role">Lead PM, Developer Ecosystem</div>
+          <div class="job-co">Linear</div>
+        </div>
+        <div class="job-loc">Remote</div>
+        <div class="job-match hi">88% match</div>
+        <button class="job-select" onclick="go('step2')">Select →</button>
+      </div>
+
+      <div class="job-row">
+        <div class="job-logo" style="background:#F59E0B">No</div>
+        <div class="job-info">
+          <div class="job-role">PM, AI Features</div>
+          <div class="job-co">Notion</div>
+        </div>
+        <div class="job-loc">NYC · Hybrid</div>
+        <div class="job-match md">74% match</div>
+        <button class="job-select">Select →</button>
+      </div>
+
+      <div class="job-row">
+        <div class="job-logo" style="background:#10B981">Ve</div>
+        <div class="job-info">
+          <div class="job-role">Group PM, Platform</div>
+          <div class="job-co">Vercel</div>
+        </div>
+        <div class="job-loc">Remote</div>
+        <div class="job-match md">71% match</div>
+        <button class="job-select">Select →</button>
+      </div>
+
+      <div class="job-row">
+        <div class="job-logo" style="background:#8B5CF6">Ri</div>
+        <div class="job-info">
+          <div class="job-role">Senior PM, Core Product</div>
+          <div class="job-co">Rippling</div>
+        </div>
+        <div class="job-loc">Hybrid · NYC</div>
+        <div class="job-match md">67% match</div>
+        <button class="job-select">Select →</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     STEP 2 — Job description
+════════════════════════════════════════ -->
+<div class="screen" id="screen-step2">
+  <div class="page">
+
+    <div class="step-label">Step 2 of 4</div>
+    <h1 class="page-heading">Tell us about the role.</h1>
+    <p class="page-sub">Paste the job description and we'll pull out what matters — requirements, keywords, must-haves.</p>
+
+    <div class="tab-row">
+      <button class="tab on">Paste text</button>
+      <button class="tab">Fetch from URL</button>
+      <button class="tab">Upload file</button>
+    </div>
+
+    <div class="section-head">Job description</div>
+    <textarea class="big-textarea" rows="9" placeholder="Paste the full job description here…">Senior Product Manager, Growth
+
+We're looking for a Senior PM to join Stripe's Growth team. You'll own the acquisition funnel for our developer products, working closely with engineering, data science, and design teams to ship high-impact experiments.
+
+Responsibilities:
+• Define and drive the strategy for growth initiatives across signup, activation, and monetisation funnels
+• Lead cross-functional squads of 6–10 engineers, designers, and analysts
+• Own key metrics: MAU, DAU/MAU ratio, revenue per seat
+• 5+ years of PM experience at a B2B SaaS company
+• Strong analytical skills — SQL and A/B testing</textarea>
+    <p class="hint">Or <a href="#">fetch directly from a URL</a> — paste the job posting link and we'll do the rest.</p>
+
+    <div class="divider"></div>
+
+    <div class="section-head">Your resume</div>
+    <div class="upload-area">
+      <p class="upload-main">Drop your resume here</p>
+      <p class="upload-sub">PDF or DOCX · up to 5 MB</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-head">Preferences</div>
+    <div class="pref-grid">
+      <div>
+        <label class="pref-label">Tone</label>
+        <select class="pref-select">
+          <option>Professional</option>
+          <option>Conversational</option>
+          <option>Technical</option>
+        </select>
+      </div>
+      <div>
+        <label class="pref-label">Emphasise</label>
+        <select class="pref-select">
+          <option>Leadership & impact</option>
+          <option>Technical depth</option>
+          <option>Cross-functional</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button class="btn-back" onclick="go('step1')">← Back</button>
+      <button class="btn-next" onclick="go('results')">Tailor my resume →</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     RESULTS
+════════════════════════════════════════ -->
+<div class="screen" id="screen-results">
+  <div class="page-wide">
+
+    <div class="step-label">Done · Stripe — Senior PM, Growth</div>
+    <h1 class="page-heading">Here's what we built for you.</h1>
+    <p class="page-sub">9 bullet points rewritten using only facts from your original resume. Nothing fabricated.</p>
+
+    <!-- Score -->
+    <div class="score-strip">
+      <div class="score-number">90</div>
+      <div class="score-label-block">
+        <div class="score-title">Strong match</div>
+        <div class="score-desc">Top 15% for this role based on your background</div>
+      </div>
+      <div class="score-badges">
+        <span class="badge badge-green">Validated</span>
+        <span class="badge badge-neutral">9 rewrites</span>
+        <span class="badge badge-neutral">16 keywords</span>
+        <span class="badge badge-neutral">0 fabrications</span>
+      </div>
+    </div>
+
+    <div class="results-grid">
+
+      <!-- Left: resume -->
+      <div>
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Tailored resume</span>
+            <button class="card-action">Edit</button>
+          </div>
+          <div class="card-body">
+            <div class="rv-name">Vishnu Pratap</div>
+            <div class="rv-contact">vishnu@example.com · San Francisco, CA · linkedin.com/in/vishnupratap</div>
+
+            <div class="rv-sec-title">Experience</div>
+
+            <div class="rv-role">
+              <div class="rv-role-head">
+                <span>Product Manager, Growth</span>
+                <span style="font-weight:400;color:var(--text-3);font-size:0.75rem">2022 – Present</span>
+              </div>
+              <div class="rv-role-sub">Acme Corp · San Francisco, CA</div>
+              <div class="rv-bullet">Led <span class="hl">cross-functional squads</span> of 8 engineers and 2 designers to ship growth experiments, improving signup conversion by 34%</div>
+              <div class="rv-bullet">Owned <span class="hl">MAU and DAU/MAU</span> metrics across 3 product lines; grew monthly actives from 180k to 310k in 18 months</div>
+              <div class="rv-bullet">Partnered with marketing on <span class="hl">acquisition funnels</span>, reducing CAC by 22% through landing page optimisation</div>
+              <div class="rv-bullet">Defined <span class="hl">A/B testing</span> frameworks adopted by 5 teams, running 40+ experiments per quarter</div>
+            </div>
+
+            <div class="rv-role">
+              <div class="rv-role-head">
+                <span>Associate Product Manager</span>
+                <span style="font-weight:400;color:var(--text-3);font-size:0.75rem">2019 – 2022</span>
+              </div>
+              <div class="rv-role-sub">StartupCo · New York, NY</div>
+              <div class="rv-bullet">Built the <span class="hl">activation funnel</span> for the B2B SaaS dashboard from 0→1, onboarding 1,200 enterprise accounts</div>
+              <div class="rv-bullet">Used <span class="hl">SQL</span> to build self-serve analytics, reducing data team tickets by 60%</div>
+            </div>
+
+            <div class="rv-sec-title">Education</div>
+            <div class="rv-role">
+              <div class="rv-role-head">
+                <span>B.S. Computer Science — UC Berkeley</span>
+                <span style="font-weight:400;color:var(--text-3);font-size:0.75rem">2015–2019</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: sidebar -->
+      <div>
+
+        <!-- Download -->
+        <div class="sidebar-section" style="border-color:var(--border)">
+          <div class="dl-section">
+            <div class="dl-title">Your resume is ready.</div>
+            <div class="dl-sub">All claims verified · no fabrications detected</div>
+            <button class="btn-dl">Download DOCX</button>
+            <button class="btn-dl-ghost">Copy as plain text</button>
+          </div>
+        </div>
+
+        <!-- Validation -->
+        <div class="sidebar-section">
+          <div class="ss-head">Integrity check</div>
+          <div class="ss-body">
+            <div class="val-row"><div class="val-dot ok"></div><span class="val-text">All claims verified</span></div>
+            <div class="val-row"><div class="val-dot ok"></div><span class="val-text">Companies and dates unchanged</span></div>
+            <div class="val-row"><div class="val-dot ok"></div><span class="val-text">0 fabrications detected</span></div>
+            <div class="val-note">Every rewrite is traceable to a fact in your original resume. We never invent experience.</div>
+          </div>
+        </div>
+
+        <!-- Keywords -->
+        <div class="sidebar-section">
+          <div class="ss-head">Keywords</div>
+          <div class="ss-body">
+            <div class="kw-list">
+              <span class="kw yes">cross-functional</span>
+              <span class="kw yes">MAU</span>
+              <span class="kw yes">A/B testing</span>
+              <span class="kw yes">SQL</span>
+              <span class="kw yes">activation</span>
+              <span class="kw yes">B2B SaaS</span>
+              <span class="kw yes">acquisition</span>
+              <span class="kw yes">DAU/MAU</span>
+              <span class="kw no">monetisation</span>
+              <span class="kw no">revenue per seat</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Changes -->
+        <div class="sidebar-section">
+          <div class="ss-head">What changed</div>
+          <div class="ss-body" style="padding:12px 14px">
+            <div class="change-row"><span class="change-type">rewrite</span> Added squad size and conversion metric to bullet 1</div>
+            <div class="change-row"><span class="change-type">rewrite</span> Surfaced MAU / DAU/MAU language with specific growth numbers</div>
+            <div class="change-row"><span class="change-type">insert</span> Acquisition funnel bullet from existing LinkedIn data</div>
+            <div class="change-row"><span class="change-type">rewrite</span> A/B testing — added scale context (40+ experiments)</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const steps = {
+  auth:    { progress: '0%',   label: '',                              topbar: false },
+  step1:   { progress: '25%',  label: '<strong>Step 1</strong> of 4 — Find roles',         topbar: true },
+  step2:   { progress: '50%',  label: '<strong>Step 2</strong> of 4 — Add the job description', topbar: true },
+  results: { progress: '100%', label: '<strong>Done</strong> — tailored and validated',    topbar: true },
+};
+
+function go(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.demo-btn').forEach((b, i) => {
+    b.classList.toggle('on', ['auth','step1','step2','results'][i] === id);
+  });
+
+  const s = document.getElementById('screen-' + id);
+  if (s) s.classList.add('active');
+
+  const cfg = steps[id];
+  if (cfg) {
+    document.getElementById('progressBar').style.width = cfg.progress;
+    document.getElementById('topbar').style.display = cfg.topbar ? 'flex' : 'none';
+    document.getElementById('stepLabel').innerHTML = cfg.label;
+  }
+
+  window.scrollTo({ top: 0 });
+}
+
+// Tab clicks
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    t.closest('.tab-row').querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+  });
+});
+
+// Filter clicks
+document.querySelectorAll('.filter').forEach(f => {
+  f.addEventListener('click', () => {
+    document.querySelectorAll('.filter').forEach(x => x.classList.remove('on'));
+    f.classList.add('on');
+  });
+});
+</script>
+</body>
+</html>

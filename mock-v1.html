@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V1 — Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0D0D0D;
+  --surface:#111;
+  --green:#00FF41;
+  --green-dim:#00CC33;
+  --green-faint:rgba(0,255,65,0.08);
+  --green-border:rgba(0,255,65,0.2);
+  --amber:#FFB800;
+  --red:#FF3B3B;
+  --text:#E0FFE0;
+  --muted:#4A7A4A;
+  --border:rgba(0,255,65,0.15);
+}
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;}
+
+/* scanline overlay */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:9999;}
+
+/* MOCK NAV */
+.mnav{position:fixed;top:0;left:0;right:0;z-index:100;background:#000;border-bottom:1px solid var(--green-border);padding:6px 16px;display:flex;align-items:center;gap:0;}
+.mnav-label{font-size:10px;color:var(--muted);margin-right:16px;letter-spacing:.2em;}
+.mtab{padding:5px 14px;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.1em;cursor:pointer;background:transparent;border:none;color:var(--muted);transition:color .15s;}
+.mtab.active{color:var(--green);}
+.mtab:not(.active):hover{color:var(--text);}
+
+/* SHELL — narrow left rail + main */
+.shell{display:grid;grid-template-columns:52px 1fr;min-height:100vh;padding-top:32px;}
+
+/* RAIL */
+.rail{background:#000;border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:20px 0;gap:0;position:sticky;top:32px;height:calc(100vh - 32px);}
+.rail-step{width:52px;height:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .15s;}
+.rail-step::after{content:'';position:absolute;right:0;top:50%;transform:translateY(-50%);width:2px;height:20px;background:transparent;transition:background .15s;}
+.rail-step.active::after{background:var(--green);}
+.rail-step:hover{background:var(--green-faint);}
+.rail-step-num{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.05em;}
+.rail-step.active .rail-step-num{color:var(--green);}
+.rail-step.done .rail-step-num{color:var(--green-dim);}
+.rail-step.locked{opacity:.3;cursor:not-allowed;}
+.rail-sep{width:1px;height:16px;background:var(--border);margin:0 auto;}
+
+/* MAIN */
+.main{display:flex;flex-direction:column;}
+
+/* TOPBAR */
+.topbar{height:44px;border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;background:var(--surface);}
+.breadcrumb{font-size:11px;color:var(--muted);letter-spacing:.05em;}
+.breadcrumb span{color:var(--green);}
+.status-dot{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--muted);}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* CONTENT */
+.content{padding:32px;flex:1;overflow-y:auto;}
+
+/* PROMPT HEADER */
+.prompt-header{margin-bottom:28px;}
+.prompt-line{display:flex;align-items:flex-start;gap:12px;margin-bottom:8px;}
+.prompt-sym{color:var(--green);font-size:16px;font-weight:700;margin-top:2px;flex-shrink:0;}
+.prompt-cmd{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.01em;line-height:1.2;}
+.prompt-cmd .hl{color:var(--green);}
+.prompt-desc{font-size:12px;color:var(--muted);padding-left:28px;line-height:1.7;max-width:580px;}
+
+/* TERMINAL BOX */
+.tbox{background:#000;border:1px solid var(--border);margin-bottom:16px;position:relative;}
+.tbox-bar{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.tbox-title{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
+.tbox-tag{font-size:9px;letter-spacing:.15em;color:var(--green-dim);border:1px solid var(--green-border);padding:2px 7px;}
+.tbox-body{padding:24px;}
+
+/* UPLOAD ZONE */
+.upload-zone{border:1px dashed var(--green-border);padding:40px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;cursor:pointer;transition:background .15s;text-align:center;}
+.upload-zone:hover{background:var(--green-faint);}
+.upload-ascii{font-size:11px;line-height:1.4;color:var(--green-dim);white-space:pre;}
+.upload-cmd{font-size:13px;color:var(--text);}
+.upload-hint{font-size:10px;color:var(--muted);letter-spacing:.1em;}
+
+/* FIELD ROW */
+.field-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;padding:0 0 16px;}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field-lbl{font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
+.term-input{background:transparent;border:1px solid var(--border);padding:9px 12px;font-family:inherit;font-size:12px;color:var(--text);outline:none;transition:border-color .15s;}
+.term-input::placeholder{color:var(--muted);}
+.term-input:focus{border-color:var(--green);box-shadow:0 0 0 1px rgba(0,255,65,.2);}
+
+/* BUTTON */
+.btn-exec{padding:10px 20px;background:var(--green);color:#000;font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:opacity .15s,box-shadow .15s;}
+.btn-exec:hover{box-shadow:0 0 16px rgba(0,255,65,.4);}
+.btn-exec:disabled{opacity:.3;cursor:not-allowed;box-shadow:none;}
+.btn-ghost-t{padding:10px 18px;background:transparent;color:var(--muted);font-family:inherit;font-size:12px;font-weight:500;letter-spacing:.1em;border:1px solid var(--border);cursor:pointer;transition:all .15s;}
+.btn-ghost-t:hover{color:var(--text);border-color:rgba(0,255,65,.3);}
+.actions{display:flex;align-items:center;gap:12px;margin-top:16px;}
+
+/* PREFS toggle */
+.prefs-toggle{padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;border-top:1px solid var(--border);}
+.prefs-toggle:hover{background:var(--green-faint);}
+.toggle-caret{color:var(--green);font-size:10px;}
+.toggle-lbl{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
+
+/* STEP 2 TEXTAREA */
+.term-textarea{width:100%;max-width:640px;background:transparent;border:1px solid var(--border);padding:16px;font-family:inherit;font-size:12px;line-height:1.7;color:var(--text);resize:vertical;outline:none;transition:border-color .15s;}
+.term-textarea::placeholder{color:var(--muted);}
+.term-textarea:focus{border-color:var(--green);}
+
+/* TAB ROW */
+.tab-row{display:flex;gap:0;margin-bottom:20px;border:1px solid var(--border);}
+.t-tab{padding:8px 16px;font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;background:transparent;border:none;color:var(--muted);border-right:1px solid var(--border);transition:all .15s;}
+.t-tab:last-child{border-right:none;}
+.t-tab.active{background:var(--green);color:#000;}
+.t-tab:not(.active):hover{color:var(--text);background:var(--green-faint);}
+
+/* RESULTS */
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:860px;}
+.score-big{font-size:72px;font-weight:700;color:var(--green);letter-spacing:-.05em;line-height:1;text-shadow:0 0 40px rgba(0,255,65,.4);}
+.score-sub{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-top:6px;}
+.delta{font-size:13px;color:var(--amber);font-weight:700;margin-top:8px;}
+.bar-track{height:3px;background:var(--border);margin-top:12px;}
+.bar-fill{height:100%;background:var(--green);box-shadow:0 0 8px var(--green);}
+.kw-list{display:flex;flex-wrap:wrap;gap:6px;padding:16px;}
+.kw{font-size:10px;font-weight:700;letter-spacing:.1em;padding:3px 9px;border:1px solid var(--border);color:var(--muted);}
+.kw.hit{border-color:var(--green-border);color:var(--green);background:var(--green-faint);}
+.change-row{padding:12px 0;border-bottom:1px solid var(--border);}
+.change-row:last-child{border-bottom:none;}
+.ch-tag{font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.ch-old{font-size:11px;color:var(--muted);text-decoration:line-through;line-height:1.6;margin-bottom:4px;}
+.ch-new{font-size:11px;color:var(--green);line-height:1.6;}
+.ch-arrow{color:var(--green-dim);}
+
+/* AUTH */
+.auth-wrap{min-height:calc(100vh - 32px);display:flex;align-items:center;justify-content:center;padding:40px;}
+.auth-terminal{width:100%;max-width:560px;background:#000;border:1px solid var(--green-border);box-shadow:0 0 60px rgba(0,255,65,.08);}
+.auth-bar{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.auth-bar-dot{width:10px;height:10px;border-radius:50%;}
+.auth-bar-title{font-size:10px;color:var(--muted);letter-spacing:.15em;margin-left:auto;margin-right:auto;}
+.auth-body{padding:32px;}
+.auth-bigtext{font-size:13px;color:var(--green);margin-bottom:24px;line-height:1.8;}
+.auth-bigtext span{color:var(--text);}
+.auth-field{margin-bottom:18px;}
+.auth-lbl{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.auth-inp{width:100%;background:transparent;border:none;border-bottom:1px solid var(--border);padding:8px 0;font-family:inherit;font-size:13px;color:var(--text);outline:none;transition:border-color .15s;}
+.auth-inp::placeholder{color:var(--muted);}
+.auth-inp:focus{border-color:var(--green);}
+.auth-note{font-size:10px;color:var(--muted);margin-top:16px;letter-spacing:.05em;}
+.auth-note a{color:var(--green-dim);}
+.screen{display:none;} .screen.active{display:block;}
+</style>
+</head>
+<body>
+<div class="mnav">
+  <span class="mnav-label">V1 · TERMINAL</span>
+  <button class="mtab active" onclick="show('auth',this)">AUTH</button>
+  <button class="mtab" onclick="show('step1',this)">STEP 1</button>
+  <button class="mtab" onclick="show('step2',this)">STEP 2</button>
+  <button class="mtab" onclick="show('results',this)">RESULTS</button>
+</div>
+<div style="padding-top:32px;">
+
+<!-- AUTH -->
+<div id="screen-auth" class="screen active">
+  <div class="auth-wrap">
+    <div class="auth-terminal">
+      <div class="auth-bar">
+        <div class="auth-bar-dot" style="background:#FF5F57;"></div>
+        <div class="auth-bar-dot" style="background:#FEBC2E;"></div>
+        <div class="auth-bar-dot" style="background:#28C840;"></div>
+        <span class="auth-bar-title">resume-tailor-pro — bash — 80×24</span>
+      </div>
+      <div class="auth-body">
+        <div class="auth-bigtext">
+          <div>$ <span>resume-tailor-pro</span> --authenticate</div>
+          <div style="margin-top:8px;color:var(--muted);">// v2.4.1 — zero fabrications engine</div>
+          <div style="margin-top:4px;color:var(--muted);">// provenance-tracked tailoring active</div>
+          <br>
+          <div>Awaiting credentials<span style="animation:blink 1s step-end infinite;">█</span></div>
+        </div>
+        <div class="auth-field">
+          <div class="auth-lbl">→ EMAIL</div>
+          <input class="auth-inp" type="email" placeholder="user@domain.com">
+        </div>
+        <div class="auth-field">
+          <div class="auth-lbl">→ PASSWORD</div>
+          <input class="auth-inp" type="password" placeholder="**************">
+        </div>
+        <button class="btn-exec" style="width:100%;justify-content:center;margin-top:8px;">[AUTHENTICATE] →</button>
+        <p class="auth-note" style="margin-top:16px;">new user? run <a href="#">register --new-account</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 1 -->
+<div id="screen-step1" class="screen">
+  <div class="shell">
+    <div class="rail">
+      <div class="rail-step active" title="Discover"><div class="rail-step-num">01</div></div>
+      <div class="rail-sep"></div>
+      <div class="rail-step locked" title="The Source"><div class="rail-step-num">02</div></div>
+      <div class="rail-sep"></div>
+      <div class="rail-step locked" title="The Profile"><div class="rail-step-num">03</div></div>
+      <div class="rail-sep"></div>
+      <div class="rail-step locked" title="The Output"><div class="rail-step-num">04</div></div>
+      <div class="rail-sep"></div>
+      <div class="rail-step locked" title="Apply"><div class="rail-step-num">05</div></div>
+      <div style="flex:1;"></div>
+      <div style="font-size:9px;color:var(--muted);writing-mode:vertical-lr;letter-spacing:.2em;padding-bottom:12px;">RTP</div>
+    </div>
+    <div class="main">
+      <div class="topbar">
+        <div class="breadcrumb">~/resume-tailor-pro/<span>discover</span></div>
+        <div class="status-dot"><div class="dot"></div>session active · step 1/5</div>
+      </div>
+      <div class="content">
+        <div class="prompt-header">
+          <div class="prompt-line">
+            <span class="prompt-sym">$</span>
+            <div class="prompt-cmd">find-best-matches <span class="hl">--scan-live-boards</span></div>
+          </div>
+          <p class="prompt-desc">Upload your resume to build a candidate profile. The engine scans live job boards and returns a ranked list of matches weighted by experience overlap.</p>
+        </div>
+        <div class="tbox">
+          <div class="tbox-bar">
+            <span class="tbox-title">INPUT: resume.docx</span>
+            <span class="tbox-tag">DOCX ONLY</span>
+          </div>
+          <div class="tbox-body">
+            <div class="upload-zone">
+              <div class="upload-ascii">┌─────────────────────────────┐
+│   ↑  DROP FILE OR BROWSE    │
+│   ──────────────────────    │
+│   DOCX · MAX 10MB           │
+└─────────────────────────────┘</div>
+            </div>
+          </div>
+          <div class="prefs-toggle">
+            <span class="toggle-caret">▶</span>
+            <span class="toggle-lbl">search preferences</span>
+          </div>
+          <div style="padding:0 16px 16px;">
+            <div class="field-row">
+              <div class="field"><div class="field-lbl">--location</div><input class="term-input" placeholder="city or remote"></div>
+              <div class="field"><div class="field-lbl">--work-type</div><input class="term-input" placeholder="remote|hybrid|onsite"></div>
+              <div class="field"><div class="field-lbl">--role-type</div><input class="term-input" placeholder="eng|design|pm"></div>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn-exec" disabled>[EXECUTE] search-jobs</button>
+          <button class="btn-ghost-t">skip --use-specific-job</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div id="screen-step2" class="screen">
+  <div class="shell">
+    <div class="rail">
+      <div class="rail-step done" title="Discover"><div class="rail-step-num">✓</div></div>
+      <div class="rail-sep"></div>
+      <div class="rail-step active"><div class="rail-step-num">02</div></div>
+      <div class="rail-sep"></div>
+      <div class="rail-step locked"><div class="rail-step-num">03</div></div>
+      <div class="rail-sep"></div>
+      <div class="rail-step locked"><div class="rail-step-num">04</div></div>
+      <div class="rail-sep"></div>
+      <div class="rail-step locked"><div class="rail-step-num">05</div></div>
+      <div style="flex:1;"></div>
+      <div style="font-size:9px;color:var(--muted);writing-mode:vertical-lr;letter-spacing:.2em;padding-bottom:12px;">RTP</div>
+    </div>
+    <div class="main">
+      <div class="topbar">
+        <div class="breadcrumb">~/resume-tailor-pro/<span>the-source</span></div>
+        <div class="status-dot"><div class="dot"></div>step 2/5</div>
+      </div>
+      <div class="content">
+        <div class="prompt-header">
+          <div class="prompt-line">
+            <span class="prompt-sym">$</span>
+            <div class="prompt-cmd">extract-jd <span class="hl">--source=stdin</span></div>
+          </div>
+          <p class="prompt-desc">Pipe in the job description. The parser extracts must-haves, preferred skills, and seniority signals from raw text, URL, or file.</p>
+        </div>
+        <div class="tab-row">
+          <button class="t-tab active">--paste</button>
+          <button class="t-tab">--url</button>
+          <button class="t-tab">--file</button>
+        </div>
+        <div class="tbox">
+          <div class="tbox-bar"><span class="tbox-title">STDIN</span><span class="tbox-tag">PASTE JD TEXT</span></div>
+          <div class="tbox-body">
+            <textarea class="term-textarea" rows="8" placeholder="Paste the full job description here...&#10;&#10;The parser handles everything: titles, bullets,&#10;salary ranges, required vs preferred skills."></textarea>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn-exec">[EXECUTE] extract-requirements</button>
+          <button class="btn-ghost-t">← back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="screen-results" class="screen">
+  <div class="shell">
+    <div class="rail">
+      <div class="rail-step done"><div class="rail-step-num">✓</div></div>
+      <div class="rail-sep"></div>
+      <div class="rail-step done"><div class="rail-step-num">✓</div></div>
+      <div class="rail-sep"></div>
+      <div class="rail-step done"><div class="rail-step-num">✓</div></div>
+      <div class="rail-sep"></div>
+      <div class="rail-step active"><div class="rail-step-num">04</div></div>
+      <div class="rail-sep"></div>
+      <div class="rail-step locked"><div class="rail-step-num">05</div></div>
+      <div style="flex:1;"></div>
+      <div style="font-size:9px;color:var(--muted);writing-mode:vertical-lr;letter-spacing:.2em;padding-bottom:12px;">RTP</div>
+    </div>
+    <div class="main">
+      <div class="topbar">
+        <div class="breadcrumb">~/resume-tailor-pro/<span>output</span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:10px;color:var(--green);border:1px solid var(--green-border);padding:3px 10px;letter-spacing:.1em;">✓ VALIDATED</span>
+          <button class="btn-exec" style="padding:8px 16px;">[DOWNLOAD] resume.docx</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="prompt-header">
+          <div class="prompt-line">
+            <span class="prompt-sym">$</span>
+            <div class="prompt-cmd">tailoring-complete <span class="hl">--status=validated</span></div>
+          </div>
+        </div>
+        <div class="result-grid">
+          <div class="tbox">
+            <div class="tbox-bar"><span class="tbox-title">MATCH SCORE</span><span class="tbox-tag" style="color:var(--amber);border-color:rgba(255,184,0,.3);">+12 PTS</span></div>
+            <div class="tbox-body">
+              <div class="score-big">87</div>
+              <div class="score-sub">/ 100 · was 75 pre-tailor</div>
+              <div class="delta">↑ +12.0% improvement</div>
+              <div class="bar-track" style="margin-top:16px;"><div class="bar-fill" style="width:87%;"></div></div>
+            </div>
+          </div>
+          <div class="tbox">
+            <div class="tbox-bar"><span class="tbox-title">KEYWORDS</span><span class="tbox-tag">6/8 HIT</span></div>
+            <div class="kw-list">
+              <span class="kw hit">React</span><span class="kw hit">TypeScript</span><span class="kw hit">Node.js</span><span class="kw hit">CI/CD</span><span class="kw">Kubernetes</span><span class="kw hit">REST APIs</span><span class="kw">GraphQL</span><span class="kw hit">Jest</span>
+            </div>
+          </div>
+          <div class="tbox" style="grid-column:1/-1;">
+            <div class="tbox-bar"><span class="tbox-title">DIFF — CHANGES APPLIED</span><span class="tbox-tag">3 MUTATIONS</span></div>
+            <div class="tbox-body">
+              <div class="change-row">
+                <div class="ch-tag">experience.bullets[1]</div>
+                <div class="ch-old">Built internal tools for the team</div>
+                <div class="ch-new"><span class="ch-arrow">→</span> Architected React/TypeScript internal tooling that reduced engineer onboarding time by 40%</div>
+              </div>
+              <div class="change-row">
+                <div class="ch-tag">experience.bullets[4]</div>
+                <div class="ch-old">Worked on API integrations</div>
+                <div class="ch-new"><span class="ch-arrow">→</span> Designed and implemented 12 REST API integrations, improving data reliability to 99.2% uptime</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+function show(id,btn){
+  document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');s.style.display='none';});
+  document.querySelectorAll('.mtab').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById('screen-'+id);
+  el.style.display='block';el.classList.add('active');
+  btn.classList.add('active');
+}
+document.querySelectorAll('.screen').forEach((s,i)=>{if(i>0)s.style.display='none';});
+</script>
+</body>
+</html>

@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Tailor Pro — V5 Bento Command</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy: #0D1526;
+  --navy2: #111E35;
+  --navy3: #162040;
+  --card: rgba(255,255,255,0.042);
+  --card-border: rgba(255,255,255,0.08);
+  --card-hover: rgba(255,255,255,0.068);
+  --blue: #38BDF8;
+  --blue2: #0EA5E9;
+  --amber: #F59E0B;
+  --coral: #F97316;
+  --green: #34D399;
+  --purple: #A78BFA;
+  --text: #F1F5F9;
+  --muted: #94A3B8;
+  --subtle: #475569;
+  --font: 'Space Grotesk', system-ui, sans-serif;
+  --mono: 'Space Mono', monospace;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--navy);
+  color: var(--text);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 15% 20%, rgba(56,189,248,0.09) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 45% at 85% 70%, rgba(167,139,250,0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 35% at 50% 90%, rgba(249,115,22,0.06) 0%, transparent 50%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ─── DEMO TABS ─── */
+.demo-tabs {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 9000;
+  background: rgba(7,10,18,0.92);
+  backdrop-filter: blur(16px);
+  display: flex; align-items: center; padding: 0 20px; height: 40px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.demo-tabs > span { font-family: var(--mono); font-size: 9px; color: #4B5563; letter-spacing: 0.15em; margin-right: 14px; text-transform: uppercase; }
+.demo-tab { font-family: var(--mono); font-size: 10px; color: #4B5563; padding: 0 14px; height: 100%; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; letter-spacing: 0.06em; transition: all 0.15s; }
+.demo-tab:hover { color: #94A3B8; }
+.demo-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+/* ─── SCREENS ─── */
+.screen { display: none; min-height: calc(100vh - 40px); margin-top: 40px; position: relative; z-index: 1; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* ═══════════ AUTH ═══════════ */
+.auth-s { display: none; min-height: calc(100vh - 40px); margin-top: 40px; position: relative; z-index: 1; align-items: center; justify-content: center; }
+.auth-s.active { display: flex; }
+
+.auth-bg-orb {
+  position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none;
+  animation: pulse 6s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{transform:scale(1);opacity:0.6} 50%{transform:scale(1.08);opacity:0.9} }
+.auth-bg-orb.a1 { width:500px;height:500px;background:rgba(56,189,248,0.12);top:-100px;left:-100px; animation-delay:0s; }
+.auth-bg-orb.a2 { width:400px;height:400px;background:rgba(167,139,250,0.1);bottom:-80px;right:-80px; animation-delay:-3s; }
+
+.auth-card {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  margin: 32px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 24px;
+  overflow: hidden;
+  backdrop-filter: blur(32px);
+  box-shadow: 0 40px 100px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.07);
+}
+
+.auth-left-panel {
+  background: linear-gradient(160deg, rgba(14,165,233,0.15) 0%, rgba(167,139,250,0.1) 100%);
+  border-right: 1px solid rgba(255,255,255,0.06);
+  padding: 56px 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.auth-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 48px; }
+.brand-mark {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--blue2), var(--purple));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700; color: white;
+}
+.brand-name { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+.auth-headline { font-size: 40px; font-weight: 700; line-height: 1.12; letter-spacing: -0.025em; color: var(--text); margin-bottom: 16px; }
+.auth-headline span { color: var(--blue); }
+.auth-tagline { font-size: 14px; color: var(--muted); line-height: 1.65; font-weight: 400; }
+
+.feature-list { display: flex; flex-direction: column; gap: 14px; margin-top: 40px; }
+.feat-row { display: flex; align-items: flex-start; gap: 12px; }
+.feat-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+.feat-text { font-size: 13px; font-weight: 500; color: var(--muted); line-height: 1.45; }
+.feat-text strong { color: var(--text); font-weight: 600; display: block; font-size: 13px; margin-bottom: 1px; }
+
+.auth-right-panel { padding: 56px 48px; display: flex; flex-direction: column; justify-content: center; }
+.form-eyebrow { font-family: var(--mono); font-size: 10px; color: var(--blue); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+.form-title { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 32px; }
+
+.field { margin-bottom: 18px; }
+.field label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; }
+.field input {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  outline: none;
+  transition: all 0.18s;
+}
+.field input:focus { border-color: var(--blue2); background: rgba(14,165,233,0.06); box-shadow: 0 0 0 3px rgba(14,165,233,0.12); }
+.field input::placeholder { color: rgba(255,255,255,0.2); }
+
+.btn-blue {
+  width: 100%;
+  background: var(--blue2);
+  border: none;
+  border-radius: 10px;
+  padding: 13px;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 4px 16px rgba(14,165,233,0.25);
+  margin-bottom: 14px;
+}
+.btn-blue:hover { background: var(--blue); box-shadow: 0 6px 24px rgba(56,189,248,0.35); transform: translateY(-1px); }
+
+.or-line { display: flex; align-items: center; gap: 10px; margin: 4px 0 14px; }
+.or-line::before, .or-line::after { content:''; flex:1; height:1px; background:rgba(255,255,255,0.07); }
+.or-line span { font-size: 11px; color: var(--subtle); font-weight: 600; }
+
+.btn-google-dark {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 10px;
+  padding: 11px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.18s;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+}
+.btn-google-dark:hover { background: rgba(255,255,255,0.07); color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+/* ═══════════ COMMAND BAR (top nav for app screens) ═══════════ */
+.cmd-bar {
+  background: rgba(13,21,38,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 0 28px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+  position: sticky;
+  top: 40px;
+  z-index: 100;
+}
+.cmd-logo { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; margin-right: 32px; display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.cmd-logo .dot { width: 8px; height: 8px; border-radius: 50%; background: linear-gradient(135deg, var(--blue2), var(--purple)); }
+
+/* Non-linear breadcrumb stepper */
+.breadcrumb-stepper { display: flex; align-items: center; gap: 0; flex: 1; }
+.bc-step {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+.bc-step:hover { background: rgba(255,255,255,0.05); }
+.bc-step.active { background: rgba(56,189,248,0.1); }
+.bc-step.locked { opacity: 0.35; cursor: not-allowed; }
+.bc-step.done { opacity: 0.75; }
+.bc-step.done:hover { opacity: 1; background: rgba(52,211,153,0.08); }
+
+.bc-num {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.06);
+  color: var(--subtle);
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.bc-step.done .bc-num { background: rgba(52,211,153,0.15); color: var(--green); }
+.bc-step.active .bc-num { background: var(--blue2); color: white; box-shadow: 0 2px 8px rgba(14,165,233,0.35); }
+
+.bc-label { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.bc-step.active .bc-label { color: var(--blue); }
+.bc-step.done .bc-label { color: var(--green); }
+
+.bc-sep { color: var(--subtle); font-size: 14px; margin: 0 2px; flex-shrink: 0; }
+
+.cmd-user { display: flex; align-items: center; gap: 10px; margin-left: 20px; }
+.cmd-avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--blue2), var(--purple)); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; }
+.cmd-shortcut { font-family: var(--mono); font-size: 9px; color: var(--subtle); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 4px; }
+
+/* ─── PAGE CONTENT ─── */
+.page-body { flex: 1; padding: 32px 28px 48px; overflow-y: auto; }
+
+/* ─── PAGE HEADER ─── */
+.page-tag { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--blue2); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 10px; }
+.page-tag .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--blue2); animation: blink 2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.page-h1 { font-size: 34px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.1; margin-bottom: 6px; }
+.page-h1 .hi { color: var(--blue); }
+.page-sub { font-size: 14px; color: var(--muted); font-weight: 400; line-height: 1.55; margin-bottom: 32px; }
+
+/* ─── SEARCH ROW ─── */
+.search-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr 200px auto;
+  gap: 10px;
+  margin-bottom: 28px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  padding: 16px 20px;
+}
+.s-field label { display: block; font-family: var(--mono); font-size: 9px; font-weight: 700; color: var(--subtle); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.s-input {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  outline: none;
+  transition: all 0.15s;
+}
+.s-input:focus { border-color: var(--blue2); background: rgba(14,165,233,0.05); }
+.s-input::placeholder { color: rgba(255,255,255,0.18); }
+select.s-input { appearance: none; cursor: pointer; }
+
+.s-btn {
+  background: var(--blue2);
+  border: none;
+  border-radius: 8px;
+  padding: 9px 20px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: all 0.15s;
+  align-self: flex-end;
+  white-space: nowrap;
+  display: flex; align-items: center; gap: 6px;
+  height: 37px;
+}
+.s-btn:hover { background: var(--blue); }
+
+/* Results header row */
+.results-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.results-count { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.results-count strong { color: var(--blue); font-weight: 700; }
+.filter-pills { display: flex; gap: 6px; }
+.filter-pill {
+  font-family: var(--mono); font-size: 10px;
+  padding: 4px 10px; border-radius: 20px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  color: var(--subtle); cursor: pointer; transition: all 0.12s;
+}
+.filter-pill:hover { border-color: var(--blue2); color: var(--blue); }
+.filter-pill.on { background: rgba(14,165,233,0.1); border-color: rgba(14,165,233,0.3); color: var(--blue); }
+
+/* ─── JOB TABLE ─── */
+.job-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.job-table thead { background: rgba(255,255,255,0.03); }
+.job-table thead th {
+  font-family: var(--mono); font-size: 9px; font-weight: 700;
+  color: var(--subtle); text-transform: uppercase; letter-spacing: 0.1em;
+  padding: 10px 16px; text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.job-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.12s;
+  cursor: pointer;
+}
+.job-table tbody tr:last-child { border-bottom: none; }
+.job-table tbody tr:hover { background: rgba(255,255,255,0.04); }
+.job-table td { padding: 14px 16px; }
+
+.td-company { display: flex; align-items: center; gap: 10px; }
+.co-logo { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; flex-shrink: 0; }
+.co-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.co-loc { font-size: 11px; color: var(--subtle); font-family: var(--mono); }
+.td-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.td-comp { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.td-type { display: flex; gap: 5px; flex-wrap: wrap; }
+.type-tag { font-size: 10px; padding: 2px 7px; border-radius: 4px; font-family: var(--mono); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.07); color: var(--muted); }
+.td-match { text-align: right; }
+.match-pct {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--blue);
+}
+.match-bar-wrap { width: 60px; height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; margin-top: 4px; margin-left: auto; }
+.match-bar { height: 3px; background: linear-gradient(90deg, var(--blue2), var(--purple)); border-radius: 2px; }
+.td-action button {
+  font-family: var(--font); font-size: 12px; font-weight: 700;
+  padding: 6px 14px; border-radius: 7px;
+  background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.25);
+  color: var(--blue); cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.td-action button:hover { background: var(--blue2); color: white; border-color: var(--blue2); }
+
+/* ─── JD STEP ─── */
+.jd-grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+
+.jd-main-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  padding: 24px 28px;
+}
+.jd-tab-row { display: flex; gap: 2px; margin-bottom: 20px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 3px; }
+.jd-tab-btn { flex: 1; font-family: var(--font); font-size: 12px; font-weight: 600; padding: 7px; border: none; background: transparent; color: var(--subtle); cursor: pointer; border-radius: 8px; transition: all 0.15s; text-align: center; }
+.jd-tab-btn.active { background: rgba(14,165,233,0.15); color: var(--blue); border: 1px solid rgba(14,165,233,0.2); }
+.jd-tab-btn:not(.active):hover { color: var(--muted); background: rgba(255,255,255,0.04); }
+
+.jd-textarea {
+  width: 100%;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text);
+  resize: none;
+  outline: none;
+  transition: all 0.18s;
+  line-height: 1.7;
+}
+.jd-textarea:focus { border-color: var(--blue2); background: rgba(14,165,233,0.04); box-shadow: 0 0 0 3px rgba(14,165,233,0.08); }
+.jd-textarea::placeholder { color: rgba(255,255,255,0.15); }
+
+.jd-side-stack { display: flex; flex-direction: column; gap: 14px; }
+
+.side-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+.sc-label { font-family: var(--mono); font-size: 9px; font-weight: 700; color: var(--subtle); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 12px; }
+.sc-title { font-size: 15px; font-weight: 700; line-height: 1.3; margin-bottom: 5px; }
+.sc-sub { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+.sc-match { display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; background: rgba(14,165,233,0.1); color: var(--blue); border: 1px solid rgba(14,165,233,0.2); margin-top: 10px; }
+
+.extract-row { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 16px; }
+.step-counter { font-family: var(--mono); font-size: 10px; color: var(--subtle); }
+
+/* ─── RESULTS (BENTO) ─── */
+.bento-results {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: auto;
+  gap: 14px;
+}
+
+/* Each bento cell */
+.bc { background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 22px 24px; transition: all 0.2s; }
+.bc:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+
+.bc-score { grid-column: span 3; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(160deg, rgba(14,165,233,0.12) 0%, rgba(167,139,250,0.08) 100%); border-color: rgba(14,165,233,0.2); }
+.bc-resume { grid-column: span 5; }
+.bc-keywords { grid-column: span 4; }
+.bc-changes { grid-column: span 6; }
+.bc-actions { grid-column: span 3; display: flex; flex-direction: column; gap: 12px; }
+.bc-stats { grid-column: span 3; }
+
+.bento-label { font-family: var(--mono); font-size: 9px; font-weight: 700; color: var(--subtle); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+.bento-label::after { content:''; flex:1; height:1px; background:rgba(255,255,255,0.06); }
+
+.big-num { font-size: 72px; font-weight: 700; font-family: var(--mono); line-height: 1; background: linear-gradient(135deg, var(--blue), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.big-num-sub { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 4px; }
+.score-delta { display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--green); background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.2); padding: 3px 8px; border-radius: 20px; margin-top: 8px; }
+
+.resume-block { font-size: 12px; line-height: 1.65; }
+.rb-name { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+.rb-contact { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-bottom: 14px; }
+.rb-section { font-family: var(--mono); font-size: 9px; color: var(--blue2); text-transform: uppercase; letter-spacing: 0.12em; margin: 14px 0 6px; }
+.rb-role { font-size: 13px; font-weight: 700; }
+.rb-sub { font-size: 11px; color: var(--subtle); font-family: var(--mono); margin-bottom: 5px; }
+.rb-bullet { color: var(--muted); padding-left: 12px; position: relative; margin-bottom: 3px; font-size: 12px; }
+.rb-bullet::before { content: '›'; position: absolute; left: 0; color: var(--blue2); font-weight: 700; }
+
+.kw-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.kw { font-family: var(--mono); font-size: 10px; font-weight: 700; padding: 4px 9px; border-radius: 6px; }
+.kw.hit { background: rgba(14,165,233,0.1); color: var(--blue); border: 1px solid rgba(14,165,233,0.2); }
+.kw.miss { background: rgba(255,255,255,0.03); color: var(--subtle); border: 1px solid rgba(255,255,255,0.06); }
+
+.change-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px; color: var(--muted); }
+.change-row:last-child { border-bottom: none; }
+.cr-type { font-family: var(--mono); font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 4px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 1px; }
+.cr-type.mod { background: rgba(245,158,11,0.15); color: var(--amber); }
+.cr-type.add { background: rgba(52,211,153,0.12); color: var(--green); }
+.cr-type.kw { background: rgba(56,189,248,0.1); color: var(--blue); }
+
+.stat-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.stat-item:last-child { border-bottom: none; }
+.si-label { font-size: 11px; color: var(--muted); font-weight: 500; }
+.si-val { font-family: var(--mono); font-size: 16px; font-weight: 700; }
+
+.btn-download-bento {
+  width: 100%;
+  background: linear-gradient(135deg, var(--blue2), var(--purple));
+  border: none;
+  border-radius: 10px;
+  padding: 13px;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(14,165,233,0.2);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-download-bento:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(14,165,233,0.3); }
+
+.integrity-bento {
+  background: rgba(52,211,153,0.06);
+  border: 1px solid rgba(52,211,153,0.15);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.ib-icon { font-size: 20px; flex-shrink: 0; }
+.ib-t { font-size: 12px; font-weight: 700; color: var(--green); }
+.ib-s { font-size: 11px; color: rgba(52,211,153,0.6); }
+</style>
+</head>
+<body>
+
+<!-- DEMO TABS -->
+<div class="demo-tabs">
+  <span>V5 · BENTO</span>
+  <button class="demo-tab active" onclick="showScreen('auth')">Auth</button>
+  <button class="demo-tab" onclick="showScreen('step1')">Step 1 · Jobs</button>
+  <button class="demo-tab" onclick="showScreen('step2')">Step 2 · JD</button>
+  <button class="demo-tab" onclick="showScreen('results')">Results</button>
+</div>
+
+<!-- ═══ AUTH ═══ -->
+<div class="auth-s active" id="s-auth">
+  <div class="auth-bg-orb a1"></div>
+  <div class="auth-bg-orb a2"></div>
+  <div class="auth-card">
+    <div class="auth-left-panel">
+      <div>
+        <div class="auth-brand">
+          <div class="brand-mark">R</div>
+          <div class="brand-name">ResumeTailorPro</div>
+        </div>
+        <div class="auth-headline">Precision-<br>tailored<br><span>résumés.</span></div>
+        <div class="auth-tagline" style="margin-top:14px;">AI reads the job description. You keep every fact. Your career moves forward.</div>
+      </div>
+      <div class="feature-list">
+        <div class="feat-row">
+          <div class="feat-icon" style="background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.2);">🎯</div>
+          <div class="feat-text"><strong>AI-scored job matching</strong>Live search across all major boards, ranked by fit.</div>
+        </div>
+        <div class="feat-row">
+          <div class="feat-icon" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.2);">🔒</div>
+          <div class="feat-text"><strong>Zero-fabrication guarantee</strong>Provenance tracking blocks any hallucinated facts.</div>
+        </div>
+        <div class="feat-row">
+          <div class="feat-icon" style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.2);">⬇</div>
+          <div class="feat-text"><strong>One-click DOCX export</strong>Styled to match your original document.</div>
+        </div>
+      </div>
+    </div>
+    <div class="auth-right-panel">
+      <div class="form-eyebrow">Access your account</div>
+      <div class="form-title">Sign in</div>
+      <div class="field"><label>Email</label><input type="email" placeholder="you@company.com"></div>
+      <div class="field" style="margin-bottom:24px;"><label>Password</label><input type="password" placeholder="••••••••••"></div>
+      <button class="btn-blue">Continue <span style="font-family:var(--mono);font-size:11px;opacity:0.7;">[⌘↵]</span></button>
+      <div class="or-line"><span>or</span></div>
+      <button class="btn-google-dark">
+        <svg width="14" height="14" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Sign in with Google
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STEP 1 ═══ -->
+<div class="screen" id="s-step1">
+  <div class="cmd-bar">
+    <div class="cmd-logo"><div class="dot"></div> ResumeTailorPro</div>
+    <div class="breadcrumb-stepper">
+      <div class="bc-step active"><div class="bc-num">1</div><div class="bc-label">Find Roles</div></div>
+      <div class="bc-sep">/</div>
+      <div class="bc-step locked"><div class="bc-num">2</div><div class="bc-label">Job Brief</div></div>
+      <div class="bc-sep">/</div>
+      <div class="bc-step locked"><div class="bc-num">3</div><div class="bc-label">Resume</div></div>
+      <div class="bc-sep">/</div>
+      <div class="bc-step locked"><div class="bc-num">4</div><div class="bc-label">Tailoring</div></div>
+      <div class="bc-sep">/</div>
+      <div class="bc-step locked"><div class="bc-num">5</div><div class="bc-label">Download</div></div>
+    </div>
+    <div class="cmd-user">
+      <span class="cmd-shortcut">⌘K</span>
+      <div class="cmd-avatar">A</div>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="page-tag"><span class="pulse"></span>Step 01 of 05</div>
+    <div class="page-h1">Find roles that <span class="hi">fit.</span></div>
+    <div class="page-sub">AI-scored against your profile. 247 matches found. Sorted by fit, not date.</div>
+
+    <div class="search-strip">
+      <div class="s-field"><label>Role / Title</label><input class="s-input" type="text" placeholder="Senior Product Manager"></div>
+      <div class="s-field"><label>Location</label><input class="s-input" type="text" placeholder="Remote or Bay Area"></div>
+      <div class="s-field"><label>Seniority</label><select class="s-input"><option>Any level</option><option>Senior</option><option>Principal</option></select></div>
+      <div class="s-field"><label>&nbsp;</label><button class="s-btn">Search →</button></div>
+    </div>
+
+    <div class="results-meta-row">
+      <div class="results-count"><strong>247</strong> matches · sorted by AI fit score</div>
+      <div class="filter-pills">
+        <div class="filter-pill on">Remote</div>
+        <div class="filter-pill on">$150k+</div>
+        <div class="filter-pill">Series B+</div>
+        <div class="filter-pill">Startup</div>
+      </div>
+    </div>
+
+    <table class="job-table">
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Role</th>
+          <th>Compensation</th>
+          <th>Type</th>
+          <th>Match</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="td-company"><div class="co-logo" style="background:linear-gradient(135deg,#6772e5,#9fa8ff);">S</div><div><div class="co-name">Stripe</div><div class="co-loc">San Francisco · Hybrid</div></div></td>
+          <td class="td-title">Senior PM, Payments Infrastructure</td>
+          <td class="td-comp">$180–220k</td>
+          <td class="td-type"><span class="type-tag">Full-time</span><span class="type-tag">Series D+</span></td>
+          <td class="td-match"><div class="match-pct">92%</div><div class="match-bar-wrap"><div class="match-bar" style="width:92%"></div></div></td>
+          <td class="td-action"><button>Select →</button></td>
+        </tr>
+        <tr>
+          <td class="td-company"><div class="co-logo" style="background:linear-gradient(135deg,#d97706,#f59e0b);">A</div><div><div class="co-name">Anthropic</div><div class="co-loc">Remote</div></div></td>
+          <td class="td-title">PM, Developer Experience &amp; Tooling</td>
+          <td class="td-comp">$170–210k</td>
+          <td class="td-type"><span class="type-tag">Full-time</span><span class="type-tag">Remote-first</span></td>
+          <td class="td-match"><div class="match-pct">88%</div><div class="match-bar-wrap"><div class="match-bar" style="width:88%;background:linear-gradient(90deg,var(--amber),var(--coral));"></div></div></td>
+          <td class="td-action"><button>Select →</button></td>
+        </tr>
+        <tr>
+          <td class="td-company"><div class="co-logo" style="background:linear-gradient(135deg,#5e6ad2,#8b5cf6);">L</div><div><div class="co-name">Linear</div><div class="co-loc">New York · Hybrid</div></div></td>
+          <td class="td-title">Product Lead, Enterprise Growth</td>
+          <td class="td-comp">$160–200k</td>
+          <td class="td-type"><span class="type-tag">Full-time</span></td>
+          <td class="td-match"><div class="match-pct">85%</div><div class="match-bar-wrap"><div class="match-bar" style="width:85%;background:linear-gradient(90deg,var(--purple),var(--blue2));"></div></div></td>
+          <td class="td-action"><button>Select →</button></td>
+        </tr>
+        <tr>
+          <td class="td-company"><div class="co-logo" style="background:linear-gradient(135deg,#111,#333);">V</div><div><div class="co-name">Vercel</div><div class="co-loc">San Francisco · On-site</div></div></td>
+          <td class="td-title">Senior PM, Platform &amp; DX</td>
+          <td class="td-comp">$175–215k</td>
+          <td class="td-type"><span class="type-tag">Full-time</span></td>
+          <td class="td-match"><div class="match-pct">81%</div><div class="match-bar-wrap"><div class="match-bar" style="width:81%;background:linear-gradient(90deg,var(--green),var(--blue2));"></div></div></td>
+          <td class="td-action"><button>Select →</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ STEP 2 ═══ -->
+<div class="screen" id="s-step2">
+  <div class="cmd-bar">
+    <div class="cmd-logo"><div class="dot"></div> ResumeTailorPro</div>
+    <div class="breadcrumb-stepper">
+      <div class="bc-step done"><div class="bc-num">✓</div><div class="bc-label">Find Roles</div></div>
+      <div class="bc-sep">/</div>
+      <div class="bc-step active"><div class="bc-num">2</div><div class="bc-label">Job Brief</div></div>
+      <div class="bc-sep">/</div>
+      <div class="bc-step locked"><div class="bc-num">3</div><div class="bc-label">Resume</div></div>
+      <div class="bc-sep">/</div>
+      <div class="bc-step locked"><div class="bc-num">4</div><div class="bc-label">Tailoring</div></div>
+      <div class="bc-sep">/</div>
+      <div class="bc-step locked"><div class="bc-num">5</div><div class="bc-label">Download</div></div>
+    </div>
+    <div class="cmd-user"><span class="cmd-shortcut">⌘K</span><div class="cmd-avatar">A</div></div>
+  </div>
+  <div class="page-body">
+    <div class="page-tag"><span class="pulse"></span>Step 02 of 05</div>
+    <div class="page-h1">Add the <span class="hi">job brief.</span></div>
+    <div class="page-sub">Paste, fetch a URL, or upload. AI extracts every keyword, signal, and seniority cue.</div>
+
+    <div class="jd-grid">
+      <div class="jd-main-card">
+        <div class="jd-tab-row">
+          <button class="jd-tab-btn active">Paste Text</button>
+          <button class="jd-tab-btn">Fetch URL</button>
+          <button class="jd-tab-btn">Upload File</button>
+        </div>
+        <textarea class="jd-textarea" rows="9" placeholder="Paste the full job description here…
+
+We're looking for a Senior Product Manager with 5+ years of experience building API-first developer products. You'll own the roadmap for our developer platform, work closely with engineering and design, and define success metrics tied to revenue…"></textarea>
+        <div class="extract-row">
+          <div class="step-counter">02 / 05</div>
+          <button class="s-btn" style="height:auto;padding:10px 24px;">Extract &amp; Continue →</button>
+        </div>
+      </div>
+      <div class="jd-side-stack">
+        <div class="side-card">
+          <div class="sc-label">Selected Role</div>
+          <div class="sc-title">Senior PM, Payments Infrastructure</div>
+          <div class="sc-sub">Stripe · San Francisco · $180–220k</div>
+          <div class="sc-match">✦ 92% match</div>
+        </div>
+        <div class="side-card">
+          <div class="sc-label">What gets extracted</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);"><span style="color:var(--blue);font-weight:700;">→</span> Must-have keywords</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);"><span style="color:var(--blue);font-weight:700;">→</span> Seniority signals</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);"><span style="color:var(--blue);font-weight:700;">→</span> Tech stack mentions</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);"><span style="color:var(--blue);font-weight:700;">→</span> Culture cues</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RESULTS ═══ -->
+<div class="screen" id="s-results">
+  <div class="cmd-bar">
+    <div class="cmd-logo"><div class="dot"></div> ResumeTailorPro</div>
+    <div class="breadcrumb-stepper">
+      <div class="bc-step done"><div class="bc-num">✓</div><div class="bc-label">Find Roles</div></div>
+      <div class="bc-sep">/</div>
+      <div class="bc-step done"><div class="bc-num">✓</div><div class="bc-label">Job Brief</div></div>
+      <div class="bc-sep">/</div>
+      <div class="bc-step done"><div class="bc-num">✓</div><div class="bc-label">Resume</div></div>
+      <div class="bc-sep">/</div>
+      <div class="bc-step done"><div class="bc-num">✓</div><div class="bc-label">Tailoring</div></div>
+      <div class="bc-sep">/</div>
+      <div class="bc-step active"><div class="bc-num">5</div><div class="bc-label">Download</div></div>
+    </div>
+    <div class="cmd-user"><span class="cmd-shortcut">⌘K</span><div class="cmd-avatar">A</div></div>
+  </div>
+  <div class="page-body">
+    <div class="page-tag"><span class="pulse"></span>Tailoring Complete</div>
+    <div class="page-h1">Résumé <span class="hi">ready.</span></div>
+    <div class="page-sub">Stripe · Senior PM, Payments Infrastructure · Verified 2 min ago</div>
+
+    <div class="bento-results">
+
+      <!-- Score cell -->
+      <div class="bc bc-score">
+        <div class="bento-label">Match Score</div>
+        <div class="big-num">92</div>
+        <div class="big-num-sub">/ 100 match score</div>
+        <div class="score-delta">↑ +18 from baseline</div>
+      </div>
+
+      <!-- Resume preview -->
+      <div class="bc bc-resume">
+        <div class="bento-label">Tailored Résumé</div>
+        <div class="resume-block">
+          <div class="rb-name">Arjun Sharma</div>
+          <div class="rb-contact">arjun@example.com · San Francisco · linkedin.com/in/arjunsharma</div>
+          <div class="rb-section">Experience</div>
+          <div class="rb-role">Senior Product Manager, Platform</div>
+          <div class="rb-sub">Acme Corp · 2021–Present</div>
+          <div class="rb-bullet">Led payments infrastructure roadmap, increasing API throughput 40% (2M daily txns)</div>
+          <div class="rb-bullet">Defined OKRs tying developer platform adoption to $12M net-new ARR</div>
+          <div class="rb-bullet">Shipped Stripe-compatible webhook spec across 4 engineering teams</div>
+          <div class="rb-section">Education</div>
+          <div class="rb-role">B.S. Computer Science · UC Berkeley · 2016</div>
+          <div class="rb-section">Skills</div>
+          <div style="font-size:11px;color:var(--muted);line-height:2;font-family:var(--mono);">Product Strategy · API Design · Payments · OKRs · Agile · Data Analytics</div>
+        </div>
+      </div>
+
+      <!-- Keywords -->
+      <div class="bc bc-keywords">
+        <div class="bento-label">Keyword Coverage</div>
+        <div class="kw-grid">
+          <span class="kw hit">payments API</span>
+          <span class="kw hit">infrastructure</span>
+          <span class="kw hit">developer platform</span>
+          <span class="kw hit">OKRs</span>
+          <span class="kw hit">cross-functional</span>
+          <span class="kw hit">webhook</span>
+          <span class="kw miss">fraud detection</span>
+          <span class="kw miss">compliance</span>
+        </div>
+        <div style="margin-top:16px;font-family:var(--mono);font-size:10px;color:var(--muted);">6/8 keywords covered · 75%</div>
+        <div style="margin-top:6px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;"><div style="width:75%;height:4px;background:linear-gradient(90deg,var(--blue2),var(--purple));border-radius:2px;"></div></div>
+      </div>
+
+      <!-- Changes -->
+      <div class="bc bc-changes">
+        <div class="bento-label">Change Log</div>
+        <div class="change-row"><span class="cr-type mod">MOD</span><span>Promoted "payments infrastructure" metric to lead bullet position</span></div>
+        <div class="change-row"><span class="cr-type add">ADD</span><span>Added "Stripe-compatible webhook spec" context to role description</span></div>
+        <div class="change-row"><span class="cr-type kw">KW</span><span>Reordered skills section to surface API Design and Payments first</span></div>
+      </div>
+
+      <!-- Actions -->
+      <div class="bc bc-actions">
+        <div class="bento-label">Actions</div>
+        <div class="integrity-bento">
+          <div class="ib-icon">🛡️</div>
+          <div><div class="ib-t">Integrity Verified</div><div class="ib-s">23 claims · 0 fabrications</div></div>
+        </div>
+        <button class="btn-download-bento">⬇ Download DOCX</button>
+      </div>
+
+      <!-- Stats -->
+      <div class="bc bc-stats">
+        <div class="bento-label">Run Stats</div>
+        <div class="stat-item"><span class="si-label">Claims verified</span><span class="si-val" style="color:var(--green);">23</span></div>
+        <div class="stat-item"><span class="si-label">Fabrications</span><span class="si-val" style="color:var(--green);">0</span></div>
+        <div class="stat-item"><span class="si-label">Edits made</span><span class="si-val" style="color:var(--amber);">7</span></div>
+        <div class="stat-item"><span class="si-label">Tailoring time</span><span class="si-val" style="color:var(--muted);font-size:13px;">1.8s</span></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function showScreen(id) {
+  document.querySelectorAll('.screen, .auth-s').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.demo-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

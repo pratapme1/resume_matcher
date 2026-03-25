@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Tailor Pro — V4 Centered Wizard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F8F7FF;
+    --surface: #FFFFFF;
+    --ink: #1C1B2E;
+    --ink2: #3D3B5C;
+    --muted: #8B89A8;
+    --border: #E4E3F4;
+    --accent: #5B21B6;
+    --accent2: #7C3AED;
+    --accent-light: #EDE9FE;
+    --accent-mid: #DDD6FE;
+    --success: #059669;
+    --success-light: #D1FAE5;
+    --warn: #D97706;
+    --warn-light: #FEF3C7;
+    --font: 'Space Grotesk', system-ui, sans-serif;
+    --mono: 'Space Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ─── TAB SWITCHER ─── */
+  .demo-tabs {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    background: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0 24px;
+    height: 44px;
+  }
+  .demo-tabs span { font-family: var(--mono); font-size: 10px; color: #888; letter-spacing: 0.1em; margin-right: 16px; text-transform: uppercase; }
+  .demo-tab { font-family: var(--mono); font-size: 11px; color: #666; padding: 0 16px; height: 100%; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; letter-spacing: 0.05em; transition: all 0.15s; }
+  .demo-tab:hover { color: #ccc; }
+  .demo-tab.active { color: #fff; border-bottom-color: var(--accent2); }
+
+  /* ─── SCREENS ─── */
+  .screen { display: none; min-height: calc(100vh - 44px); margin-top: 44px; }
+  .screen.active { display: flex; }
+
+  /* ═══════════════════════════════════════
+     AUTH — Two-tone split
+  ═══════════════════════════════════════ */
+  .auth-wrap {
+    display: none;
+    min-height: calc(100vh - 44px);
+    margin-top: 44px;
+    background: var(--bg);
+    align-items: stretch;
+  }
+  .auth-wrap.active { display: flex; }
+
+  .auth-side {
+    width: 440px;
+    min-height: 100%;
+    background: linear-gradient(160deg, #3B0764 0%, #5B21B6 50%, #7C3AED 100%);
+    padding: 64px 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .auth-wordmark {
+    font-size: 16px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.02em;
+  }
+  .auth-wordmark strong { color: #fff; font-weight: 700; }
+
+  .auth-pitch { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .auth-big {
+    font-size: 44px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  .auth-big span { color: #C4B5FD; }
+  .auth-desc { font-size: 15px; color: rgba(255,255,255,0.65); line-height: 1.65; }
+
+  .auth-features {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .auth-feat {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    font-weight: 500;
+  }
+  .auth-feat-icon {
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .auth-form-side {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 64px;
+  }
+  .auth-form-box {
+    width: 100%;
+    max-width: 400px;
+  }
+  .af-overline {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent2);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 10px;
+  }
+  .af-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 32px;
+  }
+
+  .f-group { margin-bottom: 20px; }
+  .f-label { display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 8px; }
+  .f-input {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    background: var(--surface);
+    outline: none;
+    transition: all 0.2s;
+  }
+  .f-input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px var(--accent-light); }
+  .f-input::placeholder { color: #C4C3DA; }
+
+  .btn-accent {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-family: var(--font);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 14px rgba(91,33,182,0.3);
+  }
+  .btn-accent:hover { background: var(--accent2); box-shadow: 0 6px 20px rgba(91,33,182,0.4); transform: translateY(-1px); }
+
+  .split-or { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+  .split-or::before, .split-or::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .split-or span { font-size: 12px; font-weight: 600; color: var(--muted); }
+
+  .btn-google-light {
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .btn-google-light:hover { border-color: #c9c8e2; background: var(--accent-light); }
+
+  /* ═══════════════════════════════════════
+     WIZARD LAYOUT — centered, no sidebar
+  ═══════════════════════════════════════ */
+  .wizard-shell {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  /* Top progress bar — full width, thin */
+  .wizard-topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .wt-logo { font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+  .wt-logo span { color: var(--accent2); }
+
+  .step-progress-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex: 1;
+    margin: 0 48px;
+    max-width: 640px;
+  }
+  .sp-node {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+  }
+  .sp-circle {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+  }
+  .sp-node.done .sp-circle { background: var(--accent-light); border-color: var(--accent2); color: var(--accent2); }
+  .sp-node.active .sp-circle { background: var(--accent2); border-color: var(--accent2); color: white; box-shadow: 0 2px 8px rgba(124,58,237,0.35); }
+
+  .sp-label-text {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+    display: none;
+  }
+  .sp-node.active .sp-label-text { display: block; color: var(--accent2); }
+  .sp-node.done .sp-label-text { display: none; }
+
+  .sp-connector {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    margin: 0 8px;
+    transition: background 0.2s;
+  }
+  .sp-connector.filled { background: var(--accent-mid); }
+
+  .wt-user { display: flex; align-items: center; gap: 8px; }
+  .mini-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; }
+
+  /* Wizard body — centered card */
+  .wizard-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 48px 24px 64px;
+    overflow-y: auto;
+  }
+  .wizard-card {
+    width: 100%;
+    max-width: 680px;
+  }
+
+  .step-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent2);
+    background: var(--accent-light);
+    border: 1px solid var(--accent-mid);
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .step-chip .chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); }
+
+  .wizard-title {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .wizard-title .accent-word { color: var(--accent2); }
+  .wizard-sub { font-size: 15px; color: var(--muted); font-weight: 500; line-height: 1.55; margin-bottom: 36px; }
+
+  /* Search section */
+  .search-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .search-row .span-2 { grid-column: span 2; }
+
+  .btn-violet {
+    width: 100%;
+    background: var(--accent2);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 13px;
+    font-family: var(--font);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(124,58,237,0.28);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-violet:hover { background: var(--accent); box-shadow: 0 6px 20px rgba(91,33,182,0.38); transform: translateY(-1px); }
+
+  /* Job list */
+  .job-list { display: flex; flex-direction: column; gap: 10px; }
+  .jl-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .jl-card:hover { border-color: var(--accent-mid); box-shadow: 0 4px 16px rgba(91,33,182,0.08); transform: translateY(-1px); }
+  .jl-card.featured { border-color: var(--accent-mid); background: linear-gradient(135deg, #faf8ff 0%, #f5f0ff 100%); }
+
+  .jl-logo {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+  .jl-body { flex: 1; min-width: 0; }
+  .jl-company { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 2px; }
+  .jl-title { font-size: 15px; font-weight: 700; color: var(--ink); line-height: 1.3; margin-bottom: 6px; }
+  .jl-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .jl-pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--bg); color: var(--muted); border: 1px solid var(--border); font-family: var(--mono); }
+
+  .jl-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+  .match-badge {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: var(--accent-light);
+    color: var(--accent2);
+    border: 1px solid var(--accent-mid);
+    font-family: var(--mono);
+    letter-spacing: 0.02em;
+  }
+  .select-btn {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--accent2);
+    border: 1.5px solid var(--accent-mid);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--font);
+  }
+  .select-btn:hover { background: var(--accent2); color: white; border-color: var(--accent2); }
+
+  /* JD step */
+  .tab-row {
+    display: flex;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    background: var(--surface);
+  }
+  .tr-tab {
+    flex: 1;
+    padding: 9px;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .tr-tab.active { background: var(--accent2); color: white; }
+  .tr-tab:not(.active):hover { background: var(--accent-light); color: var(--accent2); }
+
+  .wizard-textarea {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    background: var(--surface);
+    resize: none;
+    outline: none;
+    transition: all 0.2s;
+    line-height: 1.7;
+  }
+  .wizard-textarea:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px var(--accent-light); }
+  .wizard-textarea::placeholder { color: #C4C3DA; }
+
+  .action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+  .back-link {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--ink); }
+
+  /* Results */
+  .results-hero-card {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    border-radius: 20px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 12px 40px rgba(91,33,182,0.25);
+  }
+  .rhc-left {}
+  .rhc-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .rhc-title { font-size: 22px; font-weight: 700; color: white; line-height: 1.25; margin-bottom: 8px; }
+  .rhc-sub { font-size: 13px; color: rgba(255,255,255,0.65); }
+  .rhc-score {
+    font-size: 72px;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .rhc-score-label { font-size: 11px; color: rgba(255,255,255,0.6); text-align: right; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
+
+  .resume-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 18px;
+    padding: 28px 30px;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .rc-name { font-size: 22px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; margin-bottom: 4px; }
+  .rc-contact { font-size: 12px; color: var(--muted); margin-bottom: 18px; font-family: var(--mono); }
+  .rc-section { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: var(--accent2); margin: 16px 0 8px; display: flex; align-items: center; gap: 8px; }
+  .rc-section::after { content: ''; flex: 1; height: 1px; background: var(--accent-light); }
+  .rc-role-title { font-size: 14px; font-weight: 700; color: var(--ink); }
+  .rc-role-sub { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-bottom: 6px; }
+  .rc-bullet { font-size: 12px; color: var(--ink2); padding-left: 14px; position: relative; margin-bottom: 4px; line-height: 1.55; }
+  .rc-bullet::before { content: '·'; position: absolute; left: 4px; color: var(--accent2); font-size: 14px; line-height: 1.3; }
+
+  .side-stack { display: flex; flex-direction: column; gap: 14px; }
+
+  .action-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .ac-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 14px; }
+
+  .kw-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; margin: 3px 3px 3px 0; font-family: var(--mono); }
+  .kw-pill.hit { background: var(--accent-light); color: var(--accent2); border: 1px solid var(--accent-mid); }
+  .kw-pill.miss { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+
+  .integrity-box {
+    display: flex; gap: 12px; align-items: center;
+    padding: 14px 16px;
+    background: var(--success-light);
+    border: 1px solid rgba(5,150,105,0.2);
+    border-radius: 12px;
+  }
+  .ib-icon { font-size: 20px; flex-shrink: 0; }
+  .ib-title { font-size: 12px; font-weight: 700; color: var(--success); }
+  .ib-sub { font-size: 11px; color: rgba(5,150,105,0.7); }
+
+  .btn-download-solid {
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 13px;
+    font-family: var(--font);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(91,33,182,0.3);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-download-solid:hover { background: var(--accent2); box-shadow: 0 6px 20px rgba(91,33,182,0.42); transform: translateY(-1px); }
+
+  .change-item-light { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--ink2); font-weight: 500; }
+  .change-item-light:last-child { border-bottom: none; }
+  .ci-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<!-- DEMO TABS -->
+<div class="demo-tabs">
+  <span>V4 · WIZARD</span>
+  <button class="demo-tab active" onclick="showScreen('auth')">Auth</button>
+  <button class="demo-tab" onclick="showScreen('step1')">Step 1 · Jobs</button>
+  <button class="demo-tab" onclick="showScreen('step2')">Step 2 · JD</button>
+  <button class="demo-tab" onclick="showScreen('results')">Results</button>
+</div>
+
+<!-- ═══════ AUTH ═══════ -->
+<div class="auth-wrap active" id="s-auth">
+  <div class="auth-side">
+    <div class="auth-wordmark">✦ <strong>ResumeTailorPro</strong></div>
+    <div class="auth-pitch">
+      <div class="auth-big">Land the<br>job you<br><span>deserve.</span></div>
+      <div class="auth-desc">AI that reads the room — tailors your resume to every job description in seconds, provenance-guaranteed.</div>
+    </div>
+    <div class="auth-features">
+      <div class="auth-feat"><div class="auth-feat-icon">🎯</div>AI-scored job matching</div>
+      <div class="auth-feat"><div class="auth-feat-icon">✦</div>Zero-fabrication tailoring</div>
+      <div class="auth-feat"><div class="auth-feat-icon">📄</div>DOCX export in one click</div>
+    </div>
+  </div>
+  <div class="auth-form-side">
+    <div class="auth-form-box">
+      <div class="af-overline">Welcome back</div>
+      <div class="af-title">Sign in to your<br>account</div>
+      <div class="f-group">
+        <label class="f-label">Email</label>
+        <input class="f-input" type="email" placeholder="you@company.com">
+      </div>
+      <div class="f-group" style="margin-bottom:28px;">
+        <label class="f-label">Password</label>
+        <input class="f-input" type="password" placeholder="••••••••••">
+      </div>
+      <button class="btn-accent">Sign In →</button>
+      <div class="split-or"><span>or</span></div>
+      <button class="btn-google-light">
+        <svg width="16" height="16" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Continue with Google
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ STEP 1 ═══════ -->
+<div class="screen" id="s-step1" style="flex-direction:column;">
+  <div class="wizard-shell">
+    <div class="wizard-topbar">
+      <div class="wt-logo">✦ Resume<span>Tailor</span>Pro</div>
+      <div class="step-progress-bar">
+        <div class="sp-node active">
+          <div class="sp-circle">1</div>
+          <div class="sp-label-text">Find Roles</div>
+        </div>
+        <div class="sp-connector"></div>
+        <div class="sp-node"><div class="sp-circle">2</div></div>
+        <div class="sp-connector"></div>
+        <div class="sp-node"><div class="sp-circle">3</div></div>
+        <div class="sp-connector"></div>
+        <div class="sp-node"><div class="sp-circle">4</div></div>
+        <div class="sp-connector"></div>
+        <div class="sp-node"><div class="sp-circle">5</div></div>
+      </div>
+      <div class="wt-user"><div class="mini-avatar">A</div></div>
+    </div>
+    <div class="wizard-body">
+      <div class="wizard-card">
+        <div class="step-chip"><span class="chip-dot"></span>Step 1 of 5</div>
+        <div class="wizard-title">Find roles that<br><span class="accent-word">fit you.</span></div>
+        <div class="wizard-sub">Live job search, scored by AI against your profile. Only see what's worth applying for.</div>
+
+        <div class="search-row">
+          <div class="f-group" style="margin-bottom:0;"><label class="f-label">Job Title</label><input class="f-input" type="text" placeholder="Senior Product Manager"></div>
+          <div class="f-group" style="margin-bottom:0;"><label class="f-label">Location</label><input class="f-input" type="text" placeholder="Remote or Bay Area"></div>
+          <div class="f-group span-2" style="margin-bottom:0;"><button class="btn-violet">Search →</button></div>
+        </div>
+
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:14px;">247 results · sorted by match</div>
+
+        <div class="job-list">
+          <div class="jl-card featured">
+            <div class="jl-logo" style="background:linear-gradient(135deg,#6772e5,#a3aaf7);">S</div>
+            <div class="jl-body">
+              <div class="jl-company">Stripe · San Francisco · Hybrid</div>
+              <div class="jl-title">Senior Product Manager, Payments Infrastructure</div>
+              <div class="jl-pills">
+                <span class="jl-pill">$180–220k</span>
+                <span class="jl-pill">Full-time</span>
+                <span class="jl-pill">Series D+</span>
+              </div>
+            </div>
+            <div class="jl-right">
+              <div class="match-badge">92%</div>
+              <button class="select-btn">Select →</button>
+            </div>
+          </div>
+          <div class="jl-card">
+            <div class="jl-logo" style="background:linear-gradient(135deg,#e05c3a,#f09354);">A</div>
+            <div class="jl-body">
+              <div class="jl-company">Anthropic · Remote</div>
+              <div class="jl-title">PM, Developer Experience &amp; Tooling</div>
+              <div class="jl-pills">
+                <span class="jl-pill">$170–210k</span>
+                <span class="jl-pill">Full-time</span>
+                <span class="jl-pill">Remote-first</span>
+              </div>
+            </div>
+            <div class="jl-right">
+              <div class="match-badge">88%</div>
+              <button class="select-btn">Select →</button>
+            </div>
+          </div>
+          <div class="jl-card">
+            <div class="jl-logo" style="background:linear-gradient(135deg,#5e6ad2,#8a56f0);">L</div>
+            <div class="jl-body">
+              <div class="jl-company">Linear · New York · Hybrid</div>
+              <div class="jl-title">Product Lead, Enterprise Growth</div>
+              <div class="jl-pills">
+                <span class="jl-pill">$160–200k</span>
+                <span class="jl-pill">Full-time</span>
+              </div>
+            </div>
+            <div class="jl-right">
+              <div class="match-badge">85%</div>
+              <button class="select-btn">Select →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ STEP 2 ═══════ -->
+<div class="screen" id="s-step2" style="flex-direction:column;">
+  <div class="wizard-shell">
+    <div class="wizard-topbar">
+      <div class="wt-logo">✦ Resume<span>Tailor</span>Pro</div>
+      <div class="step-progress-bar">
+        <div class="sp-node done"><div class="sp-circle">✓</div></div>
+        <div class="sp-connector filled"></div>
+        <div class="sp-node active"><div class="sp-circle">2</div><div class="sp-label-text">Job Brief</div></div>
+        <div class="sp-connector"></div>
+        <div class="sp-node"><div class="sp-circle">3</div></div>
+        <div class="sp-connector"></div>
+        <div class="sp-node"><div class="sp-circle">4</div></div>
+        <div class="sp-connector"></div>
+        <div class="sp-node"><div class="sp-circle">5</div></div>
+      </div>
+      <div class="wt-user"><div class="mini-avatar">A</div></div>
+    </div>
+    <div class="wizard-body">
+      <div class="wizard-card">
+        <div class="step-chip"><span class="chip-dot"></span>Step 2 of 5</div>
+        <div class="wizard-title">Add the<br><span class="accent-word">job description.</span></div>
+        <div class="wizard-sub">We'll extract all the keywords, requirements, and seniority signals for you.</div>
+
+        <div style="background:var(--accent-light);border:1.5px solid var(--accent-mid);border-radius:12px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+          <div style="width:36px;height:36px;background:linear-gradient(135deg,#6772e5,#a3aaf7);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:white;flex-shrink:0;">S</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--accent);">Selected: Stripe</div>
+            <div style="font-size:13px;font-weight:600;color:var(--ink);">Senior PM, Payments Infrastructure</div>
+          </div>
+        </div>
+
+        <div class="tab-row">
+          <button class="tr-tab active">Paste Text</button>
+          <button class="tr-tab">URL</button>
+          <button class="tr-tab">Upload File</button>
+        </div>
+
+        <textarea class="wizard-textarea" rows="8" placeholder="Paste the full job description here…
+
+We're looking for a Senior Product Manager with 5+ years experience in API-first products. You'll own the developer platform roadmap, work with engineering and design, and define metrics tied to revenue growth…"></textarea>
+
+        <div class="action-row">
+          <div class="back-link">← Back</div>
+          <button class="btn-violet" style="width:auto;padding:13px 32px;">Extract &amp; Continue →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ RESULTS ═══════ -->
+<div class="screen" id="s-results" style="flex-direction:column;">
+  <div class="wizard-shell">
+    <div class="wizard-topbar">
+      <div class="wt-logo">✦ Resume<span>Tailor</span>Pro</div>
+      <div class="step-progress-bar">
+        <div class="sp-node done"><div class="sp-circle">✓</div></div>
+        <div class="sp-connector filled"></div>
+        <div class="sp-node done"><div class="sp-circle">✓</div></div>
+        <div class="sp-connector filled"></div>
+        <div class="sp-node done"><div class="sp-circle">✓</div></div>
+        <div class="sp-connector filled"></div>
+        <div class="sp-node done"><div class="sp-circle">✓</div></div>
+        <div class="sp-connector filled"></div>
+        <div class="sp-node active"><div class="sp-circle">5</div><div class="sp-label-text">Download</div></div>
+      </div>
+      <div class="wt-user"><div class="mini-avatar">A</div></div>
+    </div>
+    <div class="wizard-body">
+      <div class="wizard-card" style="max-width:900px;">
+        <div class="results-hero-card">
+          <div class="rhc-left">
+            <div class="rhc-label">Tailored for</div>
+            <div class="rhc-title">Senior PM, Payments Infrastructure<br>Stripe</div>
+            <div class="rhc-sub">Completed 2 minutes ago · 23 claims verified</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="rhc-score">92</div>
+            <div class="rhc-score-label">Match Score</div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="resume-card">
+            <div class="rc-name">Arjun Sharma</div>
+            <div class="rc-contact">arjun@example.com · San Francisco · linkedin.com/in/arjunsharma</div>
+            <div class="rc-section">Experience</div>
+            <div class="rc-role-title">Senior Product Manager, Platform</div>
+            <div class="rc-role-sub">Acme Corp · 2021–Present</div>
+            <div class="rc-bullet">Led payments infrastructure roadmap, increasing API throughput 40% (2M daily txns)</div>
+            <div class="rc-bullet">Defined OKRs tying developer platform adoption to $12M net-new ARR</div>
+            <div class="rc-bullet">Shipped Stripe-compatible webhook spec across 4 engineering teams</div>
+            <div class="rc-section">Education</div>
+            <div class="rc-role-title">B.S. Computer Science, UC Berkeley · 2016</div>
+            <div class="rc-section">Skills</div>
+            <div style="font-size:12px;color:var(--ink2);line-height:1.9;font-weight:500;font-family:var(--mono);">Product Strategy · API Design · Payments Systems · OKRs · Agile · Data Analytics</div>
+          </div>
+
+          <div class="side-stack">
+            <div class="action-card">
+              <div class="ac-title">Keywords</div>
+              <div>
+                <span class="kw-pill hit">payments API</span>
+                <span class="kw-pill hit">infrastructure</span>
+                <span class="kw-pill hit">developer platform</span>
+                <span class="kw-pill hit">OKRs</span>
+                <span class="kw-pill hit">cross-functional</span>
+                <span class="kw-pill miss">fraud detection</span>
+                <span class="kw-pill miss">compliance</span>
+              </div>
+            </div>
+
+            <div class="integrity-box">
+              <div class="ib-icon">🛡️</div>
+              <div>
+                <div class="ib-title">Integrity Verified</div>
+                <div class="ib-sub">23 claims · 0 fabrications</div>
+              </div>
+            </div>
+
+            <button class="btn-download-solid">⬇ Download DOCX</button>
+
+            <div class="action-card">
+              <div class="ac-title">Changes</div>
+              <div class="change-item-light"><div class="ci-dot" style="background:#7C3AED;"></div><span>Promoted payments metric to lead bullet</span></div>
+              <div class="change-item-light"><div class="ci-dot" style="background:#F59E0B;"></div><span>Added "Stripe-compatible webhook" context</span></div>
+              <div class="change-item-light"><div class="ci-dot" style="background:#10B981;"></div><span>Reordered skills to match JD priority</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showScreen(id) {
+  document.querySelectorAll('.screen, .auth-wrap').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.demo-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
