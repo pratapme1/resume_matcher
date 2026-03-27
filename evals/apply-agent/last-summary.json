@@ -1,91 +1,91 @@
 {
-  "generatedAt": "2026-03-27T05:02:27.088Z",
+  "generatedAt": "2026-03-27T16:58:32.187Z",
   "command": "isolated playwright runs for tests/e2e/local-agent-hybrid.spec.ts --project=local-agent-hybrid",
-  "exitCode": 0,
-  "passed": 11,
-  "failed": 0,
+  "exitCode": 1,
+  "passed": 0,
+  "failed": 11,
   "skipped": 0,
   "flaky": 0,
-  "durationMs": 127665,
+  "durationMs": 40071,
   "specs": [
     {
       "title": "local-agent path fills supported custom widgets and reaches submit readiness",
-      "status": "passed",
-      "durationMs": 18042,
-      "exitCode": 0
+      "status": "failed",
+      "durationMs": 2373,
+      "exitCode": 1
     },
     {
       "title": "local-agent advanced widgets capture trace and metrics for harder flows",
-      "status": "passed",
-      "durationMs": 16069,
-      "exitCode": 0
+      "status": "failed",
+      "durationMs": 2359,
+      "exitCode": 1
     },
     {
       "title": "local-agent expands and fills repeated work-history rows from session context",
-      "status": "passed",
-      "durationMs": 9505,
-      "exitCode": 0
+      "status": "failed",
+      "durationMs": 4083,
+      "exitCode": 1
     },
     {
       "title": "local-agent expands and fills repeated education rows from session context",
-      "status": "passed",
-      "durationMs": 9597,
-      "exitCode": 0
+      "status": "failed",
+      "durationMs": 4095,
+      "exitCode": 1
     },
     {
       "title": "local-agent expands and fills repeated project rows from session context",
-      "status": "passed",
-      "durationMs": 10518,
-      "exitCode": 0
+      "status": "failed",
+      "durationMs": 4162,
+      "exitCode": 1
     },
     {
       "title": "local-agent expands and fills repeated certification rows from session context",
-      "status": "passed",
-      "durationMs": 9650,
-      "exitCode": 0
+      "status": "failed",
+      "durationMs": 4139,
+      "exitCode": 1
     },
     {
       "title": "local-agent resume restarts from the latest backend page URL after agent loss",
-      "status": "passed",
-      "durationMs": 18417,
-      "exitCode": 0
+      "status": "failed",
+      "durationMs": 2419,
+      "exitCode": 1
     },
     {
       "title": "local-agent pauses cleanly on login-required gates",
-      "status": "passed",
-      "durationMs": 9015,
-      "exitCode": 0
+      "status": "failed",
+      "durationMs": 4139,
+      "exitCode": 1
     },
     {
       "title": "local-agent pauses cleanly on protected portals",
-      "status": "passed",
-      "durationMs": 8973,
-      "exitCode": 0
+      "status": "failed",
+      "durationMs": 4072,
+      "exitCode": 1
     },
     {
       "title": "local-agent pauses cleanly on legal self-id gates",
-      "status": "passed",
-      "durationMs": 9035,
-      "exitCode": 0
+      "status": "failed",
+      "durationMs": 4113,
+      "exitCode": 1
     },
     {
       "title": "local-agent pauses cleanly on assessment handoff gates",
-      "status": "passed",
-      "durationMs": 8844,
-      "exitCode": 0
+      "status": "failed",
+      "durationMs": 4117,
+      "exitCode": 1
     }
   ],
   "reports": [
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-1.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-2.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-3.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-4.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-5.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-6.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-7.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-8.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-9.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-10.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-11.json"
+    "/tmp/rtp-apply-agent-evals-JdNBXB/spec-1.json",
+    "/tmp/rtp-apply-agent-evals-JdNBXB/spec-2.json",
+    "/tmp/rtp-apply-agent-evals-JdNBXB/spec-3.json",
+    "/tmp/rtp-apply-agent-evals-JdNBXB/spec-4.json",
+    "/tmp/rtp-apply-agent-evals-JdNBXB/spec-5.json",
+    "/tmp/rtp-apply-agent-evals-JdNBXB/spec-6.json",
+    "/tmp/rtp-apply-agent-evals-JdNBXB/spec-7.json",
+    "/tmp/rtp-apply-agent-evals-JdNBXB/spec-8.json",
+    "/tmp/rtp-apply-agent-evals-JdNBXB/spec-9.json",
+    "/tmp/rtp-apply-agent-evals-JdNBXB/spec-10.json",
+    "/tmp/rtp-apply-agent-evals-JdNBXB/spec-11.json"
   ]
 }
