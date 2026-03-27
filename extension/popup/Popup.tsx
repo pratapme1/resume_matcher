@@ -4,6 +4,34 @@ type BackendStatus = 'checking' | 'connected' | 'offline';
 type LocalAgentStatus = 'checking' | 'connected' | 'offline';
 type ActionStatus = 'idle' | 'busy' | 'done' | 'error';
 
+async function isHealthyBackendOrigin(origin: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${origin}/api/health`, { signal: AbortSignal.timeout(3000) });
+    if (!response.ok) return false;
+    const body = await response.json().catch(() => null) as { status?: string } | null;
+    return body?.status === 'ok';
+  } catch {
+    return false;
+  }
+}
+
+async function restoreBackendOriginFromActiveTab(): Promise<string | null> {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.url) return null;
+    const url = new URL(tab.url);
+    if (!/^https?:$/.test(url.protocol)) return null;
+    const origin = url.origin;
+    if (!(await isHealthyBackendOrigin(origin))) {
+      return null;
+    }
+    await chrome.storage.local.set({ rtp_app_origin: origin });
+    return origin;
+  } catch {
+    return null;
+  }
+}
+
 export default function Popup() {
   const [backendOrigin, setBackendOrigin] = useState('');
   const [backend, setBackend] = useState<BackendStatus>('checking');
@@ -15,20 +43,42 @@ export default function Popup() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    chrome.storage.local.get(['rtp_prefill', 'rtp_app_origin']).then(({ rtp_prefill, rtp_app_origin }) => {
+    let cancelled = false;
+    const load = async () => {
+      const { rtp_prefill, rtp_app_origin } = await chrome.storage.local.get(['rtp_prefill', 'rtp_app_origin']);
+      if (cancelled) return;
       setPrefillReady(!!rtp_prefill);
       chrome.runtime.sendMessage({ type: 'GET_LOCAL_AGENT_STATUS' }).then((result) => {
-        setLocalAgent(result?.status === 'connected' ? 'connected' : 'offline');
-      }).catch(() => setLocalAgent('offline'));
-      if (typeof rtp_app_origin === 'string' && rtp_app_origin) {
-        setBackendOrigin(rtp_app_origin);
-        fetch(`${rtp_app_origin}/api/health`, { signal: AbortSignal.timeout(3000) })
-          .then((r) => setBackend(r.ok ? 'connected' : 'offline'))
-          .catch(() => setBackend('offline'));
+        if (!cancelled) {
+          setLocalAgent(result?.status === 'connected' ? 'connected' : 'offline');
+        }
+      }).catch(() => {
+        if (!cancelled) {
+          setLocalAgent('offline');
+        }
+      });
+
+      const storedOrigin = typeof rtp_app_origin === 'string' && rtp_app_origin ? rtp_app_origin : null;
+      let resolvedOrigin = storedOrigin;
+      if (!resolvedOrigin || !(await isHealthyBackendOrigin(resolvedOrigin))) {
+        resolvedOrigin = await restoreBackendOriginFromActiveTab();
+      }
+
+      if (cancelled) return;
+
+      if (resolvedOrigin) {
+        setBackendOrigin(resolvedOrigin);
+        setBackend('connected');
       } else {
+        setBackendOrigin('');
         setBackend('offline');
       }
-    });
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function handleTailorJob() {

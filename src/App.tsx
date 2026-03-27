@@ -739,15 +739,39 @@ export default function App() {
       }
     };
     window.addEventListener('message', handleMsg);
-    window.postMessage({ type: 'RTP_SET_APP_ORIGIN', origin: window.location.origin }, window.location.origin);
-    // Actively ping the content script — fixes race condition where READY fires before listener is attached
-    window.postMessage({ type: 'RTP_PING' }, window.location.origin);
+    let announceAttempts = 0;
+    const announceBridge = () => {
+      window.postMessage({ type: 'RTP_SET_APP_ORIGIN', origin: window.location.origin }, window.location.origin);
+      // Actively ping the content script — fixes race condition where READY fires before listener is attached
+      window.postMessage({ type: 'RTP_PING' }, window.location.origin);
+      announceAttempts += 1;
+    };
+    announceBridge();
+    const bridgeInterval = window.setInterval(() => {
+      if (extensionInstalled || announceAttempts >= 10) {
+        window.clearInterval(bridgeInterval);
+        return;
+      }
+      announceBridge();
+    }, 1500);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !extensionInstalled) {
+        announceBridge();
+      }
+    };
+    window.addEventListener('focus', announceBridge);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     // If launched from extension, request the pending JD
     const params = new URLSearchParams(window.location.search);
     if (params.get('from') === 'ext') {
       window.postMessage({ type: 'RTP_REQUEST_JD' }, window.location.origin);
     }
-    return () => window.removeEventListener('message', handleMsg);
+    return () => {
+      window.removeEventListener('message', handleMsg);
+      window.removeEventListener('focus', announceBridge);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.clearInterval(bridgeInterval);
+    };
   }, []);
 
   useEffect(() => {

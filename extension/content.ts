@@ -151,6 +151,10 @@ async function getStoredAppOrigin(): Promise<string | null> {
   return typeof value === 'string' && /^https?:\/\//.test(value) ? value : null;
 }
 
+function isExtensionContextInvalidated(error: unknown): boolean {
+  return error instanceof Error && /Extension context invalidated/i.test(error.message);
+}
+
 window.addEventListener('message', async (e: MessageEvent) => {
   if (e.source !== window) return;
 
@@ -237,6 +241,9 @@ window.addEventListener('message', async (e: MessageEvent) => {
       }
     }
   } catch (err) {
+    if (isExtensionContextInvalidated(err)) {
+      return;
+    }
     console.warn('[RTP] bridge error:', err);
   }
 });
