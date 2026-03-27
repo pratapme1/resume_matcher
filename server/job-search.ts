@@ -384,6 +384,8 @@ interface RawJob {
   companyStage?: string;
 }
 
+type SearchFetchImpl = typeof fetch;
+
 const ATS_HOST_PATTERNS = [
   'greenhouse.io',
   'lever.co',
@@ -510,6 +512,16 @@ function normalizeDescription(value?: string): string {
   return (value ?? '').replace(/\s+/g, ' ').trim().slice(0, 400);
 }
 
+function buildSearchVerificationHeaders(): HeadersInit {
+  return {
+    'user-agent':
+      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+    accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'accept-language': 'en-US,en;q=0.9',
+    'cache-control': 'no-cache',
+  };
+}
+
 function normalizeRawJob(job: RawJob): RawJob & {
   company?: string;
   url?: string;
@@ -544,6 +556,66 @@ function shouldKeepJob(job: ReturnType<typeof normalizeRawJob>): boolean {
   if (job.sourceType === 'aggregator') return false;
   if ((job.description ?? '').length < 40 && (job.requiredSkills?.length ?? 0) === 0) return false;
   return true;
+}
+
+async function verifyJobUrlLiveness(
+  url: string,
+  fetchImpl: SearchFetchImpl,
+  timeoutMs = 4_000,
+): Promise<{ ok: boolean; dead: boolean }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetchImpl(url, {
+      method: 'GET',
+      redirect: 'follow',
+      signal: controller.signal,
+      headers: buildSearchVerificationHeaders(),
+    });
+
+    if (response.status === 404 || response.status === 410) {
+      return { ok: false, dead: true };
+    }
+
+    if (response.ok) {
+      return { ok: true, dead: false };
+    }
+
+    // Keep blocked or rate-limited pages; they may still be valid listings.
+    if (response.status === 401 || response.status === 403 || response.status === 405 || response.status === 429) {
+      return { ok: true, dead: false };
+    }
+
+    return { ok: false, dead: false };
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return { ok: false, dead: false };
+    }
+    return { ok: false, dead: false };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function filterDeadJobUrls(
+  jobs: Array<ReturnType<typeof normalizeRawJob>>,
+  fetchImpl?: SearchFetchImpl,
+): Promise<Array<ReturnType<typeof normalizeRawJob>>> {
+  if (!fetchImpl || jobs.length === 0) return jobs;
+
+  const checks = await Promise.all(
+    jobs.map(async (job) => {
+      if (!job.url) return { job, keep: false };
+      const result = await verifyJobUrlLiveness(job.url, fetchImpl);
+      if (result.dead) {
+        console.warn(`[job-search] Dropping dead listing: ${job.url}`);
+        return { job, keep: false };
+      }
+      return { job, keep: true };
+    }),
+  );
+
+  return checks.filter((entry) => entry.keep).map((entry) => entry.job);
 }
 
 export class SearchProviderError extends Error {
@@ -840,6 +912,7 @@ export async function searchJobs(
   prefs: JobSearchPreferences | undefined,
   ai: AIClient,
   fallbackAI?: AIClient,
+  fetchImpl?: SearchFetchImpl,
 ): Promise<JobSearchResponse> {
   const candidateProfile = buildCandidateProfile(resume);
   const prompt = buildSearchPrompt(candidateProfile, prefs);
@@ -877,9 +950,12 @@ export async function searchJobs(
     }
   }
 
-  const normalizedJobs = rawJobs
+  const normalizedJobs = await filterDeadJobUrls(
+    rawJobs
     .map((job) => normalizeRawJob(job))
-    .filter(shouldKeepJob);
+    .filter(shouldKeepJob),
+    fetchImpl,
+  );
 
   const scored = normalizedJobs
     .filter(j => j.title && j.company)

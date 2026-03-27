@@ -62,7 +62,7 @@ describe('api integration', () => {
     expect(response.body.code).toBe('INVALID_REQUEST');
   });
 
-  it('returns an upstream error when JD URL fetch fails', async () => {
+  it('returns 422 when the JD URL points to a dead listing', async () => {
     const upstreamApp = createTestApp({
       fetchImpl: async () => new Response('missing', { status: 404 }),
     });
@@ -71,8 +71,8 @@ describe('api integration', () => {
       .post('/api/extract-jd-url')
       .send({ url: 'https://example.com/job' });
 
-    expect(response.status).toBe(502);
-    expect(response.body.code).toBe('URL_FETCH_FAILED');
+    expect(response.status).toBe(422);
+    expect(response.body.code).toBe('EMPTY_EXTRACTED_TEXT');
   });
 
   it('returns 422 when JD file extraction finds no readable text', async () => {
@@ -267,6 +267,71 @@ describe('api integration', () => {
     expect(response.body.results[0].company).toBe('Acme');
     expect(response.body.results[0].sourceType).toBe('ats');
     expect(response.body.results[0].sourceHost).toContain('greenhouse.io');
+  });
+
+  it('drops dead job URLs from search results before returning them', async () => {
+    const saveResponse = await request(app)
+      .post('/api/resumes/default')
+      .attach('resume', sampleResumePath());
+
+    const searchPayload = {
+      jobs: [
+        {
+          title: 'Principal Product Manager, AI',
+          company: 'Builtin Candidate',
+          location: 'Remote',
+          remoteType: 'remote',
+          url: 'https://builtin.com/job/principal-product-manager-ai/123456',
+          description: 'Drive AI product strategy and execution for a platform business.',
+          requiredSkills: ['Product Strategy', 'AI'],
+          niceToHaveSkills: ['B2B SaaS'],
+          estimatedSalary: null,
+          postedDate: null,
+          companyStage: 'growth',
+        },
+        {
+          title: 'Senior Frontend Engineer',
+          company: 'Acme',
+          location: 'Remote',
+          remoteType: 'remote',
+          url: 'https://boards.greenhouse.io/acme/jobs/123456',
+          description: 'Build modern React and TypeScript experiences for the product platform.',
+          requiredSkills: ['React', 'TypeScript'],
+          niceToHaveSkills: ['GraphQL'],
+          estimatedSalary: null,
+          postedDate: null,
+          companyStage: 'growth',
+        },
+      ],
+    };
+
+    const searchApp = createTestApp({
+      getSearchAI: () => ({
+        providerName: 'perplexity',
+        models: {
+          generateContent: async () => ({ text: JSON.stringify(searchPayload) }),
+        },
+      }),
+      fetchImpl: async (input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        if (url.includes('builtin.com')) {
+          return new Response('missing', { status: 404 });
+        }
+        return new Response('<html><body>Live job posting</body></html>', {
+          status: 200,
+          headers: { 'Content-Type': 'text/html' },
+        });
+      },
+    });
+
+    const response = await request(searchApp)
+      .post('/api/search-jobs')
+      .field('resumeId', saveResponse.body.resume.id)
+      .field('preferences', JSON.stringify({ roleType: 'Product Manager' }));
+
+    expect(response.status).toBe(200);
+    expect(response.body.results).toHaveLength(1);
+    expect(response.body.results[0].url).toContain('greenhouse.io');
   });
 
   it('falls back to Gemini when Perplexity search is unavailable', async () => {

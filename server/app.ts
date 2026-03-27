@@ -847,7 +847,7 @@ export function createApp(deps: AppDependencies): Express {
       const ai = deps.getSearchAI ? deps.getSearchAI(req) : deps.getAI(req);
       const fallbackAI = deps.getSearchFallbackAI ? deps.getSearchFallbackAI(req) : undefined;
       const t0 = Date.now();
-      const response = await searchJobs(resolvedResume.resume, preferences, ai, fallbackAI);
+      const response = await searchJobs(resolvedResume.resume, preferences, ai, fallbackAI, deps.fetchImpl ?? fetch);
       response.resumeSource = resolvedResume.resumeSource;
       response.resumeId = resolvedResume.resumeId;
 

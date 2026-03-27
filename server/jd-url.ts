@@ -3,6 +3,13 @@ import { badGateway, badRequest, gatewayTimeout, isAppError, unprocessable } fro
 import { normalizeWhitespace } from './utils.ts';
 
 const FETCH_TIMEOUT_MS = 8_000;
+const JOB_FETCH_HEADERS = {
+  'user-agent':
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+  accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'accept-language': 'en-US,en;q=0.9',
+  'cache-control': 'no-cache',
+};
 
 async function fetchWithPlaywright(url: URL): Promise<string> {
   const { chromium } = await import('@playwright/test').catch(() => {
@@ -57,30 +64,26 @@ export async function fetchJobDescriptionText(
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   let staticText: string | null = null;
+  let staticFetchStatus: number | null = null;
+  let staticFetchError: unknown = null;
 
   try {
     const response = await fetchImpl(url, {
       redirect: 'follow',
       signal: controller.signal,
+      headers: JOB_FETCH_HEADERS,
     });
 
     if (!response.ok) {
-      throw badGateway('Failed to fetch the job description URL.', 'URL_FETCH_FAILED', {
-        logMessage: `Job description fetch returned ${response.status} for ${url.toString()}`,
-      });
+      staticFetchStatus = response.status;
+    } else {
+      const html = await response.text();
+      const $ = cheerio.load(html);
+      $('script, style, nav, footer, header, noscript, svg').remove();
+      staticText = normalizeWhitespace($('body').text());
     }
-    const html = await response.text();
-    const $ = cheerio.load(html);
-    $('script, style, nav, footer, header, noscript, svg').remove();
-    staticText = normalizeWhitespace($('body').text());
   } catch (error) {
-    if (isAppError(error)) {
-      throw error;
-    }
-    // Timeout or network error — fall through to Playwright
-    if (!(error instanceof DOMException && error.name === 'AbortError')) {
-      console.warn(`[jd-url] Static fetch failed for ${url.toString()}, falling back to Playwright`);
-    }
+    staticFetchError = error;
   } finally {
     clearTimeout(timeout);
   }
@@ -90,11 +93,57 @@ export async function fetchJobDescriptionText(
     return staticText;
   }
 
+  if (staticFetchStatus && !playwrightFallback) {
+    if (staticFetchStatus === 404 || staticFetchStatus === 410) {
+      throw unprocessable(
+        'That job listing is no longer available at the provided URL. Use the search summary or choose another listing.',
+        'EMPTY_EXTRACTED_TEXT',
+        {
+          logMessage: `Job description fetch returned ${staticFetchStatus} for ${url.toString()}`,
+        },
+      );
+    }
+
+    if (staticFetchStatus === 401 || staticFetchStatus === 403 || staticFetchStatus === 429) {
+      throw badGateway('The job site blocked direct extraction for that URL. Use the search summary or paste the JD text.', 'URL_FETCH_FAILED', {
+        logMessage: `Job description fetch returned ${staticFetchStatus} for ${url.toString()}`,
+      });
+    }
+
+    throw badGateway('Failed to fetch the job description URL.', 'URL_FETCH_FAILED', {
+      logMessage: `Job description fetch returned ${staticFetchStatus} for ${url.toString()}`,
+    });
+  }
+
+  if (staticFetchError && !playwrightFallback) {
+    if (staticFetchError instanceof DOMException && staticFetchError.name === 'AbortError') {
+      throw gatewayTimeout('Fetching the job description URL timed out.', 'URL_FETCH_TIMEOUT', {
+        cause: staticFetchError,
+        logMessage: `Static job description fetch timed out for ${url.toString()}`,
+      });
+    }
+
+    if (isAppError(staticFetchError)) {
+      throw staticFetchError;
+    }
+
+    throw badGateway('Failed to fetch the job description URL.', 'URL_FETCH_FAILED', {
+      cause: staticFetchError,
+      logMessage: `Job description fetch failed for ${url.toString()}`,
+    });
+  }
+
   // If no Playwright fallback available, surface the empty content error
   if (!playwrightFallback) {
     throw unprocessable('No readable job description content was found at that URL.', 'EMPTY_EXTRACTED_TEXT', {
       logMessage: `No readable text extracted from ${url.toString()}`,
     });
+  }
+
+  if (staticFetchStatus) {
+    console.warn(`[jd-url] Static fetch returned ${staticFetchStatus} for ${url.toString()}, trying Playwright fallback`);
+  } else if (staticFetchError && !(staticFetchError instanceof DOMException && staticFetchError.name === 'AbortError')) {
+    console.warn(`[jd-url] Static fetch failed for ${url.toString()}, trying Playwright fallback`);
   }
 
   // Fallback: use Playwright for JS-rendered / SPA pages
