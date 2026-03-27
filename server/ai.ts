@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import type { GenerateContentParameters } from '@google/genai';
 import type { AIClient } from './app.ts';
 
 type GenerateContentArgs = {
@@ -86,7 +87,8 @@ export function createGeminiAIClient(): ProviderBackedAIClient {
     geminiClient = {
       providerName: 'gemini',
       models: {
-        generateContent: async (args: unknown) => api.models.generateContent(args),
+        generateContent: async (args: unknown) =>
+          api.models.generateContent(args as GenerateContentParameters),
       },
     };
   }

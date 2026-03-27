@@ -1,4 +1,4 @@
-import type { PortalType, WidgetKind } from '../src/shared/types.ts';
+import type { ExecutorMode, PortalType, WidgetKind } from '../src/shared/types.ts';
 
 type PortalCapabilities = {
   supportedWidgets: WidgetKind[];
@@ -19,12 +19,30 @@ const NATIVE_WIDGETS: WidgetKind[] = [
 const REVIEW_ONLY_WIDGETS: WidgetKind[] = [
   'custom_combobox',
   'custom_multiselect',
+  'custom_card_group',
   'custom_date',
   'custom_number',
   'unknown',
 ];
 
+const LOCAL_AGENT_SUPPORTED_WIDGETS: WidgetKind[] = [
+  ...NATIVE_WIDGETS,
+  'custom_combobox',
+  'custom_multiselect',
+  'custom_card_group',
+  'custom_date',
+  'custom_number',
+];
+
 const PORTAL_CAPABILITIES: Record<PortalType, PortalCapabilities> = {
+  linkedin: {
+    supportedWidgets: NATIVE_WIDGETS,
+    reviewOnlyWidgets: REVIEW_ONLY_WIDGETS,
+  },
+  naukri: {
+    supportedWidgets: NATIVE_WIDGETS,
+    reviewOnlyWidgets: REVIEW_ONLY_WIDGETS,
+  },
   phenom: {
     supportedWidgets: NATIVE_WIDGETS,
     reviewOnlyWidgets: REVIEW_ONLY_WIDGETS,
@@ -79,6 +97,8 @@ export function detectPortalTypeFromUrl(applyUrl: string): PortalType {
   try {
     const url = new URL(applyUrl);
     const host = url.hostname.toLowerCase();
+    if (host.includes('linkedin.com')) return 'linkedin';
+    if (host.includes('naukri.com')) return 'naukri';
     if (host.includes('greenhouse')) return 'greenhouse';
     if (host.includes('lever.co')) return 'lever';
     if (host.includes('ashbyhq.com')) return 'ashby';
@@ -98,6 +118,9 @@ export function getPortalCapabilities(portalType: PortalType): PortalCapabilitie
   return PORTAL_CAPABILITIES[portalType] ?? PORTAL_CAPABILITIES.generic;
 }
 
-export function isWidgetSupported(portalType: PortalType, widgetKind: WidgetKind): boolean {
+export function isWidgetSupported(portalType: PortalType, widgetKind: WidgetKind, executorMode: ExecutorMode = 'extension'): boolean {
+  if (executorMode === 'local_agent' && portalType !== 'protected') {
+    return LOCAL_AGENT_SUPPORTED_WIDGETS.includes(widgetKind);
+  }
   return getPortalCapabilities(portalType).supportedWidgets.includes(widgetKind);
 }

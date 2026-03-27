@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
+    "dev:agent": "tsx local-agent/server.ts",
     "build": "vite build && esbuild server.ts --bundle --platform=node --target=node18 --format=esm --outfile=dist/server.js --external:fsevents --external:@playwright/test --external:playwright --external:playwright-core --external:chromium-bidi/*",
     "start": "node dist/server.js",
+    "start:agent": "tsx local-agent/server.ts",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
@@ -18,7 +20,8 @@
     "test:all": "npm run lint && npm run test && npm run test:e2e",
     "test:live-ai": "npm run lint && npm run build",
     "build:ext": "node scripts/build-ext.mjs",
-    "eval:tailor": "tsx scripts/run-tailor-evals.ts"
+    "eval:tailor": "tsx scripts/run-tailor-evals.ts",
+    "eval:apply-agent": "tsx scripts/run-apply-agent-evals.ts"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

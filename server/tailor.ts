@@ -22,9 +22,11 @@ const DEFAULT_TAILOR_MODEL = 'gemini-3-flash-preview';
 export const TAILOR_PROMPT_VERSION = '2026-03-24.partial-generation-v1';
 export const TAILOR_PIPELINE_VERSION = 'server-merge-v1';
 
+type TailorProviderName = Extract<AIProviderName, 'gemini' | 'qwen'>;
+
 export type TailorAIResult = {
   tailoredResume: TailoredResumeDocument;
-  providerUsed: AIProviderName;
+  providerUsed: TailorProviderName;
   fallbackUsed: boolean;
 };
 
@@ -95,6 +97,11 @@ class AIProviderResponseError extends Error {
 
 function getProviderName(ai: AIClient): AIProviderName {
   return ((ai as { providerName?: AIProviderName }).providerName ?? 'gemini');
+}
+
+function getTailorProviderName(ai: AIClient): TailorProviderName {
+  const providerName = getProviderName(ai);
+  return providerName === 'qwen' ? 'qwen' : 'gemini';
 }
 
 function isProviderUnavailableError(error: { status?: number; message?: string }): boolean {
@@ -653,7 +660,7 @@ Return this shape only:
     const tailoredResume = await attemptProvider(ai, primaryModelName);
     return {
       tailoredResume,
-      providerUsed: getProviderName(ai),
+      providerUsed: getTailorProviderName(ai),
       fallbackUsed: false,
     };
   } catch (error) {
@@ -662,7 +669,7 @@ Return this shape only:
         const tailoredResume = await attemptProvider(fallbackAI, fallbackModelName);
         return {
           tailoredResume,
-          providerUsed: getProviderName(fallbackAI),
+          providerUsed: getTailorProviderName(fallbackAI),
           fallbackUsed: true,
         };
       } catch (fallbackError) {

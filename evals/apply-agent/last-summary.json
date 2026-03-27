@@ -1,0 +1,91 @@
+{
+  "generatedAt": "2026-03-27T05:02:27.088Z",
+  "command": "isolated playwright runs for tests/e2e/local-agent-hybrid.spec.ts --project=local-agent-hybrid",
+  "exitCode": 0,
+  "passed": 11,
+  "failed": 0,
+  "skipped": 0,
+  "flaky": 0,
+  "durationMs": 127665,
+  "specs": [
+    {
+      "title": "local-agent path fills supported custom widgets and reaches submit readiness",
+      "status": "passed",
+      "durationMs": 18042,
+      "exitCode": 0
+    },
+    {
+      "title": "local-agent advanced widgets capture trace and metrics for harder flows",
+      "status": "passed",
+      "durationMs": 16069,
+      "exitCode": 0
+    },
+    {
+      "title": "local-agent expands and fills repeated work-history rows from session context",
+      "status": "passed",
+      "durationMs": 9505,
+      "exitCode": 0
+    },
+    {
+      "title": "local-agent expands and fills repeated education rows from session context",
+      "status": "passed",
+      "durationMs": 9597,
+      "exitCode": 0
+    },
+    {
+      "title": "local-agent expands and fills repeated project rows from session context",
+      "status": "passed",
+      "durationMs": 10518,
+      "exitCode": 0
+    },
+    {
+      "title": "local-agent expands and fills repeated certification rows from session context",
+      "status": "passed",
+      "durationMs": 9650,
+      "exitCode": 0
+    },
+    {
+      "title": "local-agent resume restarts from the latest backend page URL after agent loss",
+      "status": "passed",
+      "durationMs": 18417,
+      "exitCode": 0
+    },
+    {
+      "title": "local-agent pauses cleanly on login-required gates",
+      "status": "passed",
+      "durationMs": 9015,
+      "exitCode": 0
+    },
+    {
+      "title": "local-agent pauses cleanly on protected portals",
+      "status": "passed",
+      "durationMs": 8973,
+      "exitCode": 0
+    },
+    {
+      "title": "local-agent pauses cleanly on legal self-id gates",
+      "status": "passed",
+      "durationMs": 9035,
+      "exitCode": 0
+    },
+    {
+      "title": "local-agent pauses cleanly on assessment handoff gates",
+      "status": "passed",
+      "durationMs": 8844,
+      "exitCode": 0
+    }
+  ],
+  "reports": [
+    "/tmp/rtp-apply-agent-evals-XbYaio/spec-1.json",
+    "/tmp/rtp-apply-agent-evals-XbYaio/spec-2.json",
+    "/tmp/rtp-apply-agent-evals-XbYaio/spec-3.json",
+    "/tmp/rtp-apply-agent-evals-XbYaio/spec-4.json",
+    "/tmp/rtp-apply-agent-evals-XbYaio/spec-5.json",
+    "/tmp/rtp-apply-agent-evals-XbYaio/spec-6.json",
+    "/tmp/rtp-apply-agent-evals-XbYaio/spec-7.json",
+    "/tmp/rtp-apply-agent-evals-XbYaio/spec-8.json",
+    "/tmp/rtp-apply-agent-evals-XbYaio/spec-9.json",
+    "/tmp/rtp-apply-agent-evals-XbYaio/spec-10.json",
+    "/tmp/rtp-apply-agent-evals-XbYaio/spec-11.json"
+  ]
+}

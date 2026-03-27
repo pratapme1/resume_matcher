@@ -153,6 +153,53 @@ test('phenom-like multi-step portal proves portal classification and progression
   await expect(page.getByRole('button', { name: /Confirm Submit/i })).toBeVisible({ timeout: 15_000 });
 });
 
+test('linkedin adapter classifies the portal and fills easy-apply fields', async ({ page, request }) => {
+  await reachStepFive(page, '/__fixtures__/apply/linkedin');
+
+  const { sessionId, portalPage } = await startHybridApply(page);
+
+  await expect(portalPage.locator('#first_name')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#last_name')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#email')).toHaveValue(/@/, { timeout: 15_000 });
+  await expect(portalPage.locator('#phone')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#city')).not.toHaveValue('', { timeout: 15_000 });
+  await expect.poll(() => uploadedFileName(portalPage, '#resume'), { timeout: 15_000 }).not.toBe('');
+
+  const ready = await waitForSessionStatus(request, sessionId, ['ready_to_submit']);
+  expect(ready.portalType).toBe('linkedin');
+});
+
+test('naukri adapter classifies the portal and fills India-hosted apply fields', async ({ page, request }) => {
+  await reachStepFive(page, '/__fixtures__/apply/naukri');
+
+  const { sessionId, portalPage } = await startHybridApply(page);
+
+  await expect(portalPage.locator('#full_name')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#email')).toHaveValue(/@/, { timeout: 15_000 });
+  await expect(portalPage.locator('#phone')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#location')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#experience')).not.toHaveValue('', { timeout: 15_000 });
+  await expect.poll(() => uploadedFileName(portalPage, '#resume'), { timeout: 15_000 }).not.toBe('');
+
+  const ready = await waitForSessionStatus(request, sessionId, ['ready_to_submit']);
+  expect(ready.portalType).toBe('naukri');
+});
+
+test('ashby adapter classifies the portal and fills hosted fields', async ({ page, request }) => {
+  await reachStepFive(page, '/__fixtures__/apply/ashby');
+
+  const { sessionId, portalPage } = await startHybridApply(page);
+
+  await expect(portalPage.locator('#first_name')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#last_name')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#email')).toHaveValue(/@/, { timeout: 15_000 });
+  await expect(portalPage.locator('#phone')).not.toHaveValue('', { timeout: 15_000 });
+  await expect.poll(() => uploadedFileName(portalPage, '#resume'), { timeout: 15_000 }).not.toBe('');
+
+  const ready = await waitForSessionStatus(request, sessionId, ['ready_to_submit']);
+  expect(ready.portalType).toBe('ashby');
+});
+
 test('greenhouse adapter classifies the portal and fills hosted fields', async ({ page, request }) => {
   await reachStepFive(page, '/__fixtures__/apply/greenhouse');
 
@@ -179,6 +226,62 @@ test('lever adapter classifies the portal and fills hosted fields', async ({ pag
 
   const ready = await waitForSessionStatus(request, sessionId, ['ready_to_submit']);
   expect(ready.portalType).toBe('lever');
+});
+
+test('iCIMS adapter classifies the portal and fills hosted fields', async ({ page, request }) => {
+  await reachStepFive(page, '/__fixtures__/apply/icims');
+
+  const { sessionId, portalPage } = await startHybridApply(page);
+
+  await expect(portalPage.locator('#first_name')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#last_name')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#current_company')).not.toHaveValue('', { timeout: 15_000 });
+  await expect.poll(() => uploadedFileName(portalPage, '#resume'), { timeout: 15_000 }).not.toBe('');
+
+  const ready = await waitForSessionStatus(request, sessionId, ['ready_to_submit']);
+  expect(ready.portalType).toBe('icims');
+});
+
+test('SmartRecruiters adapter classifies the portal and fills hosted fields', async ({ page, request }) => {
+  await reachStepFive(page, '/__fixtures__/apply/smartrecruiters');
+
+  const { sessionId, portalPage } = await startHybridApply(page);
+
+  await expect(portalPage.locator('#first_name')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#last_name')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#email')).toHaveValue(/@/, { timeout: 15_000 });
+  await expect.poll(() => uploadedFileName(portalPage, '#resume'), { timeout: 15_000 }).not.toBe('');
+
+  const ready = await waitForSessionStatus(request, sessionId, ['ready_to_submit']);
+  expect(ready.portalType).toBe('smartrecruiters');
+});
+
+test('Taleo adapter classifies the portal and fills hosted fields', async ({ page, request }) => {
+  await reachStepFive(page, '/__fixtures__/apply/taleo');
+
+  const { sessionId, portalPage } = await startHybridApply(page);
+
+  await expect(portalPage.locator('#first_name')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#last_name')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#current_title')).not.toHaveValue('', { timeout: 15_000 });
+  await expect.poll(() => uploadedFileName(portalPage, '#resume'), { timeout: 15_000 }).not.toBe('');
+
+  const ready = await waitForSessionStatus(request, sessionId, ['ready_to_submit']);
+  expect(ready.portalType).toBe('taleo');
+});
+
+test('SuccessFactors adapter classifies the portal and fills hosted fields', async ({ page, request }) => {
+  await reachStepFive(page, '/__fixtures__/apply/successfactors');
+
+  const { sessionId, portalPage } = await startHybridApply(page);
+
+  await expect(portalPage.locator('#first_name')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#last_name')).not.toHaveValue('', { timeout: 15_000 });
+  await expect(portalPage.locator('#current_company')).not.toHaveValue('', { timeout: 15_000 });
+  await expect.poll(() => uploadedFileName(portalPage, '#resume'), { timeout: 15_000 }).not.toBe('');
+
+  const ready = await waitForSessionStatus(request, sessionId, ['ready_to_submit']);
+  expect(ready.portalType).toBe('successfactors');
 });
 
 test('workday adapter classifies an open-step flow and advances through multiple steps', async ({ page, request }) => {

@@ -1,7 +1,35 @@
-import type { ApplicantProfile } from '../../../src/shared/types.ts';
+import type { AnswerBankEntry, ApplicantProfile } from '../../../src/shared/types.ts';
 import { supabase } from '../client.ts';
 
-export async function getStoredApplicationProfile(userId: string): Promise<ApplicantProfile | null> {
+type StoredApplicationMemoryPayload =
+  | ApplicantProfile
+  | {
+      profile?: ApplicantProfile | null;
+      answerBank?: AnswerBankEntry[] | null;
+    };
+
+function coerceStoredApplicationMemory(payload: StoredApplicationMemoryPayload | null | undefined) {
+  if (!payload || Array.isArray(payload)) {
+    return {
+      profile: {},
+      answerBank: [],
+    };
+  }
+
+  if ('profile' in payload || 'answerBank' in payload) {
+    return {
+      profile: (payload.profile as ApplicantProfile | null | undefined) ?? {},
+      answerBank: (payload.answerBank as AnswerBankEntry[] | null | undefined) ?? [],
+    };
+  }
+
+  return {
+    profile: payload as ApplicantProfile,
+    answerBank: [],
+  };
+}
+
+export async function getStoredApplicationMemory(userId: string): Promise<{ profile: ApplicantProfile; answerBank: AnswerBankEntry[] }> {
   const { data, error } = await supabase
     .from('application_profiles')
     .select('profile_json')
@@ -9,16 +37,19 @@ export async function getStoredApplicationProfile(userId: string): Promise<Appli
     .maybeSingle();
 
   if (error) throw error;
-  return (data?.profile_json as ApplicantProfile | null | undefined) ?? null;
+  return coerceStoredApplicationMemory(data?.profile_json as StoredApplicationMemoryPayload | null | undefined);
 }
 
-export async function upsertStoredApplicationProfile(userId: string, profile: ApplicantProfile): Promise<ApplicantProfile> {
+export async function upsertStoredApplicationMemory(
+  userId: string,
+  input: { profile: ApplicantProfile; answerBank: AnswerBankEntry[] },
+): Promise<{ profile: ApplicantProfile; answerBank: AnswerBankEntry[] }> {
   const { data, error } = await supabase
     .from('application_profiles')
     .upsert(
       {
         user_id: userId,
-        profile_json: profile,
+        profile_json: input,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'user_id' },
@@ -27,5 +58,5 @@ export async function upsertStoredApplicationProfile(userId: string, profile: Ap
     .single();
 
   if (error) throw error;
-  return (data?.profile_json as ApplicantProfile | null | undefined) ?? profile;
+  return coerceStoredApplicationMemory(data?.profile_json as StoredApplicationMemoryPayload | null | undefined);
 }

@@ -375,7 +375,37 @@ export interface LatestJobSearchSessionResponse {
    Apply Sessions
 ───────────────────────────────────────── */
 
-export type ExecutorMode = 'extension' | 'cloud';
+export type ExecutorMode = 'extension' | 'local_agent' | 'cloud';
+
+export type LocalAgentStatus = 'checking' | 'connected' | 'offline';
+
+export interface LocalAgentHealth {
+  service: 'resume-tailor-local-agent';
+  version: string;
+  executionMode: 'local_agent';
+  playwrightAvailable: boolean;
+  browserReady: boolean;
+  headless: boolean;
+  sessions: number;
+  userDataDir: string;
+}
+
+export interface LocalAgentSessionRequest {
+  sessionId: string;
+  applyUrl: string;
+  apiBaseUrl?: string;
+  executorToken?: string;
+}
+
+export interface LocalAgentSessionSummary {
+  sessionId: string;
+  status: 'created' | 'running' | 'paused' | 'completed' | 'failed';
+  applyUrl: string;
+  pageTitle?: string;
+  currentUrl?: string;
+  startedAt: string;
+  updatedAt: string;
+}
 
 export type ResumeSource = 'upload' | 'default';
 
@@ -394,6 +424,8 @@ export interface DefaultResumeResponse {
 }
 
 export type PortalType =
+  | 'linkedin'
+  | 'naukri'
   | 'phenom'
   | 'greenhouse'
   | 'lever'
@@ -460,6 +492,7 @@ export type WidgetKind =
   | 'date'
   | 'custom_combobox'
   | 'custom_multiselect'
+  | 'custom_card_group'
   | 'custom_date'
   | 'custom_number'
   | 'unknown';
@@ -477,6 +510,8 @@ export type PauseReason =
   | 'none'
   | 'protected_portal'
   | 'login_required'
+  | 'legal_review_required'
+  | 'assessment_required'
   | 'unsupported_widget'
   | 'missing_profile_value'
   | 'ambiguous_required_field'
@@ -506,6 +541,24 @@ export interface ApplicantProfile {
   gender?: string;
 }
 
+export type AnswerBankPortalScope = PortalType | 'any';
+export type AnswerBankSource = 'user_saved' | 'managed_browser' | 'resume_derived' | 'imported';
+export type AnswerBankConfidence = 'confirmed' | 'learned';
+
+export interface AnswerBankEntry {
+  id: string;
+  question: string;
+  normalizedQuestion: string;
+  answer: string;
+  portalType?: AnswerBankPortalScope;
+  semanticType?: FieldSemanticType;
+  source?: AnswerBankSource;
+  confidence?: AnswerBankConfidence;
+  usageCount?: number;
+  lastUsedAt?: string;
+  updatedAt: string;
+}
+
 export interface DetectedFieldOption {
   label: string;
   value: string;
@@ -521,6 +574,8 @@ export interface DetectedField {
   widgetKind: WidgetKind;
   required: boolean;
   visible: boolean;
+  semanticHint?: FieldSemanticType;
+  reviewOnlyReason?: string;
   value?: string;
   checked?: boolean;
   hasValue?: boolean;
@@ -594,9 +649,11 @@ export interface ApplySessionSummary {
   executorMode: ExecutorMode;
   portalType: PortalType;
   status: ApplySessionStatus;
+  reviewItems?: ReviewItem[];
   latestMessage?: string;
   latestScreenshot?: string | null;
   latestPauseReason?: PauseReason;
+  latestPageUrl?: string;
   latestStepKind?: StepKind;
   latestStepSignature?: string;
   filledCount: number;
@@ -611,8 +668,25 @@ export interface CreateApplySessionResponse {
   executorToken: string;
 }
 
+export interface CreateApplySessionRequest {
+  applyUrl: string;
+  tailoredResume: TailoredResumeDocument;
+  templateProfile: ResumeTemplateProfile;
+  validation: ValidationReport;
+  applicationProfile?: Partial<ApplicantProfile>;
+  answerBank?: AnswerBankEntry[];
+  executorMode?: Extract<ExecutorMode, 'extension' | 'local_agent'>;
+  job?: {
+    title?: string;
+    company?: string;
+    location?: string;
+    description?: string;
+  };
+}
+
 export interface ApplicationProfileResponse {
   profile: ApplicantProfile;
+  answerBank: AnswerBankEntry[];
 }
 
 export interface ApplySessionEvent {
@@ -626,4 +700,152 @@ export interface ApplySessionEvent {
   pauseReason?: PauseReason;
   stepKind?: StepKind;
   stepSignature?: string;
+}
+
+export interface ApplySessionTraceEntry {
+  id: string;
+  at: string;
+  source: 'system' | 'planner' | 'executor' | 'user';
+  event:
+    | 'created'
+    | 'plan_generated'
+    | 'executor_event'
+    | 'executor_mode_changed'
+    | 'confirm_submit'
+    | 'learn'
+    | 'completed';
+  status?: ApplySessionStatus;
+  message?: string;
+  portalType?: PortalType;
+  pauseReason?: PauseReason;
+  pageUrl?: string;
+  stepKind?: StepKind;
+  stepSignature?: string;
+  filledCount?: number;
+  reviewCount?: number;
+  actionCount?: number;
+}
+
+export interface ApplySessionTraceResponse {
+  session: ApplySessionSummary;
+  trace: ApplySessionTraceEntry[];
+}
+
+export interface ApplyAutomationMetrics {
+  totalSessions: number;
+  byStatus: Record<string, number>;
+  byPortalType: Record<string, number>;
+  byPauseReason: Record<string, number>;
+  byExecutorMode: Record<string, number>;
+}
+
+export interface ApplyReliabilitySnapshot {
+  metrics: ApplyAutomationMetrics;
+  recentIssues: Array<{
+    applicationId: string;
+    status: string;
+    portalType?: PortalType | null;
+    pauseReason?: PauseReason | null;
+    executorMode?: ExecutorMode | null;
+    lastMessage?: string | null;
+    updatedAt: string;
+  }>;
+}
+
+export interface ApplySessionContextResponse {
+  experienceEntries: Array<{
+    company: string;
+    title: string;
+    location?: string;
+    dates?: string;
+  }>;
+  educationEntries: Array<{
+    institution: string;
+    degree: string;
+    location?: string;
+    dates?: string;
+  }>;
+  projectEntries: Array<{
+    name: string;
+    description: string;
+  }>;
+  certificationEntries: Array<{
+    name: string;
+  }>;
+}
+
+/* ─────────────────────────────────────────
+   Applications & Jobs
+───────────────────────────────────────── */
+
+export type JobLifecycleStatus =
+  | 'discovered'
+  | 'shown'
+  | 'saved'
+  | 'queued'
+  | 'applying'
+  | 'applied'
+  | 'failed'
+  | 'manual_required'
+  | 'dismissed';
+
+export type ApplicationStatus =
+  | 'queued'
+  | 'pending'
+  | 'applied'
+  | 'rejected'
+  | 'review'
+  | 'interview'
+  | 'offered'
+  | 'in_progress'
+  | 'manual_required'
+  | 'failed';
+
+export interface JobRecord {
+  id: string;
+  userId: string;
+  title?: string | null;
+  company?: string | null;
+  location?: string | null;
+  url?: string | null;
+  applyUrl?: string | null;
+  description?: string | null;
+  sourceHost?: string | null;
+  sourceType?: string | null;
+  verifiedSource?: boolean | null;
+  lastVerifiedAt?: string | null;
+  lifecycleStatus?: JobLifecycleStatus | null;
+  seenCount?: number | null;
+  lastSearchRank?: number | null;
+  firstSeenAt?: string | null;
+  lastSeenAt?: string | null;
+  savedAt?: string | null;
+  dismissedAt?: string | null;
+  lastAppliedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApplicationRecord {
+  id: string;
+  userId: string;
+  jobId: string;
+  sessionId?: string | null;
+  applyUrl?: string | null;
+  status: ApplicationStatus;
+  notes?: string | null;
+  errorMessage?: string | null;
+  lastPauseReason?: PauseReason | null;
+  lastMessage?: string | null;
+  lastStepKind?: StepKind | null;
+  portalType?: PortalType | null;
+  executorMode?: ExecutorMode | null;
+  traceCount?: number | null;
+  lastTraceAt?: string | null;
+  retryCount?: number | null;
+  replayOfApplicationId?: string | null;
+  supersededByApplicationId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  job?: JobRecord | null;
 }

@@ -5,17 +5,27 @@ import {
   Download, Loader2, ShieldAlert, ShieldCheck, ArrowLeft,
   Sun, Moon, CheckCircle2, X, Mail, Phone, MapPin, Linkedin,
   Search, Briefcase, ChevronDown, ChevronUp, Building2, LogOut,
+  LayoutDashboard, RefreshCw,
 } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase, getAuthHeader } from './supabaseClient.ts';
 import type {
+  AnswerBankEntry,
   ApplicantProfile,
+  ApplicationProfileResponse,
+  ApplicationRecord,
+  ApplicationStatus,
   ApplySessionSummary,
   CandidateProfile,
+  CreateApplySessionRequest,
+  CreateApplySessionResponse,
   DefaultResumeResponse,
   ExtractionWarning,
+  JobRecord,
   JobSearchPreferences,
   JobSearchResult,
+  LocalAgentHealth,
+  LocalAgentStatus,
   LatestJobSearchSessionResponse,
   NormalizedJobDescription,
   ResumeSource,
@@ -23,6 +33,31 @@ import type {
   TailorResumeResponse,
   TailoredResumeDocument,
 } from './shared/types.ts';
+
+function normalizeWhitespace(text: string): string {
+  return text.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+const LOCAL_AGENT_BASE_URL = 'http://127.0.0.1:43111';
+
+function createAnswerBankEntry(question = '', answer = ''): AnswerBankEntry {
+  return {
+    id: crypto.randomUUID(),
+    question,
+    normalizedQuestion: '',
+    answer,
+    portalType: 'any',
+    source: 'user_saved',
+    confidence: 'confirmed',
+    usageCount: 0,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+type LocalAgentStatusMessage = {
+  status?: LocalAgentStatus;
+  health?: LocalAgentHealth;
+};
 
 /* ─────────────────────────────────────────
    Score Ring — animated SVG arc
@@ -219,8 +254,8 @@ function ResumePreview({ resume }: { resume: TailoredResumeDocument }) {
 /* ─────────────────────────────────────────
    Topbar — sticky top nav (V11 Studio)
 ───────────────────────────────────────── */
-function Topbar({ isDark, onToggleDark, onSignOut, userEmail, onHome }: {
-  isDark: boolean; onToggleDark: () => void; onSignOut: () => void; userEmail?: string; onHome?: () => void;
+function Topbar({ isDark, onToggleDark, onSignOut, userEmail, onHome, onDashboard, showDashboard }: {
+  isDark: boolean; onToggleDark: () => void; onSignOut: () => void; userEmail?: string; onHome?: () => void; onDashboard?: () => void; showDashboard?: boolean;
 }) {
   const initials = userEmail
     ? userEmail.split('@')[0].slice(0, 2).toUpperCase()
@@ -240,8 +275,22 @@ function Topbar({ isDark, onToggleDark, onSignOut, userEmail, onHome }: {
         <span className="text-sm font-bold tracking-tight">Resume Tailor</span>
       </button>
 
-      {/* Right: dark mode toggle + user pill */}
+      {/* Right: dashboard + dark mode toggle + user pill */}
       <div className="flex items-center gap-3">
+        {onDashboard && (
+          <button
+            onClick={onDashboard}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors text-xs font-medium ${
+              showDashboard
+                ? 'bg-[var(--rt-accent-soft)] text-[var(--rt-accent)]'
+                : 'text-[var(--rt-text-2)] hover:bg-[var(--rt-surface-2)]'
+            }`}
+            title="Application history"
+          >
+            <LayoutDashboard className="w-3.5 h-3.5" />
+            <span>Dashboard</span>
+          </button>
+        )}
         <button
           onClick={onToggleDark}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[var(--rt-text-2)] hover:bg-[var(--rt-surface-2)] transition-colors text-xs font-medium"
@@ -528,12 +577,15 @@ export default function App() {
   const [showAllRecs, setShowAllRecs] = useState(false);
   const [hasDownloaded, setHasDownloaded] = useState(false);
   const [extensionInstalled, setExtensionInstalled] = useState(false);
+  const [localAgentStatus, setLocalAgentStatus] = useState<LocalAgentStatus>('checking');
+  const [localAgentHealth, setLocalAgentHealth] = useState<LocalAgentHealth | null>(null);
   const [applyUrl, setApplyUrl] = useState('');
   const [applySession, setApplySession] = useState<ApplySessionSummary | null>(null);
   const [applyStarting, setApplyStarting] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
   const [savedApplicationProfile, setSavedApplicationProfile] = useState<ApplicantProfile>({});
   const [applicationProfile, setApplicationProfile] = useState<ApplicantProfile>({});
+  const [answerBank, setAnswerBank] = useState<AnswerBankEntry[]>([]);
   const [applicationProfileLoading, setApplicationProfileLoading] = useState(false);
   const [applicationProfileSaving, setApplicationProfileSaving] = useState(false);
   const [applicationProfileError, setApplicationProfileError] = useState<string | null>(null);
@@ -545,6 +597,15 @@ export default function App() {
   const [defaultResumeSavedNotice, setDefaultResumeSavedNotice] = useState<string | null>(null);
   const [showBlockedConfirm, setShowBlockedConfirm] = useState(false);
   const [warningsDismissed, setWarningsDismissed] = useState(false);
+
+  // Dashboard
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [applications, setApplications] = useState<ApplicationRecord[]>([]);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const [expandedApplicationId, setExpandedApplicationId] = useState<string | null>(null);
+  const [applicationReplayChains, setApplicationReplayChains] = useState<Record<string, ApplicationRecord[]>>({});
+  const [replayLoadingId, setReplayLoadingId] = useState<string | null>(null);
 
   // JD history (localStorage, max 5)
   const [jdHistory, setJdHistory] = useState<{ id: string; savedAt: string; title: string; cleanText: string }[]>(() => {
@@ -575,6 +636,77 @@ export default function App() {
     ...(result?.parseWarnings ?? []),
   ];
 
+  const probeLocalAgentHealth = async (): Promise<LocalAgentHealth | null> => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 1500);
+    try {
+      const response = await fetch(`${LOCAL_AGENT_BASE_URL}/health`, { signal: controller.signal });
+      if (!response.ok) {
+        return null;
+      }
+      return await response.json() as LocalAgentHealth;
+    } catch {
+      return null;
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+  };
+
+  const requestLocalAgentStatusFromExtension = async (timeoutMs = 5000): Promise<LocalAgentStatusMessage | null> => {
+    if (!extensionInstalled) return null;
+    return await new Promise<LocalAgentStatusMessage | null>((resolve) => {
+      let settled = false;
+      const cleanup = () => {
+        window.removeEventListener('message', onMessage);
+        window.clearTimeout(timeoutId);
+      };
+      const finish = (value: LocalAgentStatusMessage | null) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(value);
+      };
+      const onMessage = (event: MessageEvent) => {
+        if (event.source !== window) return;
+        if (event.data?.type !== 'RTP_LOCAL_AGENT_STATUS') return;
+        finish(event.data.data as LocalAgentStatusMessage | null);
+      };
+      const timeoutId = window.setTimeout(() => finish(null), timeoutMs);
+      window.addEventListener('message', onMessage);
+      window.postMessage({ type: 'RTP_REQUEST_LOCAL_AGENT_STATUS' }, window.location.origin);
+    });
+  };
+
+  const resolveLocalAgentAvailability = async (): Promise<{
+    connected: boolean;
+    health: LocalAgentHealth | null;
+    status: LocalAgentStatus;
+  }> => {
+    let lastHealth: LocalAgentHealth | null = null;
+    let lastStatus: LocalAgentStatus = 'offline';
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const [health, extensionStatus] = await Promise.all([
+        probeLocalAgentHealth(),
+        requestLocalAgentStatusFromExtension(2500),
+      ]);
+      lastHealth = health ?? extensionStatus?.health ?? lastHealth;
+      lastStatus = lastHealth || extensionStatus?.status === 'connected' ? 'connected' : 'offline';
+      if (lastStatus === 'connected') {
+        return { connected: true, health: lastHealth, status: 'connected' };
+      }
+      if (attempt < 2) {
+        await new Promise((resolve) => window.setTimeout(resolve, 500));
+      }
+    }
+
+    return {
+      connected: false,
+      health: lastHealth,
+      status: lastStatus,
+    };
+  };
+
   // Extension bridge: detect extension + handle JD injection when launched from extension
   useEffect(() => {
     const handleMsg = (e: MessageEvent) => {
@@ -586,6 +718,16 @@ export default function App() {
       // Fallback: content script self-announces on fresh page load
       if (e.data?.type === 'RTP_EXTENSION_READY') {
         setExtensionInstalled(true);
+      }
+      if (e.data?.type === 'RTP_LOCAL_AGENT_STATUS') {
+        const data = e.data.data as { status?: LocalAgentStatus; health?: LocalAgentHealth } | undefined;
+        if (data?.status === 'connected') {
+          setLocalAgentStatus('connected');
+          setLocalAgentHealth(data.health ?? null);
+        } else {
+          setLocalAgentStatus('offline');
+          setLocalAgentHealth(null);
+        }
       }
       // Content script delivering a pending JD (when app was opened by extension)
       if (e.data?.type === 'RTP_DELIVER_JD' && e.data.text) {
@@ -607,6 +749,32 @@ export default function App() {
     }
     return () => window.removeEventListener('message', handleMsg);
   }, []);
+
+  useEffect(() => {
+    if (!extensionInstalled) {
+      setLocalAgentStatus('offline');
+      setLocalAgentHealth(null);
+      return;
+    }
+    let cancelled = false;
+
+    const checkLocalAgent = async () => {
+      if (cancelled) return;
+      setLocalAgentStatus('checking');
+      const availability = await resolveLocalAgentAvailability();
+      if (!cancelled) {
+        setLocalAgentStatus(availability.status);
+        setLocalAgentHealth(availability.health);
+      }
+    };
+
+    void checkLocalAgent();
+    const intervalId = window.setInterval(checkLocalAgent, 15000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [extensionInstalled]);
 
   useEffect(() => {
     if (!session) return;
@@ -645,14 +813,16 @@ export default function App() {
           headers: await getAuthHeader(),
         });
         if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to load application profile');
-        const body = await r.json() as { profile?: ApplicantProfile };
+        const body = await r.json() as ApplicationProfileResponse;
         if (!cancelled) {
           setSavedApplicationProfile(body.profile ?? {});
+          setAnswerBank(body.answerBank ?? []);
           setApplicationProfileError(null);
         }
       } catch (err: any) {
         if (!cancelled) {
           setSavedApplicationProfile({});
+          setAnswerBank([]);
           setApplicationProfileError(err.message);
         }
       } finally {
@@ -997,6 +1167,29 @@ export default function App() {
     setApplicationProfileSavedNotice(null);
   };
 
+  const handleAnswerBankChange = (id: string, key: 'question' | 'answer', value: string) => {
+    setAnswerBank((prev) => prev.map((entry) => (
+      entry.id === id
+        ? {
+            ...entry,
+            [key]: value,
+            updatedAt: new Date().toISOString(),
+          }
+        : entry
+    )));
+    setApplicationProfileSavedNotice(null);
+  };
+
+  const addAnswerBankEntry = () => {
+    setAnswerBank((prev) => [...prev, createAnswerBankEntry()]);
+    setApplicationProfileSavedNotice(null);
+  };
+
+  const removeAnswerBankEntry = (id: string) => {
+    setAnswerBank((prev) => prev.filter((entry) => entry.id !== id));
+    setApplicationProfileSavedNotice(null);
+  };
+
   const saveApplicationProfile = async () => {
     setApplicationProfileSaving(true);
     setApplicationProfileError(null);
@@ -1004,12 +1197,16 @@ export default function App() {
       const r = await apiFetch('/api/application-profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...await getAuthHeader() },
-        body: JSON.stringify({ profile: applicationProfile }),
+        body: JSON.stringify({
+          profile: applicationProfile,
+          answerBank: answerBank.filter((entry) => normalizeWhitespace(entry.question).length > 0 && normalizeWhitespace(entry.answer).length > 0),
+        }),
       });
       if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to save application profile');
-      const body = await r.json() as { profile?: ApplicantProfile };
+      const body = await r.json() as ApplicationProfileResponse;
       setSavedApplicationProfile(body.profile ?? applicationProfile);
       setApplicationProfile(body.profile ?? applicationProfile);
+      setAnswerBank(body.answerBank ?? answerBank);
       setApplicationProfileSavedNotice('Profile saved to your account.');
     } catch (err: any) {
       setApplicationProfileError(err.message || 'Failed to save application profile.');
@@ -1027,19 +1224,40 @@ export default function App() {
     setApplyStarting(true);
     setApplyError(null);
     try {
+      const availability = await resolveLocalAgentAvailability();
+      const shouldUseLocalAgent = true;
+      setLocalAgentStatus(availability.connected ? 'connected' : localAgentStatus === 'connected' ? 'connected' : 'offline');
+      setLocalAgentHealth(availability.health ?? localAgentHealth);
+      const executorMode = shouldUseLocalAgent ? 'local_agent' : 'extension';
+      const job = selectedJob
+        ? {
+            title: selectedJob.title,
+            company: selectedJob.company,
+            location: selectedJob.location,
+            description: normalizeWhitespace(normalizedJd?.cleanText ?? '') || selectedJob.description,
+          }
+        : {
+            title: normalizeWhitespace(preferences.targetRole) || undefined,
+            company: normalizeWhitespace(result.jdCompanyName ?? '') || undefined,
+            description: normalizeWhitespace(normalizedJd?.cleanText ?? '') || undefined,
+          };
+      const payload: CreateApplySessionRequest = {
+        applyUrl,
+        tailoredResume: result.tailoredResume,
+        templateProfile: result.templateProfile,
+        validation: result.validation,
+        applicationProfile,
+        answerBank: answerBank.filter((entry) => normalizeWhitespace(entry.question).length > 0 && normalizeWhitespace(entry.answer).length > 0),
+        executorMode,
+        job,
+      };
       const r = await apiFetch('/api/apply/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...await getAuthHeader() },
-        body: JSON.stringify({
-          applyUrl,
-          tailoredResume: result.tailoredResume,
-          templateProfile: result.templateProfile,
-          validation: result.validation,
-          applicationProfile,
-        }),
+        body: JSON.stringify(payload),
       });
       if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to create apply session');
-      const data = await r.json() as { session: ApplySessionSummary; executorToken: string };
+      const data = await r.json() as CreateApplySessionResponse;
       setApplySession(data.session);
       window.postMessage({
         type: 'RTP_START_APPLY_SESSION',
@@ -1048,6 +1266,7 @@ export default function App() {
           applyUrl,
           apiBaseUrl: window.location.origin,
           executorToken: data.executorToken,
+          executorMode: data.session.executorMode,
         },
       }, window.location.origin);
     } catch (err: any) {
@@ -1057,11 +1276,104 @@ export default function App() {
     }
   };
 
+  const learnAnswersFromManagedBrowser = async (sessionId: string) => {
+    const liveLocalAgentHealth = await probeLocalAgentHealth();
+    if (!liveLocalAgentHealth) return 0;
+    setLocalAgentStatus('connected');
+    setLocalAgentHealth(liveLocalAgentHealth);
+    try {
+      const debugResponse = await fetch(`${LOCAL_AGENT_BASE_URL}/sessions/${sessionId}/debug`);
+      const debugBody = await debugResponse.json().catch(() => null) as { snapshot?: unknown } | null;
+      if (!debugResponse.ok || !debugBody?.snapshot) {
+        return 0;
+      }
+
+      const learnResponse = await apiFetch(`/api/apply/sessions/${sessionId}/learn`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...await getAuthHeader() },
+        body: JSON.stringify(debugBody.snapshot),
+      });
+      if (!learnResponse.ok) {
+        throw new Error((await learnResponse.json().catch(() => null))?.error || 'Failed to learn corrected answers.');
+      }
+
+      const learned = await learnResponse.json() as {
+        learnedCount?: number;
+        profile?: ApplicantProfile;
+        answerBank?: AnswerBankEntry[];
+        session?: ApplySessionSummary;
+      };
+
+      if (learned.profile) {
+        setSavedApplicationProfile(learned.profile);
+        setApplicationProfile(learned.profile);
+      }
+      if (learned.answerBank) {
+        setAnswerBank(learned.answerBank);
+      }
+      if (learned.session) {
+        setApplySession((current) => (current?.id === learned.session?.id ? learned.session : current));
+      }
+
+      const learnedCount = learned.learnedCount ?? 0;
+      if (learnedCount > 0) {
+        setApplicationProfileSavedNotice(
+          learnedCount === 1
+            ? 'Saved 1 corrected answer from the managed browser.'
+            : `Saved ${learnedCount} corrected answers from the managed browser.`,
+        );
+      }
+      return learnedCount;
+    } catch (err) {
+      console.warn('[RTP] failed to learn corrected answers from the managed browser', err);
+      return 0;
+    }
+  };
+
+  const describeManagedBrowserGate = (session: ApplySessionSummary) => {
+    switch (session.latestPauseReason) {
+      case 'login_required':
+        return 'Login or account setup is required in the managed browser before the agent can continue.';
+      case 'protected_portal':
+        return 'Bot protection was detected. Clear it in the managed browser, then resume the agent.';
+      case 'legal_review_required':
+        return 'A legal or self-identification section requires human review in the managed browser before the agent can continue.';
+      case 'assessment_required':
+        return 'An external assessment or challenge handoff requires human action in the managed browser before the agent can continue.';
+      case 'no_progress_after_advance':
+        return 'The form did not advance cleanly. Review the managed browser state, then resume the agent.';
+      default:
+        return session.latestMessage || 'A hard gate needs manual completion in the managed browser before the agent can continue.';
+    }
+  };
+
+  const handleTakeOverApply = async () => {
+    if (!applySession) return;
+    setApplyError(null);
+    try {
+      window.postMessage({
+        type: 'RTP_FOCUS_APPLY_SESSION',
+        data: {
+          sessionId: applySession.id,
+        },
+      }, window.location.origin);
+      setApplySession({
+        ...applySession,
+        latestMessage: 'Managed browser focused. Complete the hard gate, then resume the agent.',
+      });
+    } catch (err: any) {
+      setApplyError(err.message || 'Failed to focus the managed browser.');
+    }
+  };
+
   const handleResumeAgentApply = async () => {
     if (!applySession) return;
     setApplyStarting(true);
     setApplyError(null);
     try {
+      if (applySession.executorMode === 'local_agent') {
+        await learnAnswersFromManagedBrowser(applySession.id);
+      }
       window.postMessage({
         type: 'RTP_RESUME_APPLY_SESSION',
         data: {
@@ -1080,6 +1392,9 @@ export default function App() {
     if (!applySession) return;
     setApplyError(null);
     try {
+      if (applySession.executorMode === 'local_agent') {
+        await learnAnswersFromManagedBrowser(applySession.id);
+      }
       const r = await apiFetch(`/api/apply/sessions/${applySession.id}/confirm-submit`, {
         method: 'POST',
         headers: await getAuthHeader(),
@@ -1097,6 +1412,77 @@ export default function App() {
       setApplyError(err.message || 'Failed to submit application.');
     }
   };
+
+  const fetchApplications = async () => {
+    setDashboardLoading(true);
+    setDashboardError(null);
+    try {
+      const r = await apiFetch('/api/applications', {
+        headers: await getAuthHeader(),
+      });
+      if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to load applications');
+      const data = await r.json() as { applications?: ApplicationRecord[] };
+      setApplications(data.applications ?? []);
+    } catch (err: any) {
+      setDashboardError(err.message || 'Failed to load applications');
+    } finally {
+      setDashboardLoading(false);
+    }
+  };
+
+  const updateApplicationStatus = async (appId: string, newStatus: ApplicationStatus) => {
+    try {
+      const r = await apiFetch(`/api/applications/${appId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...await getAuthHeader() },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to update application status');
+      setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: newStatus } : a));
+      setDashboardError(null);
+    } catch (err: any) {
+      setDashboardError(err.message || 'Failed to update application status');
+    }
+  };
+
+  const toggleApplicationReplayChain = async (appId: string) => {
+    const nextExpanded = expandedApplicationId === appId ? null : appId;
+    setExpandedApplicationId(nextExpanded);
+    if (!nextExpanded || applicationReplayChains[appId]) return;
+    try {
+      setReplayLoadingId(appId);
+      const r = await apiFetch(`/api/applications/${appId}/replays`, {
+        headers: await getAuthHeader(),
+      });
+      if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to load replay chain');
+      const data = await r.json() as { applications?: ApplicationRecord[] };
+      setApplicationReplayChains((prev) => ({ ...prev, [appId]: data.applications ?? [] }));
+      setDashboardError(null);
+    } catch (err: any) {
+      setDashboardError(err.message || 'Failed to load replay chain');
+    } finally {
+      setReplayLoadingId((current) => (current === appId ? null : current));
+    }
+  };
+
+  function exportApplicationsCSV(apps: ApplicationRecord[]) {
+    const rows = [
+      ['Title', 'Company', 'URL', 'Status', 'Applied At'],
+      ...apps.map(a => [
+        a.job?.title ?? '',
+        a.job?.company ?? '',
+        a.applyUrl ?? '',
+        a.status,
+        a.createdAt ? new Date(a.createdAt).toLocaleDateString() : '',
+      ]),
+    ];
+    const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'applications.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
 
   const resetFlow = () => {
     setStep(1);
@@ -1232,7 +1618,19 @@ export default function App() {
         </div>
 
         {/* ── Topbar ── */}
-        <Topbar isDark={isDark} onToggleDark={toggleDark} onSignOut={() => supabase.auth.signOut()} userEmail={session?.user?.email} onHome={() => setStep(0)} />
+        <Topbar
+          isDark={isDark}
+          onToggleDark={toggleDark}
+          onSignOut={() => supabase.auth.signOut()}
+          userEmail={session?.user?.email}
+          onHome={() => { setShowDashboard(false); setStep(0); }}
+          onDashboard={() => {
+            const next = !showDashboard;
+            setShowDashboard(next);
+            if (next) void fetchApplications();
+          }}
+          showDashboard={showDashboard}
+        />
 
         {/* ── Step progress bar (shown when on a workflow step) ── */}
         {step >= 1 && step <= 4 && (
@@ -1281,6 +1679,282 @@ export default function App() {
         <main className="relative z-10 max-w-[1100px] mx-auto px-6 pb-16 pt-6">
           <AnimatePresence mode="wait">
             {(() => {
+
+              /* ════════════════ DASHBOARD ════════════════ */
+              if (showDashboard) {
+                const statusColors: Record<ApplicationStatus, string> = {
+                  queued: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+                  pending: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
+                  in_progress: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+                  applied: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+                  review: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+                  manual_required: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+                  rejected: 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300',
+                  interview: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+                  offered: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+                  failed: 'bg-red-200 text-red-800 dark:bg-red-900/60 dark:text-red-200',
+                };
+                const statusLabels: Record<ApplicationStatus, string> = {
+                  queued: 'Queued',
+                  pending: 'Pending',
+                  in_progress: 'In Progress',
+                  applied: 'Applied',
+                  review: 'In Review',
+                  manual_required: 'Manual Queue',
+                  rejected: 'Rejected',
+                  interview: 'Interview',
+                  offered: 'Offered',
+                  failed: 'Failed',
+                };
+                const lifecycleLabels: Record<NonNullable<JobRecord['lifecycleStatus']>, string> = {
+                  discovered: 'Discovered',
+                  shown: 'Shown',
+                  saved: 'Saved',
+                  queued: 'Queued',
+                  applying: 'Applying',
+                  applied: 'Applied',
+                  failed: 'Failed',
+                  manual_required: 'Manual',
+                  dismissed: 'Dismissed',
+                };
+                const allStatuses: ApplicationStatus[] = ['queued', 'pending', 'in_progress', 'applied', 'review', 'manual_required', 'interview', 'offered', 'rejected', 'failed'];
+                const statCounts = {
+                  total: applications.length,
+                  inProgress: applications.filter(a => a.status === 'queued' || a.status === 'in_progress').length,
+                  manualQueue: applications.filter(a => a.status === 'manual_required').length,
+                  interview: applications.filter(a => a.status === 'interview').length,
+                  offered: applications.filter(a => a.status === 'offered').length,
+                };
+
+                return (
+                  <motion.div key="dashboard"
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -16 }}
+                    transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    className="py-8"
+                  >
+                    {/* Header row */}
+                    <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[var(--rt-accent-soft)] flex items-center justify-center">
+                          <LayoutDashboard className="w-5 h-5 text-[var(--rt-accent)]" />
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-bold tracking-tight">Application History</h2>
+                          <p className="text-xs text-[var(--rt-text-3)]">Track and manage your job applications</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => void fetchApplications()}
+                          disabled={dashboardLoading}
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[var(--rt-text-2)] hover:bg-[var(--rt-surface-2)] border border-[var(--rt-border)] transition-colors text-xs font-medium disabled:opacity-50"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${dashboardLoading ? 'animate-spin' : ''}`} />
+                          Refresh
+                        </button>
+                        {applications.length > 0 && (
+                          <button
+                            onClick={() => exportApplicationsCSV(applications)}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--rt-accent)] text-white hover:opacity-90 transition-opacity text-xs font-medium"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            Export CSV
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Summary stats */}
+                    {applications.length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                        {[
+                          { label: 'Total Applications', value: statCounts.total, color: 'text-[var(--rt-text)]' },
+                          { label: 'In Progress', value: statCounts.inProgress, color: 'text-blue-500 dark:text-blue-400' },
+                          { label: 'Manual Queue', value: statCounts.manualQueue, color: 'text-orange-500 dark:text-orange-400' },
+                          { label: 'Interviews', value: statCounts.interview, color: 'text-purple-600 dark:text-purple-400' },
+                          { label: 'Offers', value: statCounts.offered, color: 'text-emerald-600 dark:text-emerald-400' },
+                        ].map(stat => (
+                          <div key={stat.label} className="bg-[var(--rt-surface)] border border-[var(--rt-border)] rounded-xl px-4 py-3 [box-shadow:var(--rt-shadow-card)]">
+                            <p className="text-xs text-[var(--rt-text-3)] mb-1">{stat.label}</p>
+                            <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Loading state */}
+                    {dashboardLoading && (
+                      <div className="flex items-center justify-center py-20">
+                        <Loader2 className="w-8 h-8 text-[var(--rt-accent)] animate-spin" />
+                      </div>
+                    )}
+
+                    {/* Error state */}
+                    {!dashboardLoading && dashboardError && (
+                      <div className="flex items-start gap-3 px-4 py-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 rounded-xl text-red-700 dark:text-red-300">
+                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <p className="text-sm">{dashboardError}</p>
+                      </div>
+                    )}
+
+                    {/* Empty state */}
+                    {!dashboardLoading && !dashboardError && applications.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-20 text-center">
+                        <div className="w-16 h-16 rounded-2xl bg-[var(--rt-surface-2)] flex items-center justify-center mb-4">
+                          <Briefcase className="w-8 h-8 text-[var(--rt-text-3)]" />
+                        </div>
+                        <p className="text-base font-semibold text-[var(--rt-text-2)] mb-1">No applications yet</p>
+                        <p className="text-sm text-[var(--rt-text-3)]">Start applying to jobs to track them here!</p>
+                      </div>
+                    )}
+
+                    {/* Applications list */}
+                    {!dashboardLoading && !dashboardError && applications.length > 0 && (
+                      <div className="space-y-3">
+                        {applications.map(app => (
+                          <div key={app.id} className="bg-[var(--rt-surface)] border border-[var(--rt-border)] rounded-xl px-5 py-4 [box-shadow:var(--rt-shadow-card)] flex flex-col sm:flex-row sm:items-center gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start gap-2 flex-wrap">
+                                <p className="font-semibold text-sm text-[var(--rt-text)] truncate">
+                                  {app.job?.title ?? 'Unknown Role'}
+                                </p>
+                                <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold shrink-0 ${statusColors[app.status]}`}>
+                                  {statusLabels[app.status]}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3 mt-1 flex-wrap">
+                                {app.job?.company && (
+                                  <span className="flex items-center gap-1 text-xs text-[var(--rt-text-2)]">
+                                    <Building2 className="w-3 h-3 shrink-0" />
+                                    {app.job.company}
+                                  </span>
+                                )}
+                                {!app.job?.company && app.job?.sourceHost && (
+                                  <span className="flex items-center gap-1 text-xs text-[var(--rt-text-2)]">
+                                    <Building2 className="w-3 h-3 shrink-0" />
+                                    via {app.job.sourceHost.replace(/^www\./, '')}
+                                  </span>
+                                )}
+                                {app.applyUrl && (
+                                  <a
+                                    href={app.applyUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-xs text-[var(--rt-accent)] hover:underline truncate max-w-[200px]"
+                                  >
+                                    <LinkIcon className="w-3 h-3 shrink-0" />
+                                    {app.applyUrl.replace(/^https?:\/\//, '').split('/')[0]}
+                                  </a>
+                                )}
+                                <span className="text-xs text-[var(--rt-text-3)]">
+                                  {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '—'}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 mt-2 flex-wrap text-[11px] text-[var(--rt-text-3)]">
+                                {app.job?.lifecycleStatus && (
+                                  <span className="px-2 py-0.5 rounded-full bg-[var(--rt-surface-2)] border border-[var(--rt-border)]">
+                                    {lifecycleLabels[app.job.lifecycleStatus]}
+                                  </span>
+                                )}
+                                {app.portalType && (
+                                  <span className="px-2 py-0.5 rounded-full bg-[var(--rt-surface-2)] border border-[var(--rt-border)]">
+                                    {app.portalType}
+                                  </span>
+                                )}
+                                {app.executorMode && (
+                                  <span className="px-2 py-0.5 rounded-full bg-[var(--rt-surface-2)] border border-[var(--rt-border)]">
+                                    {app.executorMode.replace('_', ' ')}
+                                  </span>
+                                )}
+                                {typeof app.traceCount === 'number' && app.traceCount > 0 && (
+                                  <span>Trace: {app.traceCount}</span>
+                                )}
+                                {typeof app.retryCount === 'number' && app.retryCount > 0 && (
+                                  <span>Retry #{app.retryCount}</span>
+                                )}
+                                {app.job?.seenCount ? (
+                                  <span>Seen {app.job.seenCount}x</span>
+                                ) : null}
+                              </div>
+                              {(app.lastMessage || app.lastPauseReason) && (
+                                <p className="mt-2 text-xs text-[var(--rt-text-3)] line-clamp-2">
+                                  {app.lastMessage ?? app.lastPauseReason?.replace(/_/g, ' ')}
+                                </p>
+                              )}
+                              <div className="mt-2 flex items-center gap-2 flex-wrap">
+                                <button
+                                  onClick={() => void toggleApplicationReplayChain(app.id)}
+                                  className="text-[11px] font-medium text-[var(--rt-accent)] hover:underline"
+                                >
+                                  {expandedApplicationId === app.id ? 'Hide replay chain' : 'Replay chain'}
+                                </button>
+                                {app.job?.lastSeenAt && (
+                                  <span className="text-[11px] text-[var(--rt-text-3)]">
+                                    Last seen {new Date(app.job.lastSeenAt).toLocaleDateString()}
+                                  </span>
+                                )}
+                                {app.job?.lastAppliedAt && (
+                                  <span className="text-[11px] text-[var(--rt-text-3)]">
+                                    Last apply {new Date(app.job.lastAppliedAt).toLocaleDateString()}
+                                  </span>
+                                )}
+                              </div>
+                              {expandedApplicationId === app.id && (
+                                <div className="mt-3 rounded-xl border border-[var(--rt-border)] bg-[var(--rt-surface-2)] px-3 py-3">
+                                  {replayLoadingId === app.id && (
+                                    <div className="text-xs text-[var(--rt-text-3)]">Loading replay chain…</div>
+                                  )}
+                                  {replayLoadingId !== app.id && (applicationReplayChains[app.id]?.length ?? 0) === 0 && (
+                                    <div className="text-xs text-[var(--rt-text-3)]">No prior retries recorded for this application yet.</div>
+                                  )}
+                                  {replayLoadingId !== app.id && (applicationReplayChains[app.id]?.length ?? 0) > 0 && (
+                                    <div className="space-y-2">
+                                      {applicationReplayChains[app.id]!.map((entry) => (
+                                        <div key={entry.id} className="flex items-center justify-between gap-3 rounded-lg border border-[var(--rt-border)] bg-[var(--rt-surface)] px-3 py-2">
+                                          <div className="min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                              <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${statusColors[entry.status]}`}>
+                                                {statusLabels[entry.status]}
+                                              </span>
+                                              {typeof entry.retryCount === 'number' && (
+                                                <span className="text-[11px] text-[var(--rt-text-3)]">Retry {entry.retryCount}</span>
+                                              )}
+                                            </div>
+                                            <div className="mt-1 text-[11px] text-[var(--rt-text-3)]">
+                                              {entry.createdAt ? new Date(entry.createdAt).toLocaleString() : 'Unknown time'}
+                                            </div>
+                                          </div>
+                                          <div className="text-right text-[11px] text-[var(--rt-text-3)]">
+                                            {entry.traceCount ? <div>{entry.traceCount} trace events</div> : null}
+                                            {entry.portalType ? <div>{entry.portalType}</div> : null}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            <div className="shrink-0">
+                              <select
+                                value={app.status}
+                                onChange={e => void updateApplicationStatus(app.id, e.target.value as ApplicationStatus)}
+                                className="text-xs px-3 py-1.5 rounded-lg bg-[var(--rt-surface-2)] border border-[var(--rt-border)] text-[var(--rt-text)] focus:outline-none focus:ring-2 focus:ring-[var(--rt-accent-soft)] focus:border-[var(--rt-accent)] transition-all cursor-pointer"
+                              >
+                                {allStatuses.map(s => (
+                                  <option key={s} value={s}>{statusLabels[s]}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              }
 
               /* ════════════════ ENTRY — MODE PICKER ════════════════ */
               if (step === 0) return (
@@ -2669,6 +3343,15 @@ export default function App() {
                           <span className="text-zinc-400 dark:text-zinc-600">
                             Executor: {applySession?.executorMode ?? 'extension'}
                           </span>
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold ${
+                            localAgentStatus === 'connected'
+                              ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300'
+                              : localAgentStatus === 'checking'
+                              ? 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300'
+                              : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+                          }`} title={localAgentHealth ? `Managed profile: ${localAgentHealth.userDataDir}` : 'Local agent not detected'}>
+                            {localAgentStatus === 'connected' ? 'Local agent ready' : localAgentStatus === 'checking' ? 'Checking local agent…' : 'Local agent offline'}
+                          </span>
                           {applySession?.portalType && (
                             <span className="text-zinc-400 dark:text-zinc-600 capitalize">
                               Portal: {applySession.portalType}
@@ -2692,24 +3375,70 @@ export default function App() {
                               {applySession.latestMessage || 'Opening the form and filling supported fields…'}
                             </div>
                           ) : applySession.status === 'protected' ? (
-                            <div className="w-full flex items-center gap-2.5 px-4 py-3.5 rounded-xl text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
-                              <ShieldAlert className="w-4 h-4 shrink-0" />
-                              <span>Bot protection detected (Cloudflare / CAPTCHA). <button onClick={() => applyUrl.trim() && window.open(applyUrl.trim(), '_blank')} className="underline font-semibold">Open manually ↗</button></span>
-                            </div>
+                            <>
+                              <div className="w-full flex items-center gap-2.5 px-4 py-3.5 rounded-xl text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
+                                <ShieldAlert className="w-4 h-4 shrink-0" />
+                                <span>
+                                  {applySession.executorMode === 'local_agent'
+                                    ? describeManagedBrowserGate(applySession)
+                                    : <>Bot protection detected (Cloudflare / CAPTCHA). <button onClick={() => applyUrl.trim() && window.open(applyUrl.trim(), '_blank')} className="underline font-semibold">Open manually ↗</button></>}
+                                </span>
+                              </div>
+                              {applySession.executorMode === 'local_agent' && (
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                  <button
+                                    onClick={handleTakeOverApply}
+                                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-zinc-900 bg-zinc-100 hover:bg-zinc-200 dark:text-white dark:bg-zinc-800 dark:hover:bg-zinc-700 active:scale-[0.98] transition-all duration-200 border border-zinc-200 dark:border-zinc-700"
+                                  >
+                                    Take Over in Managed Browser →
+                                  </button>
+                                  <button
+                                    onClick={handleResumeAgentApply}
+                                    disabled={applyStarting}
+                                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-amber-600 hover:bg-amber-500 active:scale-[0.98] disabled:opacity-40 transition-all duration-200 shadow-lg shadow-amber-500/20"
+                                  >
+                                    {applyStarting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    Resume Agent →
+                                  </button>
+                                </div>
+                              )}
+                            </>
                           ) : applySession.status === 'review_required' ? (
                             <>
                               <div className="w-full flex items-center gap-2.5 px-4 py-3.5 rounded-xl text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
                                 <AlertCircle className="w-4 h-4 shrink-0" />
-                                <span>{applySession.latestMessage || 'Review the highlighted fields in the job portal, then ask the extension to re-check the page.'}</span>
+                                <span>{applySession.executorMode === 'local_agent'
+                                  ? describeManagedBrowserGate(applySession)
+                                  : (applySession.latestMessage || 'Review the highlighted fields in the job portal, then ask the extension to re-check the page.')}
+                                </span>
                               </div>
-                              <button
-                                onClick={handleResumeAgentApply}
-                                disabled={applyStarting}
-                                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-amber-600 hover:bg-amber-500 active:scale-[0.98] disabled:opacity-40 transition-all duration-200 shadow-lg shadow-amber-500/20"
-                              >
-                                {applyStarting && <Loader2 className="w-4 h-4 animate-spin" />}
-                                Re-check Form →
-                              </button>
+                              {applySession.executorMode === 'local_agent' ? (
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                  <button
+                                    onClick={handleTakeOverApply}
+                                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-zinc-900 bg-zinc-100 hover:bg-zinc-200 dark:text-white dark:bg-zinc-800 dark:hover:bg-zinc-700 active:scale-[0.98] transition-all duration-200 border border-zinc-200 dark:border-zinc-700"
+                                  >
+                                    Take Over in Managed Browser →
+                                  </button>
+                                  <button
+                                    onClick={handleResumeAgentApply}
+                                    disabled={applyStarting}
+                                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-amber-600 hover:bg-amber-500 active:scale-[0.98] disabled:opacity-40 transition-all duration-200 shadow-lg shadow-amber-500/20"
+                                  >
+                                    {applyStarting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    Resume Agent →
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={handleResumeAgentApply}
+                                  disabled={applyStarting}
+                                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-amber-600 hover:bg-amber-500 active:scale-[0.98] disabled:opacity-40 transition-all duration-200 shadow-lg shadow-amber-500/20"
+                                >
+                                  {applyStarting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                  Re-check Form →
+                                </button>
+                              )}
                             </>
                           ) : applySession.status === 'ready_to_submit' ? (
                             <button
@@ -2728,10 +3457,33 @@ export default function App() {
                               <span>{applySession.latestMessage || 'This portal needs manual completion right now.'}</span>
                             </div>
                           ) : applySession.status === 'manual_required' ? (
-                            <div className="w-full flex items-center gap-2.5 px-4 py-3.5 rounded-xl text-sm text-zinc-600 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700">
-                              <AlertCircle className="w-4 h-4 shrink-0" />
-                              <span>{applySession.latestMessage || 'The portal needs manual completion from this point.'}</span>
-                            </div>
+                            <>
+                              <div className="w-full flex items-center gap-2.5 px-4 py-3.5 rounded-xl text-sm text-zinc-600 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700">
+                                <AlertCircle className="w-4 h-4 shrink-0" />
+                                <span>{applySession.executorMode === 'local_agent'
+                                  ? describeManagedBrowserGate(applySession)
+                                  : (applySession.latestMessage || 'The portal needs manual completion from this point.')}
+                                </span>
+                              </div>
+                              {applySession.executorMode === 'local_agent' && (
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                  <button
+                                    onClick={handleTakeOverApply}
+                                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-zinc-900 bg-zinc-100 hover:bg-zinc-200 dark:text-white dark:bg-zinc-800 dark:hover:bg-zinc-700 active:scale-[0.98] transition-all duration-200 border border-zinc-200 dark:border-zinc-700"
+                                  >
+                                    Take Over in Managed Browser →
+                                  </button>
+                                  <button
+                                    onClick={handleResumeAgentApply}
+                                    disabled={applyStarting}
+                                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white bg-amber-600 hover:bg-amber-500 active:scale-[0.98] disabled:opacity-40 transition-all duration-200 shadow-lg shadow-amber-500/20"
+                                  >
+                                    {applyStarting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    Resume Agent →
+                                  </button>
+                                </div>
+                              )}
+                            </>
                           ) : null}
 
                           <button
@@ -2759,6 +3511,40 @@ export default function App() {
                           <div className="flex-1 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl px-4 py-3 text-center">
                             <p className="text-2xl font-black text-amber-600 dark:text-amber-400">{applySession.reviewCount}</p>
                             <p className="text-[10px] font-bold text-amber-700 dark:text-amber-500 uppercase tracking-widest mt-0.5">Need attention</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {applySession?.reviewItems && applySession.reviewItems.length > 0 && (
+                        <div className={`${card} p-5 mb-5`}>
+                          <div className="flex items-start justify-between gap-3 mb-4">
+                            <div>
+                              <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Needs Review</p>
+                              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">These fields blocked automation on the current page. You can save repeatable answers for future runs.</p>
+                            </div>
+                          </div>
+                          <div className="space-y-3">
+                            {applySession.reviewItems.map((item) => (
+                              <div key={item.fieldId} className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 dark:border-amber-500/20 dark:bg-amber-500/10">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">{item.label}</p>
+                                    <p className="text-xs text-amber-700/90 dark:text-amber-200/80 mt-1">{item.reason}</p>
+                                  </div>
+                                  <button
+                                    onClick={() => setAnswerBank((prev) => {
+                                      const normalizedLabel = normalizeWhitespace(item.label).toLowerCase();
+                                      const exists = prev.some((entry) => normalizeWhitespace(entry.question).toLowerCase() === normalizedLabel);
+                                      if (exists) return prev;
+                                      return [...prev, createAnswerBankEntry(item.label, '')];
+                                    })}
+                                    className="shrink-0 px-3 py-2 rounded-xl text-xs font-semibold text-amber-800 bg-white/80 hover:bg-white dark:bg-zinc-900/60 dark:text-amber-200 dark:hover:bg-zinc-900 transition-colors"
+                                  >
+                                    Save for Future
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}
@@ -2825,6 +3611,58 @@ export default function App() {
                             )}
                           </div>
                         )}
+                      </div>
+
+                      <div className={`${card} p-5 mb-5`}>
+                        <div className="flex items-start justify-between gap-3 mb-4">
+                          <div>
+                            <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Saved Screening Answers</p>
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Store recurring question/answer pairs so future portals can reuse them before pausing for review.</p>
+                          </div>
+                          <button
+                            onClick={addAnswerBankEntry}
+                            className="shrink-0 px-3 py-2 rounded-xl text-xs font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                          >
+                            Add Answer
+                          </button>
+                        </div>
+
+                        <div className="space-y-3">
+                          {answerBank.length === 0 ? (
+                            <div className="rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700 px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400">
+                              No recurring screening answers saved yet.
+                            </div>
+                          ) : answerBank.map((entry) => (
+                            <div key={entry.id} className="grid grid-cols-1 md:grid-cols-[1.1fr_1fr_auto] gap-3 items-start rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
+                              <label className="block">
+                                <span className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Question</span>
+                                <input
+                                  type="text"
+                                  value={entry.question}
+                                  onChange={(e) => handleAnswerBankChange(entry.id, 'question', e.target.value)}
+                                  placeholder="e.g. Are you open to relocation?"
+                                  className={`${inputCls} py-2.5`}
+                                />
+                              </label>
+                              <label className="block">
+                                <span className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Answer</span>
+                                <input
+                                  type="text"
+                                  value={entry.answer}
+                                  onChange={(e) => handleAnswerBankChange(entry.id, 'answer', e.target.value)}
+                                  placeholder="e.g. Yes"
+                                  className={`${inputCls} py-2.5`}
+                                />
+                              </label>
+                              <button
+                                onClick={() => removeAnswerBankEntry(entry.id)}
+                                className="mt-6 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20 transition-colors"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       </div>
 
                       {/* Nav buttons */}

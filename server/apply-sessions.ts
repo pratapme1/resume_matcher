@@ -1,8 +1,12 @@
 import type {
+  ApplyAutomationMetrics,
+  AnswerBankEntry,
   ApplicantProfile,
   ApplyPlanResponse,
+  ApplySessionContextResponse,
   ApplySessionEvent,
   ApplySessionSummary,
+  ApplySessionTraceEntry,
   ApplySessionStatus,
   DetectedControl,
   DetectedField,
@@ -12,6 +16,7 @@ import type {
   PageSnapshot,
   PlannedAction,
   PortalType,
+  JobLifecycleStatus,
   ResumeTemplateProfile,
   ReviewItem,
   TailoredResumeDocument,
@@ -21,10 +26,24 @@ import { detectPortalTypeFromUrl, isWidgetSupported } from './apply-capabilities
 import { deriveApplicantProfile, mergeApplicantProfiles } from './application-profile.ts';
 import { generateTailoredDocx } from './docx-render.ts';
 import { badRequest, internalServerError, notFound, unauthorized } from './errors.ts';
+import { isSupabaseConfigured } from './db/client.ts';
+import {
+  createApplication,
+  findLatestApplicationForReplay,
+  linkApplicationReplay,
+  updateApplicationRunDetails,
+  updateApplicationStatus,
+  upsertJob,
+  type ApplicationStatus,
+} from './db/queries/applications.ts';
+import { updateJobLifecycle } from './db/queries/jobs.ts';
+import { logger } from './logger.ts';
 
 type ApplySessionRecord = {
   id: string;
   userId?: string;
+  applicationId?: string;
+  jobId?: string;
   applyUrl: string;
   executorMode: ExecutorMode;
   portalType: PortalType;
@@ -33,6 +52,7 @@ type ApplySessionRecord = {
   createdAt: string;
   updatedAt: string;
   applicantProfile: ApplicantProfile;
+  answerBank: AnswerBankEntry[];
   latestMessage?: string;
   latestScreenshot?: string | null;
   latestPauseReason?: PauseReason;
@@ -42,11 +62,16 @@ type ApplySessionRecord = {
   filledCount: number;
   reviewItems: ReviewItem[];
   submitConfirmed: boolean;
+  trace: ApplySessionTraceEntry[];
   resumeAsset: {
     filename: string;
     mimeType: string;
     base64: string;
   };
+  experienceEntries: ApplySessionContextResponse['experienceEntries'];
+  educationEntries: ApplySessionContextResponse['educationEntries'];
+  projectEntries: ApplySessionContextResponse['projectEntries'];
+  certificationEntries: ApplySessionContextResponse['certificationEntries'];
 };
 
 const applySessions = new Map<string, ApplySessionRecord>();
@@ -66,9 +91,11 @@ function sessionSummary(session: ApplySessionRecord): ApplySessionSummary {
     executorMode: session.executorMode,
     portalType: session.portalType,
     status: session.status,
+    reviewItems: session.reviewItems,
     latestMessage: session.latestMessage,
     latestScreenshot: session.latestScreenshot ?? null,
     latestPauseReason: session.latestPauseReason,
+    latestPageUrl: session.latestPageUrl,
     latestStepKind: session.latestStepKind,
     latestStepSignature: session.latestStepSignature,
     filledCount: session.filledCount,
@@ -79,11 +106,55 @@ function sessionSummary(session: ApplySessionRecord): ApplySessionSummary {
   };
 }
 
+function buildApplySessionContext(tailoredResume: TailoredResumeDocument): ApplySessionContextResponse {
+  return {
+    experienceEntries: tailoredResume.experience.map((entry) => ({
+      company: entry.company,
+      title: entry.title,
+      location: entry.location,
+      dates: entry.dates,
+    })),
+    educationEntries: tailoredResume.education.map((entry) => ({
+      institution: entry.institution,
+      degree: entry.degree,
+      location: entry.location,
+      dates: entry.dates,
+    })),
+    projectEntries: tailoredResume.projects.map((entry) => ({
+      name: entry.name,
+      description: entry.description,
+    })),
+    certificationEntries: tailoredResume.certifications.map((entry) => ({
+      name: entry,
+    })),
+  };
+}
+
 function updateSession(session: ApplySessionRecord, patch: Partial<ApplySessionRecord>) {
   Object.assign(session, patch, { updatedAt: nowIso() });
 }
 
+function pushTrace(
+  session: ApplySessionRecord,
+  entry: Omit<ApplySessionTraceEntry, 'id' | 'at'>,
+) {
+  if (!Array.isArray(session.trace)) {
+    session.trace = [];
+  }
+  session.trace.push({
+    id: crypto.randomUUID(),
+    at: nowIso(),
+    ...entry,
+  });
+  if (session.trace.length > 200) {
+    session.trace = session.trace.slice(-200);
+  }
+}
+
 function inferSemanticType(field: DetectedField): FieldSemanticType {
+  if (field.semanticHint && field.semanticHint !== 'unknown') {
+    return field.semanticHint;
+  }
   const text = [field.label, field.name, field.placeholder].join(' ').toLowerCase();
   if (field.inputType === 'file') {
     if (/cover\s*letter/.test(text)) return 'cover_letter_upload';
@@ -110,7 +181,7 @@ function inferSemanticType(field: DetectedField): FieldSemanticType {
   if (/sponsorship|require[\s_-]*visa|visa[\s_-]*sponsorship|need[\s_-]*sponsorship/.test(text)) return 'requires_sponsorship';
   if (/visa[\s_-]*status|current[\s_-]*visa|work[\s_-]*visa/.test(text)) return 'visa_status';
   if (/gender|sex/.test(text)) return 'gender';
-  if (/location|city|address|town|state/.test(text)) return 'location';
+  if (/\b(current\s*location|preferred\s*location|location|city|address|town|state)\b/.test(text) || /currentlocation|preferredlocation/.test(text)) return 'location';
   return 'unknown';
 }
 
@@ -137,53 +208,275 @@ function optionMatchesValue(field: DetectedField, candidate: string): string | u
   return fuzzy?.value;
 }
 
-function getFieldValue(field: DetectedField, profile: ApplicantProfile): { value?: string; semanticType: FieldSemanticType } {
+function normalizeAnswerPrompt(value?: string) {
+  return (value ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function findAnswerBankValue(
+  field: DetectedField,
+  answerBank: AnswerBankEntry[],
+  portalType: PortalType,
+  semanticType: FieldSemanticType,
+) {
+  const promptCandidates = [
+    field.label,
+    field.placeholder,
+    field.name,
+    `${field.label} ${field.placeholder}`,
+  ].map(normalizeAnswerPrompt).filter(Boolean);
+
+  const matchingEntries = answerBank.filter((entry) => {
+    const samePortal = !entry.portalType || entry.portalType === 'any' || entry.portalType === portalType;
+    const sameSemantic = entry.semanticType ? entry.semanticType === semanticType : true;
+    return samePortal && sameSemantic;
+  });
+
+  const byPrompt = matchingEntries.find((entry) =>
+    promptCandidates.some((candidate) => candidate === entry.normalizedQuestion),
+  );
+  if (byPrompt) return byPrompt.answer;
+
+  if (semanticType !== 'unknown') {
+    const bySemantic = matchingEntries.find((entry) => entry.semanticType === semanticType);
+    if (bySemantic) return bySemantic.answer;
+  }
+
+  const fuzzy = matchingEntries.find((entry) =>
+    promptCandidates.some((candidate) =>
+      candidate.includes(entry.normalizedQuestion) || entry.normalizedQuestion.includes(candidate),
+    ),
+  );
+  return fuzzy?.answer;
+}
+
+type RepeaterSection = 'experience' | 'education' | 'project' | 'certification';
+type RepeaterAttribute =
+  | 'company'
+  | 'title'
+  | 'location'
+  | 'dates'
+  | 'institution'
+  | 'degree'
+  | 'name'
+  | 'description';
+
+function normalizeRepeaterIndex(rawIndex: number, source: string) {
+  if (source.includes('[')) return rawIndex;
+  return rawIndex > 0 ? rawIndex - 1 : rawIndex;
+}
+
+function parseRepeaterIndex(source: string, section: RepeaterSection) {
+  const normalized = source.toLowerCase();
+  const patterns = section === 'experience'
+    ? [
+        /experience\[(\d+)\]/,
+        /work[_-]?experience\[(\d+)\]/,
+        /employment(?:history)?\[(\d+)\]/,
+        /experience[_-](\d+)[_-]/,
+        /work[_-]?experience[_-](\d+)[_-]/,
+        /employment(?:history)?[_-](\d+)[_-]/,
+      ]
+    : section === 'education'
+    ? [
+        /education\[(\d+)\]/,
+        /school\[(\d+)\]/,
+        /education[_-](\d+)[_-]/,
+        /school[_-](\d+)[_-]/,
+      ]
+    : section === 'project'
+    ? [
+        /projects?\[(\d+)\]/,
+        /portfolio[_-]?projects?\[(\d+)\]/,
+        /projects?[_-](\d+)[_-]/,
+        /portfolio[_-]?projects?[_-](\d+)[_-]/,
+      ]
+    : [
+        /certifications?\[(\d+)\]/,
+        /licenses?\[(\d+)\]/,
+        /certifications?[_-](\d+)[_-]/,
+        /licenses?[_-](\d+)[_-]/,
+      ];
+
+  for (const pattern of patterns) {
+    const match = normalized.match(pattern);
+    if (match?.[1]) {
+      return normalizeRepeaterIndex(Number(match[1]), source);
+    }
+  }
+
+  return undefined;
+}
+
+function inferRepeaterAttribute(field: DetectedField, section: RepeaterSection): RepeaterAttribute | undefined {
+  const combined = `${field.name} ${field.label} ${field.placeholder}`.toLowerCase();
+  if (/location|city/.test(combined)) return 'location';
+  if (/date|period|duration|from|to/.test(combined)) return 'dates';
+
+  if (section === 'experience') {
+    if (/company|employer|organization/.test(combined)) return 'company';
+    if (/title|role|designation|position/.test(combined)) return 'title';
+    return undefined;
+  }
+
+  if (section === 'education') {
+    if (/institution|school|college|university/.test(combined)) return 'institution';
+    if (/degree|qualification|program|course|major/.test(combined)) return 'degree';
+    return undefined;
+  }
+
+  if (section === 'project') {
+    if (/description|summary|overview|details/.test(combined)) return 'description';
+    if (/name|project/.test(combined)) return 'name';
+    return undefined;
+  }
+
+  if (/certification|certificate|license|licence|name/.test(combined)) return 'name';
+  return undefined;
+}
+
+function findRepeaterFieldValue(
+  field: DetectedField,
+  session: ApplySessionRecord,
+): { semanticType: FieldSemanticType; value?: string } | undefined {
+  const sources = [field.name, field.label, field.placeholder].filter(Boolean);
+
+  for (const source of sources) {
+    const experienceIndex = parseRepeaterIndex(source, 'experience');
+    if (typeof experienceIndex === 'number') {
+      const attribute = inferRepeaterAttribute(field, 'experience');
+      const entry = session.experienceEntries[experienceIndex];
+      if (!entry || !attribute) continue;
+      return {
+        semanticType: 'unknown',
+        value: entry[attribute],
+      };
+    }
+
+    const educationIndex = parseRepeaterIndex(source, 'education');
+    if (typeof educationIndex === 'number') {
+      const attribute = inferRepeaterAttribute(field, 'education');
+      const entry = session.educationEntries[educationIndex];
+      if (!entry || !attribute) continue;
+      return {
+        semanticType: 'unknown',
+        value: entry[attribute],
+      };
+    }
+
+    const projectIndex = parseRepeaterIndex(source, 'project');
+    if (typeof projectIndex === 'number') {
+      const attribute = inferRepeaterAttribute(field, 'project');
+      const entry = session.projectEntries[projectIndex];
+      if (!entry || !attribute) continue;
+      return {
+        semanticType: 'unknown',
+        value: entry[attribute],
+      };
+    }
+
+    const certificationIndex = parseRepeaterIndex(source, 'certification');
+    if (typeof certificationIndex === 'number') {
+      const attribute = inferRepeaterAttribute(field, 'certification');
+      const entry = session.certificationEntries[certificationIndex];
+      if (!entry || !attribute) continue;
+      return {
+        semanticType: 'unknown',
+        value: entry[attribute],
+      };
+    }
+  }
+
+  return undefined;
+}
+
+function getFieldValue(
+  field: DetectedField,
+  profile: ApplicantProfile,
+  answerBank: AnswerBankEntry[],
+  portalType: PortalType,
+  session: ApplySessionRecord,
+): { value?: string; semanticType: FieldSemanticType } {
+  const repeaterValue = findRepeaterFieldValue(field, session);
+  if (repeaterValue?.value) {
+    return repeaterValue;
+  }
+
   const semanticType = inferSemanticType(field);
+  let value: string | undefined;
   switch (semanticType) {
     case 'full_name':
-      return { semanticType, value: profile.fullName };
+      value = profile.fullName;
+      break;
     case 'first_name':
-      return { semanticType, value: profile.firstName };
+      value = profile.firstName;
+      break;
     case 'last_name':
-      return { semanticType, value: profile.lastName };
+      value = profile.lastName;
+      break;
     case 'email':
-      return { semanticType, value: profile.email };
+      value = profile.email;
+      break;
     case 'phone':
-      return { semanticType, value: normalizePhone(profile.phone) };
+      value = normalizePhone(profile.phone);
+      break;
     case 'linkedin':
-      return { semanticType, value: profile.linkedin };
+      value = profile.linkedin;
+      break;
     case 'github':
-      return { semanticType, value: profile.github };
+      value = profile.github;
+      break;
     case 'portfolio':
-      return { semanticType, value: profile.portfolio ?? profile.github ?? profile.website };
+      value = profile.portfolio ?? profile.github ?? profile.website;
+      break;
     case 'website':
-      return { semanticType, value: profile.website ?? profile.portfolio ?? profile.github };
+      value = profile.website ?? profile.portfolio ?? profile.github;
+      break;
     case 'location':
     case 'city':
-      return { semanticType, value: profile.location };
+      value = profile.location;
+      break;
     case 'current_company':
-      return { semanticType, value: profile.currentCompany };
+      value = profile.currentCompany;
+      break;
     case 'current_title':
-      return { semanticType, value: profile.currentTitle };
+      value = profile.currentTitle;
+      break;
     case 'years_of_experience':
-      return { semanticType, value: profile.yearsOfExperience };
+      value = profile.yearsOfExperience;
+      break;
     case 'current_ctc':
-      return { semanticType, value: profile.currentCtcLpa };
+      value = profile.currentCtcLpa;
+      break;
     case 'expected_ctc':
-      return { semanticType, value: profile.expectedCtcLpa };
+      value = profile.expectedCtcLpa;
+      break;
     case 'notice_period':
-      return { semanticType, value: profile.noticePeriodDays };
+      value = profile.noticePeriodDays;
+      break;
     case 'work_authorization':
-      return { semanticType, value: profile.workAuthorization };
+      value = profile.workAuthorization;
+      break;
     case 'requires_sponsorship':
-      return { semanticType, value: profile.requiresSponsorship };
+      value = profile.requiresSponsorship;
+      break;
     case 'visa_status':
-      return { semanticType, value: profile.visaStatus };
+      value = profile.visaStatus;
+      break;
     case 'gender':
-      return { semanticType, value: profile.gender };
+      value = profile.gender;
+      break;
     default:
-      return { semanticType };
+      value = undefined;
   }
+
+  return {
+    semanticType,
+    value: value ?? findAnswerBankValue(field, answerBank, portalType, semanticType),
+  };
 }
 
 function getAdvanceControl(controls: DetectedControl[]) {
@@ -194,6 +487,115 @@ function getSubmitControl(controls: DetectedControl[]) {
   return controls.find((control) => control.kind === 'submit');
 }
 
+function parseApplyUrlMetadata(applyUrl: string, portalType: PortalType) {
+  try {
+    const parsed = new URL(applyUrl);
+    return {
+      sourceHost: parsed.hostname,
+      sourceType: portalType === 'generic' || portalType === 'unknown' ? 'direct' : portalType,
+      verifiedSource: portalType !== 'unknown' && portalType !== 'protected',
+      lastVerifiedAt: nowIso(),
+    };
+  } catch {
+    return {
+      sourceHost: undefined,
+      sourceType: portalType === 'generic' || portalType === 'unknown' ? 'direct' : portalType,
+      verifiedSource: false,
+      lastVerifiedAt: undefined,
+    };
+  }
+}
+
+function normalizeFieldPrompt(...parts: Array<string | undefined>) {
+  return parts
+    .map((part) => normalizeAnswerPrompt(part))
+    .find(Boolean) ?? '';
+}
+
+function extractFieldAnswer(field: DetectedField): string | undefined {
+  if (field.inputType === 'checkbox') {
+    return typeof field.checked === 'boolean' ? (field.checked ? 'Yes' : 'No') : undefined;
+  }
+  const directValue = (field.value ?? '').trim();
+  if (directValue) return directValue;
+  if (field.hasValue && typeof field.checked === 'boolean') {
+    return field.checked ? 'Yes' : 'No';
+  }
+  return undefined;
+}
+
+function applyProfileUpdate(
+  profileUpdates: Partial<ApplicantProfile>,
+  semanticType: FieldSemanticType,
+  value: string,
+) {
+  switch (semanticType) {
+    case 'full_name':
+      profileUpdates.fullName = value;
+      break;
+    case 'first_name':
+      profileUpdates.firstName = value;
+      break;
+    case 'last_name':
+      profileUpdates.lastName = value;
+      break;
+    case 'email':
+      profileUpdates.email = value;
+      break;
+    case 'phone':
+      profileUpdates.phone = value;
+      break;
+    case 'linkedin':
+      profileUpdates.linkedin = value;
+      break;
+    case 'github':
+      profileUpdates.github = value;
+      break;
+    case 'portfolio':
+      profileUpdates.portfolio = value;
+      break;
+    case 'website':
+      profileUpdates.website = value;
+      break;
+    case 'location':
+    case 'city':
+      profileUpdates.location = value;
+      break;
+    case 'current_company':
+      profileUpdates.currentCompany = value;
+      break;
+    case 'current_title':
+      profileUpdates.currentTitle = value;
+      break;
+    case 'years_of_experience':
+      profileUpdates.yearsOfExperience = value;
+      break;
+    case 'current_ctc':
+      profileUpdates.currentCtcLpa = value;
+      break;
+    case 'expected_ctc':
+      profileUpdates.expectedCtcLpa = value;
+      break;
+    case 'notice_period':
+      profileUpdates.noticePeriodDays = value;
+      break;
+    case 'work_authorization':
+      profileUpdates.workAuthorization = value;
+      break;
+    case 'requires_sponsorship':
+      profileUpdates.requiresSponsorship = value;
+      break;
+    case 'visa_status':
+      profileUpdates.visaStatus = value;
+      break;
+    case 'gender':
+      profileUpdates.gender = value;
+      break;
+    default:
+      break;
+  }
+}
+
 export async function createApplySession(params: {
   applyUrl: string;
   userId?: string;
@@ -201,10 +603,18 @@ export async function createApplySession(params: {
   templateProfile: ResumeTemplateProfile;
   validation: ValidationReport;
   applicationProfile?: Partial<ApplicantProfile> | null;
+  answerBank?: AnswerBankEntry[] | null;
+  executorMode?: Extract<ExecutorMode, 'extension' | 'local_agent'>;
+  job?: {
+    title?: string;
+    company?: string;
+    location?: string;
+    description?: string;
+  };
 }): Promise<{ session: ApplySessionSummary; executorToken: string }> {
   const createdAt = nowIso();
   const portalType = detectPortalTypeFromUrl(params.applyUrl);
-  const executorMode: ExecutorMode = 'extension';
+  const executorMode: ExecutorMode = params.executorMode ?? 'extension';
   const id = crypto.randomUUID();
   const executorToken = crypto.randomUUID();
 
@@ -234,6 +644,7 @@ export async function createApplySession(params: {
       deriveApplicantProfile({ tailoredResume: params.tailoredResume }),
       params.applicationProfile,
     ),
+    answerBank: params.answerBank ?? [],
     latestMessage: 'Apply session created.',
     latestScreenshot: null,
     latestPauseReason: 'none',
@@ -243,14 +654,69 @@ export async function createApplySession(params: {
     filledCount: 0,
     reviewItems: [],
     submitConfirmed: false,
+    trace: [],
     resumeAsset: {
       filename,
       mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       base64: buffer.toString('base64'),
     },
+    ...buildApplySessionContext(params.tailoredResume),
   };
 
+  pushTrace(session, {
+    source: 'system',
+    event: 'created',
+    status: 'created',
+    message: 'Apply session created.',
+    portalType,
+    pageUrl: params.applyUrl,
+  });
+
   applySessions.set(id, session);
+
+  if (params.userId && isSupabaseConfigured()) {
+    const userId = params.userId;
+    const applyUrl = params.applyUrl;
+    const sourceMetadata = parseApplyUrlMetadata(applyUrl, portalType);
+    Promise.resolve()
+      .then(async () => {
+        const jobId = await upsertJob(userId, {
+          url: applyUrl,
+          applyUrl,
+          title: params.job?.title,
+          company: params.job?.company,
+          location: params.job?.location,
+          description: params.job?.description,
+          sourceHost: sourceMetadata.sourceHost,
+          sourceType: sourceMetadata.sourceType,
+          verifiedSource: sourceMetadata.verifiedSource,
+          lastVerifiedAt: sourceMetadata.lastVerifiedAt,
+          lifecycleStatus: 'queued',
+          lastSeenAt: createdAt,
+          lastAppliedAt: createdAt,
+        });
+        session.jobId = jobId;
+        const previousApplication = await findLatestApplicationForReplay(userId, { applyUrl, jobId });
+        const retryCount = (previousApplication?.retryCount ?? -1) + 1;
+        const applicationId = await createApplication(userId, jobId, id, applyUrl, 'queued', {
+          retryCount,
+          replayOfApplicationId: previousApplication?.id ?? null,
+        });
+        if (previousApplication?.id) {
+          await linkApplicationReplay(previousApplication.id, applicationId, userId);
+        }
+        session.applicationId = applicationId;
+        await updateApplicationRunDetails(applicationId, {
+          trace: session.trace,
+          lastStepKind: session.latestStepKind,
+          portalType: session.portalType,
+          executorMode: session.executorMode,
+        }, userId);
+        await updateJobLifecycle(userId, jobId, 'queued', { applyUrl });
+      })
+      .catch((err) => logger.error({ err }, 'Failed to persist apply session to DB'));
+  }
+
   return { session: sessionSummary(session), executorToken };
 }
 
@@ -263,6 +729,10 @@ export function getApplySessionForUser(sessionId: string, userId?: string): Appl
     throw notFound('Apply session not found.', 'NOT_FOUND');
   }
   return sessionSummary(session);
+}
+
+export function getApplySessionForExecutor(sessionId: string, executorToken: string): ApplySessionSummary {
+  return sessionSummary(getApplySessionByToken(sessionId, executorToken));
 }
 
 function getApplySessionByToken(sessionId: string, executorToken: string): ApplySessionRecord {
@@ -283,6 +753,59 @@ function reviewReasonToPauseReason(reason: string): PauseReason {
   return 'manual_required';
 }
 
+function statusToJobLifecycle(status: ApplySessionStatus, pauseReason?: PauseReason): JobLifecycleStatus | null {
+  if (status === 'created' || status === 'queued') return 'queued';
+  if (status === 'starting' || status === 'filling' || status === 'ready_to_submit' || status === 'submitting') return 'applying';
+  if (status === 'submitted') return 'applied';
+  if (status === 'protected' || status === 'unsupported') return 'manual_required';
+  if (status === 'review_required' || status === 'manual_required') {
+    if (pauseReason === 'protected_portal') return 'manual_required';
+    return 'manual_required';
+  }
+  if (status === 'failed') return 'failed';
+  return null;
+}
+
+function syncJobLifecycle(session: ApplySessionRecord, status: ApplySessionStatus) {
+  if (!session.userId || !session.jobId || !isSupabaseConfigured()) return;
+  const lifecycleStatus = statusToJobLifecycle(status, session.latestPauseReason);
+  if (!lifecycleStatus) return;
+
+  Promise.resolve()
+    .then(async () => {
+      await updateJobLifecycle(session.userId!, session.jobId!, lifecycleStatus, {
+        applyUrl: session.applyUrl,
+      });
+    })
+    .catch((err) => logger.error({ err }, 'Failed to sync job lifecycle from apply-session state.'));
+}
+
+function persistApplicationRunState(session: ApplySessionRecord) {
+  if (!session.userId || !isSupabaseConfigured()) return;
+
+  Promise.resolve()
+    .then(async () => {
+      const { getApplicationBySessionId } = await import('./db/queries/applications.ts');
+      const application = session.applicationId
+        ? { id: session.applicationId, userId: session.userId }
+        : await getApplicationBySessionId(session.id);
+      if (!application) return;
+      if (!session.applicationId && application.id) {
+        session.applicationId = application.id;
+      }
+      if (!session.jobId && 'jobId' in application && typeof application.jobId === 'string') {
+        session.jobId = application.jobId;
+      }
+      await updateApplicationRunDetails(application.id, {
+        trace: session.trace,
+        lastStepKind: session.latestStepKind,
+        portalType: session.portalType,
+        executorMode: session.executorMode,
+      }, application.userId);
+    })
+    .catch((err) => logger.error({ err }, 'Failed to persist apply-session run details.'));
+}
+
 export function planApplySnapshot(sessionId: string, executorToken: string, snapshot: PageSnapshot): ApplyPlanResponse {
   const session = getApplySessionByToken(sessionId, executorToken);
   const actions: PlannedAction[] = [];
@@ -290,9 +813,22 @@ export function planApplySnapshot(sessionId: string, executorToken: string, snap
   const effectivePortalType = snapshot.portalType === 'unknown' ? session.portalType : snapshot.portalType;
 
   for (const field of snapshot.fields) {
-    const { semanticType, value } = getFieldValue(field, session.applicantProfile);
+    if (field.reviewOnlyReason) {
+      const fieldAlreadySatisfied = Boolean(field.hasValue || field.checked || (field.value ?? '').trim());
+      if (!fieldAlreadySatisfied && field.required) {
+        reviewItems.push({
+          fieldId: field.id,
+          label: field.label || field.name || field.placeholder || 'Required field',
+          reason: field.reviewOnlyReason,
+          required: true,
+        });
+      }
+      continue;
+    }
+
+    const { semanticType, value } = getFieldValue(field, session.applicantProfile, session.answerBank, session.portalType, session);
     const fieldAlreadySatisfied = Boolean(field.hasValue || field.checked || (field.value ?? '').trim());
-    const widgetSupported = isWidgetSupported(effectivePortalType, field.widgetKind);
+    const widgetSupported = isWidgetSupported(effectivePortalType, field.widgetKind, session.executorMode);
 
     if (!widgetSupported) {
       if (!fieldAlreadySatisfied && field.required) {
@@ -340,7 +876,24 @@ export function planApplySnapshot(sessionId: string, executorToken: string, snap
       continue;
     }
 
-    if (field.tagName === 'select' || field.inputType === 'select-one') {
+    if (
+      field.tagName === 'select'
+      || field.inputType === 'select-one'
+      || field.widgetKind === 'custom_combobox'
+      || field.widgetKind === 'custom_multiselect'
+      || field.widgetKind === 'custom_card_group'
+    ) {
+      if (
+        session.executorMode === 'local_agent'
+        && (
+          field.widgetKind === 'custom_multiselect'
+          || field.widgetKind === 'custom_combobox'
+          || field.widgetKind === 'custom_card_group'
+        )
+      ) {
+        actions.push({ type: 'select', fieldId: field.id, value, semanticType });
+        continue;
+      }
       const optionValue = optionMatchesValue(field, value);
       if (optionValue) {
         actions.push({ type: 'select', fieldId: field.id, value: optionValue, semanticType });
@@ -406,6 +959,23 @@ export function planApplySnapshot(sessionId: string, executorToken: string, snap
     reviewItems,
   });
 
+  pushTrace(session, {
+    source: 'planner',
+    event: 'plan_generated',
+    status,
+    message: reviewItems.length > 0 ? 'Planner produced review items.' : 'Planner produced actions.',
+    portalType: effectivePortalType,
+    pauseReason,
+    pageUrl: snapshot.url,
+    stepKind: snapshot.stepKind,
+    stepSignature: snapshot.stepSignature,
+    filledCount: actions.length,
+    reviewCount: reviewItems.length,
+    actionCount: actions.length,
+  });
+
+  persistApplicationRunState(session);
+
   return {
     portalType: effectivePortalType,
     status,
@@ -431,6 +1001,82 @@ export function recordApplySessionEvent(sessionId: string, executorToken: string
     reviewItems: event.reviewItems ?? session.reviewItems,
     portalType: event.portalType ?? session.portalType,
   });
+
+  pushTrace(session, {
+    source: 'executor',
+    event: 'executor_event',
+    status: event.status ?? session.status,
+    message: event.message,
+    portalType: event.portalType ?? session.portalType,
+    pauseReason: event.pauseReason,
+    pageUrl: event.pageUrl,
+    stepKind: event.stepKind,
+    stepSignature: event.stepSignature,
+    filledCount: event.filledCount,
+    reviewCount: event.reviewItems?.length,
+  });
+
+  const eventStatus = event.status ?? session.status;
+  persistApplicationRunState(session);
+  syncJobLifecycle(session, eventStatus);
+
+  const applicationStatus: ApplicationStatus | null =
+    eventStatus === 'created' || eventStatus === 'queued'
+      ? 'queued'
+      : eventStatus === 'starting' || eventStatus === 'filling' || eventStatus === 'submitting'
+      ? 'in_progress'
+      : eventStatus === 'ready_to_submit' || eventStatus === 'review_required'
+      ? 'review'
+      : eventStatus === 'submitted'
+      ? 'applied'
+      : eventStatus === 'protected' || eventStatus === 'unsupported' || eventStatus === 'manual_required'
+      ? 'manual_required'
+      : eventStatus === 'failed'
+      ? 'failed'
+      : null;
+
+  if (applicationStatus && isSupabaseConfigured()) {
+    Promise.resolve()
+      .then(async () => {
+        const { getApplicationBySessionId } = await import('./db/queries/applications.ts');
+        const application = await getApplicationBySessionId(sessionId);
+        if (application) {
+          await updateApplicationStatus(
+            application.id,
+            applicationStatus,
+            undefined,
+            eventStatus === 'failed' ? (event.message ?? undefined) : undefined,
+            application.userId,
+            event.pauseReason ?? undefined,
+            event.message ?? undefined,
+          );
+        }
+      })
+      .catch((err) => logger.error({ err }, 'Failed to sync application status from apply-session event'));
+  }
+  return sessionSummary(session);
+}
+
+export function setApplySessionExecutorMode(
+  sessionId: string,
+  executorToken: string,
+  executorMode: Extract<ExecutorMode, 'extension' | 'local_agent'>,
+  message?: string,
+): ApplySessionSummary {
+  const session = getApplySessionByToken(sessionId, executorToken);
+  updateSession(session, {
+    executorMode,
+    latestMessage: message ?? session.latestMessage,
+  });
+  pushTrace(session, {
+    source: 'system',
+    event: 'executor_mode_changed',
+    status: session.status,
+    message: message ?? `Executor switched to ${executorMode}.`,
+    portalType: session.portalType,
+    pageUrl: session.latestPageUrl ?? session.applyUrl,
+  });
+  persistApplicationRunState(session);
   return sessionSummary(session);
 }
 
@@ -445,7 +1091,129 @@ export function confirmApplySessionSubmit(sessionId: string, userId?: string): A
     latestMessage: 'Submit confirmed. Waiting for executor.',
     latestPauseReason: 'none',
   });
+  pushTrace(session, {
+    source: 'user',
+    event: 'confirm_submit',
+    status: 'submitting',
+    message: 'User confirmed submit.',
+    portalType: session.portalType,
+    pageUrl: session.latestPageUrl,
+    stepKind: session.latestStepKind,
+    stepSignature: session.latestStepSignature,
+  });
+  persistApplicationRunState(session);
+  syncJobLifecycle(session, 'submitting');
   return sessionSummary(session);
+}
+
+export function learnApplySessionCorrections(
+  sessionId: string,
+  userId: string | undefined,
+  snapshot: PageSnapshot,
+) {
+  const session = applySessions.get(sessionId);
+  if (!session || (session.userId && userId && session.userId !== userId)) {
+    throw notFound('Apply session not found.', 'NOT_FOUND');
+  }
+  if (!session) {
+    throw notFound('Apply session not found.', 'NOT_FOUND');
+  }
+
+  const profileUpdates: Partial<ApplicantProfile> = {};
+  const learnedAnswerEntries: AnswerBankEntry[] = [];
+  let learnedCount = 0;
+
+  const reviewLookup = new Map<string, ReviewItem>();
+  const reviewPrompts = new Set<string>();
+  for (const item of session.reviewItems) {
+    reviewLookup.set(item.fieldId, item);
+    const normalized = normalizeFieldPrompt(item.label);
+    if (normalized) reviewPrompts.add(normalized);
+  }
+
+  for (const field of snapshot.fields) {
+    const normalizedPrompt = normalizeFieldPrompt(field.label, field.placeholder, field.name);
+    const isReviewedField = reviewLookup.has(field.id) || (normalizedPrompt && reviewPrompts.has(normalizedPrompt));
+    if (!isReviewedField) continue;
+
+    const answer = extractFieldAnswer(field);
+    if (!answer) continue;
+
+    const semanticType = inferSemanticType(field);
+    if (semanticType !== 'unknown' && semanticType !== 'resume_upload' && semanticType !== 'cover_letter_upload') {
+      applyProfileUpdate(profileUpdates, semanticType, answer);
+      learnedCount += 1;
+      continue;
+    }
+
+    learnedAnswerEntries.push({
+      id: crypto.randomUUID(),
+      question: field.label || field.placeholder || field.name || 'Application question',
+      normalizedQuestion: normalizedPrompt,
+      answer,
+      portalType: session.portalType === 'unknown' ? 'any' : session.portalType,
+      semanticType,
+      source: 'managed_browser',
+      confidence: 'learned',
+      usageCount: 0,
+      lastUsedAt: nowIso(),
+      updatedAt: nowIso(),
+    });
+    learnedCount += 1;
+  }
+
+  if (learnedCount === 0) {
+    return {
+      session: sessionSummary(session),
+      profileUpdates: {},
+      answerBank: session.answerBank,
+      learnedCount: 0,
+    };
+  }
+
+  const mergedProfile = mergeApplicantProfiles(session.applicantProfile, profileUpdates);
+  const mergedAnswerBank = [
+    ...session.answerBank.filter((existing) =>
+      !learnedAnswerEntries.some((learned) =>
+        learned.portalType === existing.portalType
+        && learned.semanticType === existing.semanticType
+        && learned.normalizedQuestion === existing.normalizedQuestion,
+      ),
+    ),
+    ...learnedAnswerEntries,
+  ].sort((left, right) => left.question.localeCompare(right.question));
+
+  updateSession(session, {
+    applicantProfile: mergedProfile,
+    answerBank: mergedAnswerBank,
+  });
+
+  pushTrace(session, {
+    source: 'user',
+    event: 'learn',
+    status: session.status,
+    message: `Learned ${learnedCount} corrected answer${learnedCount === 1 ? '' : 's'}.`,
+    portalType: session.portalType,
+    pageUrl: snapshot.url,
+    stepKind: snapshot.stepKind,
+    stepSignature: snapshot.stepSignature,
+    reviewCount: session.reviewItems.length,
+  });
+
+  persistApplicationRunState(session);
+
+  return {
+    session: sessionSummary(session),
+    profileUpdates,
+    answerBank: mergedAnswerBank,
+    learnedCount,
+  };
+}
+
+function outcomeToApplicationStatus(outcome: ApplySessionStatus): ApplicationStatus {
+  if (outcome === 'submitted') return 'applied';
+  if (outcome === 'protected' || outcome === 'unsupported' || outcome === 'manual_required') return 'manual_required';
+  return 'failed';
 }
 
 export function completeApplySession(sessionId: string, executorToken: string, outcome: ApplySessionStatus, message?: string): ApplySessionSummary {
@@ -462,5 +1230,87 @@ export function completeApplySession(sessionId: string, executorToken: string, o
       ? (session.latestPauseReason && session.latestPauseReason !== 'none' ? session.latestPauseReason : 'manual_required')
       : 'none',
   });
+
+  pushTrace(session, {
+    source: 'system',
+    event: 'completed',
+    status: outcome,
+    message: message ?? session.latestMessage,
+    portalType: session.portalType,
+    pauseReason: session.latestPauseReason,
+    pageUrl: session.latestPageUrl,
+    stepKind: session.latestStepKind,
+    stepSignature: session.latestStepSignature,
+  });
+
+  persistApplicationRunState(session);
+  syncJobLifecycle(session, outcome);
+
+  const applicationStatus = outcomeToApplicationStatus(outcome);
+  if (isSupabaseConfigured()) {
+    Promise.resolve()
+      .then(async () => {
+        const { getApplicationBySessionId } = await import('./db/queries/applications.ts');
+        const application = await getApplicationBySessionId(sessionId);
+        if (application) {
+          await updateApplicationStatus(
+            application.id,
+            applicationStatus,
+            undefined,
+            outcome === 'failed' ? (message ?? undefined) : undefined,
+            application.userId,
+            session.latestPauseReason ?? undefined,
+            message ?? session.latestMessage,
+          );
+        }
+      })
+      .catch((err) => logger.error({ err }, 'Failed to update application status in DB'));
+  }
+
   return sessionSummary(session);
+}
+
+export function getApplySessionTraceForUser(sessionId: string, userId?: string) {
+  const session = applySessions.get(sessionId);
+  if (!session || (session.userId && userId && session.userId !== userId)) {
+    throw notFound('Apply session not found.', 'NOT_FOUND');
+  }
+  if (!session) {
+    throw notFound('Apply session not found.', 'NOT_FOUND');
+  }
+  return {
+    session: sessionSummary(session),
+    trace: [...session.trace],
+  };
+}
+
+export function getApplySessionContext(sessionId: string, executorToken: string): ApplySessionContextResponse {
+  const session = getApplySessionByToken(sessionId, executorToken);
+  return {
+    experienceEntries: [...session.experienceEntries],
+    educationEntries: [...session.educationEntries],
+    projectEntries: [...session.projectEntries],
+    certificationEntries: [...session.certificationEntries],
+  };
+}
+
+export function getApplyAutomationMetricsForUser(userId?: string): ApplyAutomationMetrics {
+  const sessionsForUser = [...applySessions.values()].filter((session) => !userId || !session.userId || session.userId === userId);
+  const metrics: ApplyAutomationMetrics = {
+    totalSessions: sessionsForUser.length,
+    byStatus: {},
+    byPortalType: {},
+    byPauseReason: {},
+    byExecutorMode: {},
+  };
+
+  for (const session of sessionsForUser) {
+    metrics.byStatus[session.status] = (metrics.byStatus[session.status] ?? 0) + 1;
+    metrics.byPortalType[session.portalType] = (metrics.byPortalType[session.portalType] ?? 0) + 1;
+    const pauseReason = session.latestPauseReason ?? 'none';
+    metrics.byPauseReason[pauseReason] = (metrics.byPauseReason[pauseReason] ?? 0) + 1;
+    metrics.byExecutorMode[session.executorMode] = (metrics.byExecutorMode[session.executorMode] ?? 0) + 1;
+  }
+
+  return metrics;
 }
