@@ -1,10 +1,11 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { readSanitizedEnv } from '../env.ts';
 
 let _client: SupabaseClient | null = null;
 
 export function isSupabaseConfigured() {
-  const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = readSanitizedEnv('SUPABASE_URL') ?? readSanitizedEnv('VITE_SUPABASE_URL');
+  const serviceRoleKey = readSanitizedEnv('SUPABASE_SERVICE_ROLE_KEY');
   return Boolean(supabaseUrl && serviceRoleKey);
 }
 
@@ -12,8 +13,8 @@ export function isSupabaseConfigured() {
 // Lazy so tests without Supabase env vars don't fail on import.
 export function getSupabaseClient(): SupabaseClient {
   if (!_client) {
-    const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = readSanitizedEnv('SUPABASE_URL') ?? readSanitizedEnv('VITE_SUPABASE_URL');
+    const serviceRoleKey = readSanitizedEnv('SUPABASE_SERVICE_ROLE_KEY');
     if (!supabaseUrl || !serviceRoleKey) {
       throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
     }

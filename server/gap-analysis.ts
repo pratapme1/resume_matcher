@@ -1,5 +1,6 @@
 import type { GapAnalysis, JDRequirementModel, SourceResumeDocument } from '../src/shared/types.ts';
 import type { AIClient } from './app.ts';
+import { readSanitizedEnv } from './env.ts';
 
 const DEFAULT_GAP_MODEL = 'gemini-2.5-flash';
 
@@ -31,7 +32,7 @@ export async function buildGapAnalysis(
   jdText: string,
 ): Promise<GapAnalysis> {
   try {
-    const modelName = process.env.GEMINI_GAP_MODEL?.trim() || DEFAULT_GAP_MODEL;
+    const modelName = readSanitizedEnv('GEMINI_GAP_MODEL') || DEFAULT_GAP_MODEL;
     const resumeSnapshot = buildResumeSnapshot(resume);
 
     const prompt = `You are a resume positioning strategist. Produce a concise strategic analysis.

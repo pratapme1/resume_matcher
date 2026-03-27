@@ -1,6 +1,7 @@
 import type { AIClient } from './app.ts';
 import type { AIProviderName } from './ai.ts';
 import { badGateway } from './errors.ts';
+import { readSanitizedEnv } from './env.ts';
 import type {
   CandidateProfile,
   JobMatchBreakdown,
@@ -580,9 +581,9 @@ function getProviderName(ai: AIClient): AIProviderName {
 
 function getSearchModelForProvider(providerName: AIProviderName): string {
   if (providerName === 'perplexity') {
-    return process.env.OPENROUTER_PERPLEXITY_SEARCH_MODEL?.trim() || 'perplexity/sonar';
+    return readSanitizedEnv('OPENROUTER_PERPLEXITY_SEARCH_MODEL') || 'perplexity/sonar';
   }
-  return process.env.GEMINI_SEARCH_MODEL ?? 'gemini-2.0-flash';
+  return readSanitizedEnv('GEMINI_SEARCH_MODEL') || 'gemini-2.0-flash';
 }
 
 function isProviderUnavailableError(error: { status?: number; message?: string }): boolean {

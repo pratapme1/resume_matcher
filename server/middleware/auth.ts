@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { upsertUser } from '../db/queries/users.ts';
+import { readSanitizedEnv } from '../env.ts';
 
 // Extend Request to carry user info
 declare global {
@@ -21,8 +22,8 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     return;
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
-  const anonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY;
+  const supabaseUrl = readSanitizedEnv('SUPABASE_URL') ?? readSanitizedEnv('VITE_SUPABASE_URL');
+  const anonKey = readSanitizedEnv('SUPABASE_ANON_KEY') ?? readSanitizedEnv('VITE_SUPABASE_ANON_KEY');
   if (!supabaseUrl || !anonKey) {
     res.status(500).json({ error: 'Auth service not configured.', code: 'INTERNAL_ERROR' });
     return;

@@ -79,6 +79,7 @@ import {
 } from './db/queries/applications.ts';
 import { getJobsForUser, upsertJobFromSearch, updateJobLifecycle } from './db/queries/jobs.ts';
 import { isSupabaseConfigured, supabase } from './db/client.ts';
+import { readSanitizedEnv } from './env.ts';
 import { logger } from './logger.ts';
 import type {
   AnswerBankEntry,
@@ -329,7 +330,7 @@ export function createApp(deps: AppDependencies): Express {
     storage: multer.memoryStorage(),
   });
 
-  const appUrl = process.env.APP_URL;
+  const appUrl = readSanitizedEnv('APP_URL');
   const corsOrigin = appUrl ?? (process.env.NODE_ENV !== 'production' ? '*' : false);
   app.use(helmet({ contentSecurityPolicy: false })); // CSP managed by Vite in dev
   app.use(cors(corsOrigin ? { origin: corsOrigin } : { origin: false }));

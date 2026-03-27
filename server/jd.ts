@@ -5,6 +5,7 @@ import type {
   NormalizedJobDescription,
 } from '../src/shared/types.ts';
 import type { AIClient } from './app.ts';
+import { readSanitizedEnv } from './env.ts';
 import { clamp, normalizeWhitespace, sanitizeKeyword, splitLines, unique } from './utils.ts';
 
 const DEFAULT_JD_MODEL = 'gemini-2.5-flash';
@@ -22,7 +23,7 @@ async function extractJDRequirementsWithAI(
   jdText: string,
 ): Promise<AIJDExtractionResult | null> {
   try {
-    const modelName = process.env.GEMINI_JD_MODEL?.trim() || DEFAULT_JD_MODEL;
+    const modelName = readSanitizedEnv('GEMINI_JD_MODEL') || DEFAULT_JD_MODEL;
     const prompt = `You are a job description analyst. Extract structured requirements from the job description below.
 Work across ALL domains (software, finance, design, marketing, data science, operations, product, etc.).
 

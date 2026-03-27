@@ -13,6 +13,7 @@ import type {
 } from '../src/shared/types.ts';
 import type { AIClient } from './app.ts';
 import type { AIProviderName } from './ai.ts';
+import { readSanitizedEnv } from './env.ts';
 import { badGateway } from './errors.ts';
 import { tailoredResumeMutableSchema, tailoredResumeSchema } from './schemas.ts';
 import { unique } from './utils.ts';
@@ -425,8 +426,8 @@ export async function tailorResumeWithAI(
   preferences: { targetRole?: string; tone?: string; seniority?: string },
   fallbackAI?: AIClient | null,
 ): Promise<TailorAIResult> {
-  const primaryModelName = process.env.GEMINI_TAILOR_MODEL?.trim() || DEFAULT_TAILOR_MODEL;
-  const fallbackModelName = process.env.OPENROUTER_QWEN_MODEL?.trim();
+  const primaryModelName = readSanitizedEnv('GEMINI_TAILOR_MODEL') || DEFAULT_TAILOR_MODEL;
+  const fallbackModelName = readSanitizedEnv('OPENROUTER_QWEN_MODEL');
   const prompt = `
 You are an elite ATS-focused resume editor.
 You are tailoring an existing resume to a target role while preserving factual accuracy and the reference resume's visual system.
