@@ -10,18 +10,27 @@ import { buildAnalysis, buildTailoringPlan, ensureGapAnalysisNarrative } from '.
 import { buildGapAnalysis } from './gap-analysis.ts';
 import { generateTailoredDocx } from './docx-render.ts';
 import {
+  getMemoryApplicationMemory,
   getMemoryApplicationProfile,
+  mergeAnswerBankEntries,
   mergeApplicantProfiles,
   sanitizeApplicantProfile,
+  setMemoryApplicationMemory,
   setMemoryApplicationProfile,
 } from './application-profile.ts';
 import {
   createApplySession,
   confirmApplySessionSubmit,
   completeApplySession,
+  getApplyAutomationMetricsForUser,
+  getApplySessionContext,
+  getApplySessionForExecutor,
   getApplySessionForUser,
+  getApplySessionTraceForUser,
+  learnApplySessionCorrections,
   planApplySnapshot,
   recordApplySessionEvent,
+  setApplySessionExecutorMode,
 } from './apply-sessions.ts';
 import {
   badRequest,
@@ -48,7 +57,7 @@ import { startAutoApply, submitAutoApply } from './auto-apply.ts';
 import { searchJobs, buildCandidateProfile } from './job-search.ts';
 import { requireAuth } from './middleware/auth.ts';
 import { writeUsageEvent, isOverQuota } from './db/queries/usage.ts';
-import { getStoredApplicationProfile, upsertStoredApplicationProfile } from './db/queries/application-profiles.ts';
+import { getStoredApplicationMemory, upsertStoredApplicationMemory } from './db/queries/application-profiles.ts';
 import {
   getMemoryDefaultResume,
   getStoredDefaultResume,
@@ -59,18 +68,30 @@ import {
   type StoredResumeRecord,
 } from './db/queries/uploaded-resumes.ts';
 import { createJobSearchSession, getLatestJobSearchSession } from './db/queries/sessions.ts';
-import { getApplicationsForUser, updateApplicationStatus, type ApplicationStatus } from './db/queries/applications.ts';
-import { getJobsForUser } from './db/queries/jobs.ts';
-import { supabase } from './db/client.ts';
+import {
+  getApplicationMetricsForUser,
+  getApplicationReliabilitySnapshotForUser,
+  getApplicationTraceForUser,
+  getApplicationsForUser,
+  getRelatedApplicationsForUser,
+  updateApplicationStatus,
+  type ApplicationStatus,
+} from './db/queries/applications.ts';
+import { getJobsForUser, upsertJobFromSearch, updateJobLifecycle } from './db/queries/jobs.ts';
+import { isSupabaseConfigured, supabase } from './db/client.ts';
 import { logger } from './logger.ts';
 import type {
+  AnswerBankEntry,
   ApplicantProfile,
+  ApplicationProfileResponse,
   ApplicationRecord,
   ApplySessionEvent,
   CandidateProfile,
+  CreateApplySessionRequest,
   DefaultResumeResponse,
   ExtractionWarning,
   JobRecord,
+  JobLifecycleStatus,
   JobSearchResult,
   LatestJobSearchSessionResponse,
   PageSnapshot,
@@ -326,22 +347,56 @@ export function createApp(deps: AppDependencies): Express {
 
   const getProfileUserKey = (req: Request) => req.internalUserId ?? req.userId ?? 'anonymous';
 
-  const loadApplicationProfileForRequest = async (req: Request): Promise<ApplicantProfile> => {
+  const loadApplicationMemoryForRequest = async (req: Request): Promise<{ profile: ApplicantProfile; answerBank: AnswerBankEntry[] }> => {
     const userKey = getProfileUserKey(req);
     if (deps.skipAuth) {
-      return sanitizeApplicantProfile(getMemoryApplicationProfile(userKey));
+      const memory = getMemoryApplicationMemory(userKey);
+      return {
+        profile: sanitizeApplicantProfile(memory.profile),
+        answerBank: mergeAnswerBankEntries(memory.answerBank),
+      };
     }
-    const stored = await getStoredApplicationProfile(userKey);
-    return sanitizeApplicantProfile(stored);
+    const stored = await getStoredApplicationMemory(userKey);
+    return {
+      profile: sanitizeApplicantProfile(stored.profile),
+      answerBank: mergeAnswerBankEntries(stored.answerBank),
+    };
+  };
+
+  const loadApplicationProfileForRequest = async (req: Request): Promise<ApplicantProfile> => {
+    const memory = await loadApplicationMemoryForRequest(req);
+    return memory.profile;
+  };
+
+  const loadAnswerBankForRequest = async (req: Request): Promise<AnswerBankEntry[]> => {
+    const memory = await loadApplicationMemoryForRequest(req);
+    return memory.answerBank;
+  };
+
+  const saveApplicationMemoryForRequest = async (
+    req: Request,
+    input: {
+      profile?: Partial<ApplicantProfile> | null;
+      answerBank?: AnswerBankEntry[] | null;
+    },
+  ): Promise<{ profile: ApplicantProfile; answerBank: AnswerBankEntry[] }> => {
+    const userKey = getProfileUserKey(req);
+    if (deps.skipAuth) {
+      return setMemoryApplicationMemory(userKey, {
+        profile: input.profile,
+        answerBank: input.answerBank ?? undefined,
+      });
+    }
+    const existing = await loadApplicationMemoryForRequest(req);
+    return upsertStoredApplicationMemory(userKey, {
+      profile: sanitizeApplicantProfile(input.profile ?? existing.profile),
+      answerBank: mergeAnswerBankEntries(existing.answerBank, input.answerBank),
+    });
   };
 
   const saveApplicationProfileForRequest = async (req: Request, profile: Partial<ApplicantProfile>): Promise<ApplicantProfile> => {
-    const userKey = getProfileUserKey(req);
-    const sanitized = sanitizeApplicantProfile(profile);
-    if (deps.skipAuth) {
-      return setMemoryApplicationProfile(userKey, sanitized);
-    }
-    return upsertStoredApplicationProfile(userKey, sanitized);
+    const memory = await saveApplicationMemoryForRequest(req, { profile });
+    return memory.profile;
   };
 
   const loadDefaultResumeForRequest = async (req: Request): Promise<StoredResumeRecord | null> => {
@@ -720,8 +775,12 @@ export function createApp(deps: AppDependencies): Express {
 
   app.get('/api/application-profile', auth, limitProfile, async (req, res) => {
     try {
-      const profile = await loadApplicationProfileForRequest(req);
-      res.json({ profile });
+      const memory = await loadApplicationMemoryForRequest(req);
+      const payload: ApplicationProfileResponse = {
+        profile: memory.profile,
+        answerBank: memory.answerBank,
+      };
+      res.json(payload);
     } catch (error) {
       sendErrorResponse(res, error, 'application-profile-get');
     }
@@ -729,11 +788,35 @@ export function createApp(deps: AppDependencies): Express {
 
   app.put('/api/application-profile', auth, limitProfile, async (req, res) => {
     try {
-      const body = z.object({ profile: applicantProfileSchema }).parse(req.body);
-      const existingProfile = await loadApplicationProfileForRequest(req);
-      const mergedProfile = mergeApplicantProfiles(existingProfile, body.profile);
-      const profile = await saveApplicationProfileForRequest(req, mergedProfile);
-      res.json({ profile });
+      const answerBankEntrySchema = z.object({
+        id: z.string().optional(),
+        question: z.string(),
+        normalizedQuestion: z.string().optional(),
+        answer: z.string(),
+        portalType: z.string().optional(),
+        semanticType: z.string().optional(),
+        source: z.enum(['user_saved', 'managed_browser', 'resume_derived', 'imported']).optional(),
+        confidence: z.enum(['confirmed', 'learned']).optional(),
+        usageCount: z.number().int().nonnegative().optional(),
+        lastUsedAt: z.string().optional(),
+        updatedAt: z.string().optional(),
+      });
+      const body = z.object({
+        profile: applicantProfileSchema.optional().default({}),
+        answerBank: z.array(answerBankEntrySchema).optional().default([]),
+      }).parse(req.body);
+      const existing = await loadApplicationMemoryForRequest(req);
+      const mergedProfile = mergeApplicantProfiles(existing.profile, body.profile);
+      const mergedAnswerBank = mergeAnswerBankEntries(existing.answerBank, body.answerBank as AnswerBankEntry[]);
+      const memory = await saveApplicationMemoryForRequest(req, {
+        profile: mergedProfile,
+        answerBank: mergedAnswerBank,
+      });
+      const payload: ApplicationProfileResponse = {
+        profile: memory.profile,
+        answerBank: memory.answerBank,
+      };
+      res.json(payload);
     } catch (error) {
       sendErrorResponse(res, error, 'application-profile-put');
     }
@@ -779,6 +862,11 @@ export function createApp(deps: AppDependencies): Express {
           resultsJson: response.results,
           totalResults: response.totalFound,
         }).catch(err => logger.error({ err }, 'Failed to create job search session'));
+        if (isSupabaseConfigured()) {
+          Promise.allSettled(response.results.map((result, index) =>
+            upsertJobFromSearch(effectiveUserId, result, { searchRank: index }),
+          )).catch((err) => logger.error({ err }, 'Failed to persist search results into the job ledger'));
+        }
       }
       res.json(response);
     } catch (error) {
@@ -886,16 +974,41 @@ Instructions:
         templateProfile: z.any(),
         validation: z.any(),
         applicationProfile: applicantProfileSchema.optional(),
-      }).parse(req.body);
+        answerBank: z.array(z.object({
+          id: z.string(),
+          question: z.string(),
+          normalizedQuestion: z.string(),
+          answer: z.string(),
+          portalType: z.string().optional(),
+          semanticType: z.string().optional(),
+          source: z.enum(['user_saved', 'managed_browser', 'resume_derived', 'imported']).optional(),
+          confidence: z.enum(['confirmed', 'learned']).optional(),
+          usageCount: z.number().int().nonnegative().optional(),
+          lastUsedAt: z.string().optional(),
+          updatedAt: z.string(),
+        })).optional(),
+        executorMode: z.enum(['extension', 'local_agent']).optional(),
+        job: z.object({
+          title: z.string().optional(),
+          company: z.string().optional(),
+          location: z.string().optional(),
+          description: z.string().optional(),
+        }).optional(),
+      }).parse(req.body) as CreateApplySessionRequest;
 
       const savedProfile = await loadApplicationProfileForRequest(req);
+      const savedAnswerBank = await loadAnswerBankForRequest(req);
       const mergedApplicationProfile = mergeApplicantProfiles(savedProfile, body.applicationProfile);
+      const mergedAnswerBank = mergeAnswerBankEntries(savedAnswerBank, body.answerBank as AnswerBankEntry[] | undefined);
 
-      if (body.applicationProfile) {
+      if (body.applicationProfile || body.answerBank?.length) {
         try {
-          await saveApplicationProfileForRequest(req, mergedApplicationProfile);
+          await saveApplicationMemoryForRequest(req, {
+            profile: mergedApplicationProfile,
+            answerBank: mergedAnswerBank,
+          });
         } catch (error) {
-          logger.warn({ error }, 'Failed to persist application profile before creating apply session.');
+          logger.warn({ error }, 'Failed to persist application memory before creating apply session.');
         }
       }
 
@@ -906,6 +1019,9 @@ Instructions:
         templateProfile: body.templateProfile as ResumeTemplateProfile,
         validation: body.validation as ValidationReport,
         applicationProfile: mergedApplicationProfile,
+        answerBank: mergedAnswerBank,
+        executorMode: body.executorMode,
+        job: body.job,
       });
 
       res.json(response);
@@ -923,12 +1039,84 @@ Instructions:
     }
   });
 
+  app.get('/api/apply/sessions/:id/trace', auth, limitApplySession, async (req, res) => {
+    try {
+      const trace = getApplySessionTraceForUser(req.params.id, req.internalUserId ?? req.userId);
+      res.json(trace);
+    } catch (error) {
+      sendErrorResponse(res, error, 'apply-sessions-trace');
+    }
+  });
+
+  app.get('/api/apply/sessions/:id/context', limitApplySession, async (req, res) => {
+    try {
+      const context = getApplySessionContext(req.params.id, getExecutorToken(req));
+      res.json(context);
+    } catch (error) {
+      sendErrorResponse(res, error, 'apply-sessions-context');
+    }
+  });
+
+  app.get('/api/apply/sessions/:id/executor-state', limitApplySession, async (req, res) => {
+    try {
+      const session = getApplySessionForExecutor(req.params.id, getExecutorToken(req));
+      res.json(session);
+    } catch (error) {
+      sendErrorResponse(res, error, 'apply-sessions-executor-state');
+    }
+  });
+
+  app.post('/api/apply/sessions/:id/executor-mode', limitApplySession, async (req, res) => {
+    try {
+      const body = z.object({
+        executorMode: z.enum(['extension', 'local_agent']),
+        message: z.string().optional(),
+      }).parse(req.body);
+      const session = setApplySessionExecutorMode(
+        req.params.id,
+        getExecutorToken(req),
+        body.executorMode,
+        body.message,
+      );
+      res.json(session);
+    } catch (error) {
+      sendErrorResponse(res, error, 'apply-sessions-executor-mode');
+    }
+  });
+
+  app.get('/api/apply/metrics', auth, limitApplySession, async (req, res) => {
+    try {
+      const metrics = req.internalUserId && isSupabaseConfigured()
+        ? await getApplicationMetricsForUser(req.internalUserId)
+        : getApplyAutomationMetricsForUser(req.internalUserId ?? req.userId);
+      res.json(metrics);
+    } catch (error) {
+      sendErrorResponse(res, error, 'apply-metrics');
+    }
+  });
+
+  app.get('/api/apply/reliability', auth, limitApplySession, async (req, res) => {
+    try {
+      if (req.internalUserId && isSupabaseConfigured()) {
+        const snapshot = await getApplicationReliabilitySnapshotForUser(req.internalUserId);
+        res.json(snapshot);
+        return;
+      }
+      res.json({
+        metrics: getApplyAutomationMetricsForUser(req.internalUserId ?? req.userId),
+        recentIssues: [],
+      });
+    } catch (error) {
+      sendErrorResponse(res, error, 'apply-reliability');
+    }
+  });
+
   app.post('/api/apply/sessions/:id/snapshot', limitApplySession, async (req, res) => {
     try {
       const snapshot = z.object({
         url: z.string().url(),
         title: z.string(),
-        portalType: z.enum(['phenom', 'greenhouse', 'lever', 'ashby', 'workday', 'icims', 'smartrecruiters', 'taleo', 'successfactors', 'generic', 'protected', 'unknown']),
+        portalType: z.enum(['linkedin', 'naukri', 'phenom', 'greenhouse', 'lever', 'ashby', 'workday', 'icims', 'smartrecruiters', 'taleo', 'successfactors', 'generic', 'protected', 'unknown']),
         stepKind: z.enum(['profile', 'work_history', 'education', 'questionnaire', 'review', 'submit', 'unknown']),
         stepSignature: z.string(),
         fields: z.array(z.object({
@@ -938,9 +1126,11 @@ Instructions:
           placeholder: z.string(),
           inputType: z.string(),
           tagName: z.string(),
-          widgetKind: z.enum(['text', 'textarea', 'select', 'radio_group', 'checkbox', 'file_upload', 'number', 'date', 'custom_combobox', 'custom_multiselect', 'custom_date', 'custom_number', 'unknown']),
+          widgetKind: z.enum(['text', 'textarea', 'select', 'radio_group', 'checkbox', 'file_upload', 'number', 'date', 'custom_combobox', 'custom_multiselect', 'custom_card_group', 'custom_date', 'custom_number', 'unknown']),
           required: z.boolean(),
           visible: z.boolean(),
+          semanticHint: z.enum(['full_name', 'first_name', 'last_name', 'email', 'phone', 'linkedin', 'github', 'location', 'city', 'portfolio', 'website', 'current_company', 'current_title', 'years_of_experience', 'current_ctc', 'expected_ctc', 'notice_period', 'work_authorization', 'requires_sponsorship', 'visa_status', 'gender', 'resume_upload', 'cover_letter_upload', 'unknown']).optional(),
+          reviewOnlyReason: z.string().optional(),
           value: z.string().optional(),
           checked: z.boolean().optional(),
           hasValue: z.boolean().optional(),
@@ -974,8 +1164,8 @@ Instructions:
           required: z.boolean(),
         })).optional(),
         pageUrl: z.string().url().optional(),
-        portalType: z.enum(['phenom', 'greenhouse', 'lever', 'ashby', 'workday', 'icims', 'smartrecruiters', 'taleo', 'successfactors', 'generic', 'protected', 'unknown']).optional(),
-        pauseReason: z.enum(['none', 'protected_portal', 'login_required', 'unsupported_widget', 'missing_profile_value', 'ambiguous_required_field', 'no_progress_after_advance', 'manual_required']).optional(),
+        portalType: z.enum(['linkedin', 'naukri', 'phenom', 'greenhouse', 'lever', 'ashby', 'workday', 'icims', 'smartrecruiters', 'taleo', 'successfactors', 'generic', 'protected', 'unknown']).optional(),
+        pauseReason: z.enum(['none', 'protected_portal', 'login_required', 'legal_review_required', 'assessment_required', 'unsupported_widget', 'missing_profile_value', 'ambiguous_required_field', 'no_progress_after_advance', 'manual_required']).optional(),
         stepKind: z.enum(['profile', 'work_history', 'education', 'questionnaire', 'review', 'submit', 'unknown']).optional(),
         stepSignature: z.string().optional(),
       }).parse(req.body) as ApplySessionEvent;
@@ -984,6 +1174,54 @@ Instructions:
       res.json(session);
     } catch (error) {
       sendErrorResponse(res, error, 'apply-sessions-events');
+    }
+  });
+
+  app.post('/api/apply/sessions/:id/learn', auth, limitApplySession, async (req, res) => {
+    try {
+      const snapshot = z.object({
+        url: z.string().url(),
+        title: z.string(),
+        portalType: z.enum(['linkedin', 'naukri', 'phenom', 'greenhouse', 'lever', 'ashby', 'workday', 'icims', 'smartrecruiters', 'taleo', 'successfactors', 'generic', 'protected', 'unknown']),
+        stepKind: z.enum(['profile', 'work_history', 'education', 'questionnaire', 'review', 'submit', 'unknown']),
+        stepSignature: z.string(),
+        fields: z.array(z.object({
+          id: z.string(),
+          name: z.string(),
+          label: z.string(),
+          placeholder: z.string(),
+          inputType: z.string(),
+          tagName: z.string(),
+          widgetKind: z.enum(['text', 'textarea', 'select', 'radio_group', 'checkbox', 'file_upload', 'number', 'date', 'custom_combobox', 'custom_multiselect', 'custom_card_group', 'custom_date', 'custom_number', 'unknown']),
+          required: z.boolean(),
+          visible: z.boolean(),
+          semanticHint: z.enum(['full_name', 'first_name', 'last_name', 'email', 'phone', 'linkedin', 'github', 'location', 'city', 'portfolio', 'website', 'current_company', 'current_title', 'years_of_experience', 'current_ctc', 'expected_ctc', 'notice_period', 'work_authorization', 'requires_sponsorship', 'visa_status', 'gender', 'resume_upload', 'cover_letter_upload', 'unknown']).optional(),
+          reviewOnlyReason: z.string().optional(),
+          value: z.string().optional(),
+          checked: z.boolean().optional(),
+          hasValue: z.boolean().optional(),
+          options: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
+        })),
+        controls: z.array(z.object({
+          id: z.string(),
+          label: z.string(),
+          kind: z.enum(['next', 'review', 'submit', 'unknown']),
+        })),
+      }).parse(req.body) as PageSnapshot;
+
+      const learned = learnApplySessionCorrections(req.params.id, req.internalUserId ?? req.userId, snapshot);
+      const memory = await saveApplicationMemoryForRequest(req, {
+        profile: learned.profileUpdates,
+        answerBank: learned.answerBank,
+      });
+      res.json({
+        learnedCount: learned.learnedCount,
+        profile: memory.profile,
+        answerBank: memory.answerBank,
+        session: learned.session,
+      });
+    } catch (error) {
+      sendErrorResponse(res, error, 'apply-sessions-learn');
     }
   });
 
@@ -1064,14 +1302,48 @@ Instructions:
     }
   });
 
+  app.get('/api/applications/:id/trace', auth, async (req, res) => {
+    try {
+      if (deps.skipAuth || !req.internalUserId) {
+        res.json({ trace: [] });
+        return;
+      }
+      const trace = await getApplicationTraceForUser(req.params.id, req.internalUserId);
+      res.json({ trace });
+    } catch (error) {
+      sendErrorResponse(res, error, 'applications-trace');
+    }
+  });
+
+  app.get('/api/applications/:id/replays', auth, async (req, res) => {
+    try {
+      if (deps.skipAuth || !req.internalUserId) {
+        res.json({ applications: [] });
+        return;
+      }
+      const applications = await getRelatedApplicationsForUser(req.params.id, req.internalUserId);
+      res.json({ applications });
+    } catch (error) {
+      sendErrorResponse(res, error, 'applications-replays');
+    }
+  });
+
   app.patch('/api/applications/:id', auth, async (req, res) => {
     try {
+      if (deps.skipAuth || !req.internalUserId) {
+        res.json({ success: true });
+        return;
+      }
       const { id } = req.params;
       const { status, notes } = z.object({
-        status: z.enum(['pending', 'applied', 'rejected', 'review', 'interview', 'offered', 'in_progress', 'failed']),
+        status: z.enum(['queued', 'pending', 'applied', 'rejected', 'review', 'interview', 'offered', 'in_progress', 'manual_required', 'failed']),
         notes: z.string().optional(),
       }).parse(req.body);
-      await updateApplicationStatus(id, status as ApplicationStatus, notes);
+      const updated = await updateApplicationStatus(id, status as ApplicationStatus, notes, undefined, req.internalUserId);
+      if (!updated) {
+        res.status(404).json({ error: 'Application not found.', code: 'NOT_FOUND' });
+        return;
+      }
       res.json({ success: true });
     } catch (error) {
       sendErrorResponse(res, error, 'applications-patch');
@@ -1090,6 +1362,26 @@ Instructions:
       res.json(body);
     } catch (error) {
       sendErrorResponse(res, error, 'jobs-list');
+    }
+  });
+
+  app.patch('/api/jobs/:id', auth, async (req, res) => {
+    try {
+      if (deps.skipAuth || !req.internalUserId) {
+        res.json({ success: true });
+        return;
+      }
+      const { lifecycleStatus } = z.object({
+        lifecycleStatus: z.enum(['discovered', 'shown', 'saved', 'queued', 'applying', 'applied', 'failed', 'manual_required', 'dismissed']),
+      }).parse(req.body) as { lifecycleStatus: JobLifecycleStatus };
+      const updated = await updateJobLifecycle(req.internalUserId, req.params.id, lifecycleStatus);
+      if (!updated) {
+        res.status(404).json({ error: 'Job not found.', code: 'NOT_FOUND' });
+        return;
+      }
+      res.json({ success: true });
+    } catch (error) {
+      sendErrorResponse(res, error, 'jobs-patch');
     }
   });
 

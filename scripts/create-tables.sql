@@ -94,6 +94,92 @@ CREATE TABLE IF NOT EXISTS application_profiles (
   updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- ── jobs ──────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS jobs (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id          UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title            TEXT,
+  company          TEXT,
+  location         TEXT,
+  url              TEXT,
+  apply_url        TEXT,
+  description      TEXT,
+  source_host      TEXT,
+  source_type      TEXT,
+  verified_source  BOOLEAN,
+  last_verified_at TIMESTAMPTZ,
+  lifecycle_status TEXT NOT NULL DEFAULT 'discovered',
+  seen_count       INT NOT NULL DEFAULT 0,
+  last_search_rank INT,
+  first_seen_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at     TIMESTAMPTZ,
+  saved_at         TIMESTAMPTZ,
+  dismissed_at     TIMESTAMPTZ,
+  last_applied_at  TIMESTAMPTZ,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS apply_url TEXT;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS source_host TEXT;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS source_type TEXT;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS verified_source BOOLEAN;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS last_verified_at TIMESTAMPTZ;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS lifecycle_status TEXT NOT NULL DEFAULT 'discovered';
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS seen_count INT NOT NULL DEFAULT 0;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS last_search_rank INT;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS first_seen_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS saved_at TIMESTAMPTZ;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS dismissed_at TIMESTAMPTZ;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS last_applied_at TIMESTAMPTZ;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+CREATE INDEX IF NOT EXISTS jobs_user_id_idx ON jobs(user_id, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS jobs_user_id_url_idx ON jobs(user_id, url);
+
+-- ── applications ──────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS applications (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id           UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  job_id            UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  session_id        TEXT,
+  apply_url         TEXT,
+  status            TEXT NOT NULL DEFAULT 'queued',
+  notes             TEXT,
+  error_message     TEXT,
+  last_pause_reason TEXT,
+  last_message      TEXT,
+  last_step_kind    TEXT,
+  portal_type       TEXT,
+  executor_mode     TEXT,
+  trace_json        JSONB,
+  trace_count       INT NOT NULL DEFAULT 0,
+  last_trace_at     TIMESTAMPTZ,
+  retry_count       INT NOT NULL DEFAULT 0,
+  replay_of_application_id UUID REFERENCES applications(id) ON DELETE SET NULL,
+  superseded_by_application_id UUID REFERENCES applications(id) ON DELETE SET NULL,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS session_id TEXT;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS apply_url TEXT;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'queued';
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS error_message TEXT;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS last_pause_reason TEXT;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS last_message TEXT;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS last_step_kind TEXT;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS portal_type TEXT;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS executor_mode TEXT;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS trace_json JSONB;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS trace_count INT NOT NULL DEFAULT 0;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS last_trace_at TIMESTAMPTZ;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS retry_count INT NOT NULL DEFAULT 0;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS replay_of_application_id UUID REFERENCES applications(id) ON DELETE SET NULL;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS superseded_by_application_id UUID REFERENCES applications(id) ON DELETE SET NULL;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+CREATE INDEX IF NOT EXISTS applications_user_id_idx ON applications(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS applications_session_id_idx ON applications(session_id);
+
 -- ── usage_events ──────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS usage_events (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -114,6 +200,8 @@ ALTER TABLE job_descriptions    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tailor_sessions     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE job_search_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE application_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jobs                ENABLE ROW LEVEL SECURITY;
+ALTER TABLE applications        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE usage_events        ENABLE ROW LEVEL SECURITY;
 
 -- Service role bypasses RLS automatically.
@@ -132,6 +220,12 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
   CREATE POLICY "own rows only" ON application_profiles FOR ALL USING (user_id = auth.uid());
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE POLICY "own rows only" ON jobs                FOR ALL USING (user_id = auth.uid());
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE POLICY "own rows only" ON applications        FOR ALL USING (user_id = auth.uid());
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
   CREATE POLICY "own rows only" ON usage_events        FOR ALL USING (user_id = auth.uid());

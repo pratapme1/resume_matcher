@@ -14,14 +14,15 @@ type PrefillData = {
 
 type RuntimeMessage =
   | {
-      type: 'START_APPLY_SESSION';
-      data: {
-        sessionId: string;
-        applyUrl: string;
-        apiBaseUrl: string;
-        executorToken: string;
-      };
-    }
+    type: 'START_APPLY_SESSION';
+    data: {
+      sessionId: string;
+      applyUrl: string;
+      apiBaseUrl: string;
+      executorToken: string;
+      executorMode: 'extension' | 'local_agent';
+    };
+  }
   | {
       type: 'RESUME_APPLY_SESSION';
       data: {
@@ -30,6 +31,12 @@ type RuntimeMessage =
     }
   | {
       type: 'SUBMIT_APPLY_SESSION';
+      data: {
+        sessionId: string;
+      };
+    }
+  | {
+      type: 'FOCUS_APPLY_SESSION';
       data: {
         sessionId: string;
       };
@@ -66,6 +73,9 @@ type RuntimeMessage =
         outcome: 'submitted' | 'protected' | 'unsupported' | 'manual_required' | 'failed';
         message?: string;
       };
+    }
+  | {
+      type: 'GET_LOCAL_AGENT_STATUS';
     };
 
 type PlannedAction =
@@ -104,7 +114,7 @@ type ApplyDomState = {
 let activeApplyState: ApplyDomState | null = null;
 let applyExecutionPromise: Promise<void> | null = null;
 
-type SupportedPortalType = 'phenom' | 'greenhouse' | 'lever' | 'ashby' | 'workday' | 'icims' | 'smartrecruiters' | 'taleo' | 'successfactors' | 'generic' | 'protected' | 'unknown';
+type SupportedPortalType = 'linkedin' | 'naukri' | 'phenom' | 'greenhouse' | 'lever' | 'ashby' | 'workday' | 'icims' | 'smartrecruiters' | 'taleo' | 'successfactors' | 'generic' | 'protected' | 'unknown';
 type WidgetKind =
   | 'text'
   | 'textarea'
@@ -122,6 +132,8 @@ type WidgetKind =
 type StepKind = 'profile' | 'work_history' | 'education' | 'questionnaire' | 'review' | 'submit' | 'unknown';
 
 const PORTAL_MARKERS: Array<{ type: SupportedPortalType; selectors: string[] }> = [
+  { type: 'linkedin', selectors: ['[data-easy-apply-modal]', '.jobs-easy-apply-content', '.jobs-apply-form'] },
+  { type: 'naukri', selectors: ['[data-testid="naukri-apply-form"]', '#root [class*="apply"]', '.chatBot', '.apply-button'] },
   { type: 'phenom', selectors: ['[data-ph-id]', '#_PCM', '[data-portal="phenom"]'] },
   { type: 'greenhouse', selectors: ['#application_form', '[data-portal="greenhouse"]', '[data-board="greenhouse"]', 'meta[property="og:site_name"][content*="Greenhouse"]'] },
   { type: 'lever', selectors: ['[data-qa="application-page"]', '[data-qa="application-form"]', '[data-portal="lever"]'] },
@@ -185,9 +197,28 @@ window.addEventListener('message', async (e: MessageEvent) => {
       return;
     }
 
+    if (e.data?.type === 'RTP_REQUEST_LOCAL_AGENT_STATUS') {
+      const result = await chrome.runtime.sendMessage({
+        type: 'GET_LOCAL_AGENT_STATUS',
+      } as RuntimeMessage);
+      window.postMessage({ type: 'RTP_LOCAL_AGENT_STATUS', data: result }, '*');
+      return;
+    }
+
     if (e.data?.type === 'RTP_RESUME_APPLY_SESSION') {
       const result = await chrome.runtime.sendMessage({
         type: 'RESUME_APPLY_SESSION',
+        data: e.data.data,
+      } as RuntimeMessage);
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+      return;
+    }
+
+    if (e.data?.type === 'RTP_FOCUS_APPLY_SESSION') {
+      const result = await chrome.runtime.sendMessage({
+        type: 'FOCUS_APPLY_SESSION',
         data: e.data.data,
       } as RuntimeMessage);
       if (result?.error) {
@@ -450,6 +481,8 @@ function simpleHash(input: string) {
 
 function portalTypeForLocation(): SupportedPortalType {
   const host = window.location.hostname.toLowerCase();
+  if (host.includes('linkedin.com')) return 'linkedin';
+  if (host.includes('naukri.com')) return 'naukri';
   if (
     host.includes('phenompeople.com') ||
     typeof (window as typeof window & { phApp?: unknown }).phApp !== 'undefined'
@@ -485,6 +518,40 @@ function detectLoginRequired(portalType: SupportedPortalType) {
     return /sign in|create account|login|register/.test(pageText);
   }
   return /sign in|login/.test(pageText);
+}
+
+function detectLegalReviewRequired(snapshot: ReturnType<typeof collectApplySnapshot>) {
+  const text = [
+    document.title,
+    document.body?.innerText || '',
+    snapshot.fields.map((field) => `${field.label} ${field.name} ${field.placeholder}`).join(' '),
+  ].join(' ').toLowerCase();
+  if (!/voluntary self[\s-]*identification|self[\s-]*identify|equal employment opportunity|\beeo\b|veteran status|disability status|race(?:\/| and )ethnicity|gender identity|sexual orientation|demographic information/.test(text)) {
+    return false;
+  }
+  return snapshot.fields.some((field) =>
+    /(veteran|disability|race|ethnicity|gender identity|sexual orientation|self[\s-]*identify|demographic)/.test(
+      `${field.label} ${field.name} ${field.placeholder}`.toLowerCase(),
+    ),
+  ) || snapshot.stepKind === 'questionnaire';
+}
+
+function detectAssessmentGate(snapshot: ReturnType<typeof collectApplySnapshot>) {
+  if (document.querySelector('a[href*="hackerrank"], a[href*="codility"], a[href*="codesignal"], a[href*="coderbyte"], a[href*="qualified.io"], a[href*="testgorilla"], a[href*="karat"]')) {
+    return true;
+  }
+  const text = [
+    document.title,
+    document.body?.innerText || '',
+    snapshot.controls.map((control) => control.label).join(' '),
+  ].join(' ').toLowerCase();
+  if (!/assessment|coding challenge|online test|technical test|take[\s-]*home|screening test|skills test|code challenge/.test(text)) {
+    return false;
+  }
+  if (snapshot.fields.length > 1) {
+    return false;
+  }
+  return /start|continue|begin|launch|complete|take/.test(text);
 }
 
 function detectBotProtection(): boolean {
@@ -816,8 +883,69 @@ async function executeApplySession(sessionId: string) {
       return;
     }
 
+    if (detectLegalReviewRequired(initialSnapshot)) {
+      await emitApplyEvent(sessionId, {
+        status: 'manual_required',
+        message: 'A legal or self-identification section requires human review in the portal.',
+        pageUrl: window.location.href,
+        portalType: initialSnapshot.portalType,
+        pauseReason: 'legal_review_required',
+        stepKind: initialSnapshot.stepKind,
+        stepSignature: initialSnapshot.stepSignature,
+        includeScreenshot: true,
+      });
+      await completeApply(sessionId, 'manual_required', 'A legal or self-identification section requires human review before automation can continue.');
+      return;
+    }
+
+    if (detectAssessmentGate(initialSnapshot)) {
+      await emitApplyEvent(sessionId, {
+        status: 'manual_required',
+        message: 'An external assessment or challenge handoff requires human action in the portal.',
+        pageUrl: window.location.href,
+        portalType: initialSnapshot.portalType,
+        pauseReason: 'assessment_required',
+        stepKind: initialSnapshot.stepKind,
+        stepSignature: initialSnapshot.stepSignature,
+        includeScreenshot: true,
+      });
+      await completeApply(sessionId, 'manual_required', 'An external assessment or challenge handoff requires human action before automation can continue.');
+      return;
+    }
+
     for (let attempt = 0; attempt < 12; attempt++) {
       const snapshot = collectApplySnapshot(sessionId);
+
+      if (detectLegalReviewRequired(snapshot)) {
+        await emitApplyEvent(sessionId, {
+          status: 'manual_required',
+          message: 'A legal or self-identification section requires human review in the portal.',
+          pageUrl: window.location.href,
+          portalType: snapshot.portalType,
+          pauseReason: 'legal_review_required',
+          stepKind: snapshot.stepKind,
+          stepSignature: snapshot.stepSignature,
+          includeScreenshot: true,
+        });
+        await completeApply(sessionId, 'manual_required', 'A legal or self-identification section requires human review before automation can continue.');
+        return;
+      }
+
+      if (detectAssessmentGate(snapshot)) {
+        await emitApplyEvent(sessionId, {
+          status: 'manual_required',
+          message: 'An external assessment or challenge handoff requires human action in the portal.',
+          pageUrl: window.location.href,
+          portalType: snapshot.portalType,
+          pauseReason: 'assessment_required',
+          stepKind: snapshot.stepKind,
+          stepSignature: snapshot.stepSignature,
+          includeScreenshot: true,
+        });
+        await completeApply(sessionId, 'manual_required', 'An external assessment or challenge handoff requires human action before automation can continue.');
+        return;
+      }
+
       if (snapshot.fields.length === 0) {
         await emitApplyEvent(sessionId, {
           status: 'manual_required',

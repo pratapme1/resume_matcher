@@ -631,6 +631,7 @@ describe('api integration', () => {
 
     expect(initialResponse.status).toBe(200);
     expect(initialResponse.body.profile).toEqual({});
+    expect(initialResponse.body.answerBank).toEqual([]);
 
     const updateResponse = await request(profileApp)
       .put('/api/application-profile')
@@ -642,10 +643,27 @@ describe('api integration', () => {
           github: 'github.com/vishnu',
           requiresSponsorship: 'No',
         },
+        answerBank: [
+          {
+            id: 'relocation-answer',
+            question: 'Are you open to relocation?',
+            answer: 'Yes',
+            portalType: 'any',
+            updatedAt: new Date().toISOString(),
+          },
+        ],
       });
 
     expect(updateResponse.status).toBe(200);
     expect(updateResponse.body.profile.currentCtcLpa).toBe('12.5');
+    expect(updateResponse.body.answerBank).toEqual([
+      expect.objectContaining({
+        question: 'Are you open to relocation?',
+        answer: 'Yes',
+        normalizedQuestion: 'are you open to relocation',
+        portalType: 'any',
+      }),
+    ]);
 
     const mergeResponse = await request(profileApp)
       .put('/api/application-profile')
@@ -666,6 +684,7 @@ describe('api integration', () => {
     expect(getResponse.body.profile.noticePeriodDays).toBe('30');
     expect(getResponse.body.profile.github).toBe('github.com/vishnu');
     expect(getResponse.body.profile.visaStatus).toBe('H1B');
+    expect(getResponse.body.answerBank).toHaveLength(1);
   });
 
   it('creates and fetches an apply session for Stage 5 orchestration', async () => {
@@ -698,6 +717,642 @@ describe('api integration', () => {
     expect(getResponse.body.status).toBe('created');
   });
 
+  it('creates a local-agent apply session when requested', async () => {
+    const applyApp = createTestApp();
+    const tailoringResponse = await request(applyApp)
+      .post('/api/tailor-resume')
+      .attach('resume', sampleResumePath())
+      .field('jdText', await readFile(fixturePath('jd-valid.txt'), 'utf8'))
+      .field('preferences', JSON.stringify({ targetRole: 'Senior Frontend Engineer' }));
+
+    const createResponse = await request(applyApp)
+      .post('/api/apply/sessions')
+      .send({
+        applyUrl: 'https://careers.example.com/apply/123',
+        tailoredResume: tailoringResponse.body.tailoredResume,
+        templateProfile: tailoringResponse.body.templateProfile,
+        validation: tailoringResponse.body.validation,
+        executorMode: 'local_agent',
+      });
+
+    expect(createResponse.status).toBe(200);
+    expect(createResponse.body.session.executorMode).toBe('local_agent');
+    expect(createResponse.body.session.status).toBe('created');
+  });
+
+  it('returns apply-session context and plans repeated work-history rows from resume entries', async () => {
+    const applyApp = createTestApp();
+    const tailoringResponse = await request(applyApp)
+      .post('/api/tailor-resume')
+      .attach('resume', sampleResumePath())
+      .field('jdText', await readFile(fixturePath('jd-valid.txt'), 'utf8'))
+      .field('preferences', JSON.stringify({ targetRole: 'Senior Frontend Engineer' }));
+
+    const repeatedResume = {
+      ...tailoringResponse.body.tailoredResume,
+      experience: [
+        tailoringResponse.body.tailoredResume.experience[0],
+        {
+          id: 'exp-1',
+          company: 'Acme Labs',
+          title: 'Senior Frontend Engineer',
+          dates: 'Jan 2020 – Apr 2022',
+          location: 'Pune, India',
+          bullets: [
+            {
+              text: 'Built internal frontend tooling for enterprise teams.',
+              sourceProvenanceIds: ['synthetic-exp-1'],
+            },
+          ],
+          sourceProvenanceIds: ['synthetic-exp-1'],
+        },
+      ],
+    };
+
+    const createResponse = await request(applyApp)
+      .post('/api/apply/sessions')
+      .send({
+        applyUrl: 'https://jobs.smartrecruiters.com/Acme/repeater',
+        tailoredResume: repeatedResume,
+        templateProfile: tailoringResponse.body.templateProfile,
+        validation: tailoringResponse.body.validation,
+        executorMode: 'local_agent',
+      });
+
+    const contextResponse = await request(applyApp)
+      .get(`/api/apply/sessions/${createResponse.body.session.id}/context`)
+      .set('Authorization', `Bearer ${createResponse.body.executorToken}`);
+
+    expect(contextResponse.status).toBe(200);
+    expect(contextResponse.body.experienceEntries).toHaveLength(2);
+    expect(contextResponse.body.experienceEntries[1].company).toBe('Acme Labs');
+
+    const snapshotResponse = await request(applyApp)
+      .post(`/api/apply/sessions/${createResponse.body.session.id}/snapshot`)
+      .set('Authorization', `Bearer ${createResponse.body.executorToken}`)
+      .send({
+        url: 'https://jobs.smartrecruiters.com/Acme/repeater',
+        title: 'Work Experience',
+        portalType: 'smartrecruiters',
+        stepKind: 'work_history',
+        stepSignature: 'work_history:repeater',
+        fields: [
+          {
+            id: 'exp0-company',
+            name: 'experience[0].company',
+            label: 'Company',
+            placeholder: '',
+            inputType: 'text',
+            tagName: 'input',
+            widgetKind: 'text',
+            required: true,
+            visible: true,
+            value: '',
+            hasValue: false,
+          },
+          {
+            id: 'exp1-company',
+            name: 'experience[1].company',
+            label: 'Company',
+            placeholder: '',
+            inputType: 'text',
+            tagName: 'input',
+            widgetKind: 'text',
+            required: true,
+            visible: true,
+            value: '',
+            hasValue: false,
+          },
+          {
+            id: 'exp1-title',
+            name: 'experience[1].title',
+            label: 'Job Title',
+            placeholder: '',
+            inputType: 'text',
+            tagName: 'input',
+            widgetKind: 'text',
+            required: true,
+            visible: true,
+            value: '',
+            hasValue: false,
+          },
+          {
+            id: 'exp1-dates',
+            name: 'experience[1].dates',
+            label: 'Employment Dates',
+            placeholder: '',
+            inputType: 'text',
+            tagName: 'input',
+            widgetKind: 'text',
+            required: true,
+            visible: true,
+            value: '',
+            hasValue: false,
+          },
+          {
+            id: 'exp1-location',
+            name: 'experience[1].location',
+            label: 'Location',
+            placeholder: '',
+            inputType: 'text',
+            tagName: 'input',
+            widgetKind: 'text',
+            required: true,
+            visible: true,
+            value: '',
+            hasValue: false,
+          },
+        ],
+        controls: [{ id: 'submit', label: 'Submit Application', kind: 'submit' }],
+      });
+
+    expect(snapshotResponse.status).toBe(200);
+    expect(snapshotResponse.body.status).toBe('ready_to_submit');
+    expect(snapshotResponse.body.actions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ fieldId: 'exp1-company', type: 'fill', value: 'Acme Labs', semanticType: 'unknown' }),
+      expect.objectContaining({ fieldId: 'exp1-title', type: 'fill', value: 'Senior Frontend Engineer', semanticType: 'unknown' }),
+      expect.objectContaining({ fieldId: 'exp1-dates', type: 'fill', value: 'Jan 2020 – Apr 2022', semanticType: 'unknown' }),
+      expect.objectContaining({ fieldId: 'exp1-location', type: 'fill', value: 'Pune, India', semanticType: 'unknown' }),
+    ]));
+  });
+
+  it('plans supported custom widgets for local-agent apply sessions', async () => {
+    const applyApp = createTestApp();
+    const tailoringResponse = await request(applyApp)
+      .post('/api/tailor-resume')
+      .attach('resume', sampleResumePath())
+      .field('jdText', await readFile(fixturePath('jd-valid.txt'), 'utf8'))
+      .field('preferences', JSON.stringify({ targetRole: 'Senior Frontend Engineer' }));
+
+    const createResponse = await request(applyApp)
+      .post('/api/apply/sessions')
+      .send({
+        applyUrl: 'https://jobs.smartrecruiters.com/Acme/123',
+        tailoredResume: tailoringResponse.body.tailoredResume,
+        templateProfile: tailoringResponse.body.templateProfile,
+        validation: tailoringResponse.body.validation,
+        executorMode: 'local_agent',
+        applicationProfile: {
+          yearsOfExperience: '6',
+          workAuthorization: 'Authorized to work in India',
+        },
+      });
+
+    const snapshotResponse = await request(applyApp)
+      .post(`/api/apply/sessions/${createResponse.body.session.id}/snapshot`)
+      .set('Authorization', `Bearer ${createResponse.body.executorToken}`)
+      .send({
+        url: 'https://jobs.smartrecruiters.com/Acme/123',
+        title: 'Apply to Senior Frontend Engineer',
+        portalType: 'smartrecruiters',
+        stepKind: 'questionnaire',
+        stepSignature: 'questionnaire:custom',
+        fields: [
+          {
+            id: 'experience',
+            name: 'yearsExperience',
+            label: 'Total Experience (Years)',
+            placeholder: '',
+            inputType: 'custom',
+            tagName: 'div',
+            widgetKind: 'custom_number',
+            required: true,
+            visible: true,
+            value: '',
+            hasValue: false,
+          },
+          {
+            id: 'workAuthorization',
+            name: 'workAuthorization',
+            label: 'Work Authorization',
+            placeholder: '',
+            inputType: 'custom',
+            tagName: 'div',
+            widgetKind: 'custom_combobox',
+            required: true,
+            visible: true,
+            value: '',
+            hasValue: false,
+            options: [
+              { label: 'Authorized to work in India', value: 'Authorized to work in India' },
+              { label: 'Require sponsorship', value: 'Require sponsorship' },
+            ],
+          },
+        ],
+        controls: [{ id: 'submit', label: 'Submit Application', kind: 'submit' }],
+      });
+
+    expect(snapshotResponse.status).toBe(200);
+    expect(snapshotResponse.body.status).toBe('ready_to_submit');
+    expect(snapshotResponse.body.reviewItems).toEqual([]);
+    expect(snapshotResponse.body.actions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ fieldId: 'experience', type: 'fill', semanticType: 'years_of_experience', value: '6' }),
+      expect.objectContaining({ fieldId: 'workAuthorization', type: 'select', semanticType: 'work_authorization', value: 'Authorized to work in India' }),
+    ]));
+  });
+
+  it('plans multiselect and card-group widgets for local-agent apply sessions', async () => {
+    const applyApp = createTestApp();
+    const tailoringResponse = await request(applyApp)
+      .post('/api/tailor-resume')
+      .attach('resume', sampleResumePath())
+      .field('jdText', await readFile(fixturePath('jd-valid.txt'), 'utf8'))
+      .field('preferences', JSON.stringify({ targetRole: 'Senior Frontend Engineer' }));
+
+    const createResponse = await request(applyApp)
+      .post('/api/apply/sessions')
+      .send({
+        applyUrl: 'https://jobs.smartrecruiters.com/Acme/advanced',
+        tailoredResume: tailoringResponse.body.tailoredResume,
+        templateProfile: tailoringResponse.body.templateProfile,
+        validation: tailoringResponse.body.validation,
+        executorMode: 'local_agent',
+        answerBank: [
+          {
+            id: 'skills-bank',
+            question: 'Primary Skills',
+            normalizedQuestion: 'primary skills',
+            answer: 'React, TypeScript',
+            portalType: 'smartrecruiters',
+            updatedAt: new Date().toISOString(),
+          },
+          {
+            id: 'relocation-bank',
+            question: 'Are you open to relocation?',
+            normalizedQuestion: 'are you open to relocation',
+            answer: 'Yes',
+            portalType: 'smartrecruiters',
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+      });
+
+    const snapshotResponse = await request(applyApp)
+      .post(`/api/apply/sessions/${createResponse.body.session.id}/snapshot`)
+      .set('Authorization', `Bearer ${createResponse.body.executorToken}`)
+      .send({
+        url: 'https://jobs.smartrecruiters.com/Acme/advanced',
+        title: 'Apply to Senior Frontend Engineer',
+        portalType: 'smartrecruiters',
+        stepKind: 'questionnaire',
+        stepSignature: 'questionnaire:advanced-widgets',
+        fields: [
+          {
+            id: 'skills',
+            name: 'primarySkills',
+            label: 'Primary Skills',
+            placeholder: '',
+            inputType: 'custom',
+            tagName: 'div',
+            widgetKind: 'custom_multiselect',
+            required: true,
+            visible: true,
+            value: '',
+            hasValue: false,
+            options: [
+              { label: 'React', value: 'React' },
+              { label: 'TypeScript', value: 'TypeScript' },
+            ],
+          },
+          {
+            id: 'relocation',
+            name: 'relocationPreference',
+            label: 'Are you open to relocation?',
+            placeholder: '',
+            inputType: 'custom',
+            tagName: 'div',
+            widgetKind: 'custom_card_group',
+            required: true,
+            visible: true,
+            value: '',
+            hasValue: false,
+            options: [
+              { label: 'Yes', value: 'Yes' },
+              { label: 'No', value: 'No' },
+            ],
+          },
+        ],
+        controls: [{ id: 'submit', label: 'Submit Application', kind: 'submit' }],
+      });
+
+    expect(snapshotResponse.status).toBe(200);
+    expect(snapshotResponse.body.status).toBe('ready_to_submit');
+    expect(snapshotResponse.body.actions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ fieldId: 'skills', type: 'select', value: 'React, TypeScript' }),
+      expect.objectContaining({ fieldId: 'relocation', type: 'select', value: 'Yes' }),
+    ]));
+  });
+
+  it('fills unknown required fields from the saved answer bank before pausing for review', async () => {
+    const applyApp = createTestApp();
+    const tailoringResponse = await request(applyApp)
+      .post('/api/tailor-resume')
+      .attach('resume', sampleResumePath())
+      .field('jdText', await readFile(fixturePath('jd-valid.txt'), 'utf8'))
+      .field('preferences', JSON.stringify({ targetRole: 'Senior Frontend Engineer' }));
+
+    const createResponse = await request(applyApp)
+      .post('/api/apply/sessions')
+      .send({
+        applyUrl: 'https://jobs.smartrecruiters.com/Acme/789',
+        tailoredResume: tailoringResponse.body.tailoredResume,
+        templateProfile: tailoringResponse.body.templateProfile,
+        validation: tailoringResponse.body.validation,
+        executorMode: 'local_agent',
+        answerBank: [
+          {
+            id: 'onsite-answer',
+            question: 'Are you willing to work onsite 5 days a week?',
+            normalizedQuestion: 'are you willing to work onsite 5 days a week',
+            answer: 'Yes',
+            portalType: 'smartrecruiters',
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+      });
+
+    const snapshotResponse = await request(applyApp)
+      .post(`/api/apply/sessions/${createResponse.body.session.id}/snapshot`)
+      .set('Authorization', `Bearer ${createResponse.body.executorToken}`)
+      .send({
+        url: 'https://jobs.smartrecruiters.com/Acme/789',
+        title: 'Apply to Senior Frontend Engineer',
+        portalType: 'smartrecruiters',
+        stepKind: 'questionnaire',
+        stepSignature: 'questionnaire:answer-bank',
+        fields: [
+          {
+            id: 'onsite',
+            name: 'onsiteQuestion',
+            label: 'Are you willing to work onsite 5 days a week?',
+            placeholder: '',
+            inputType: 'text',
+            tagName: 'input',
+            widgetKind: 'text',
+            required: true,
+            visible: true,
+            value: '',
+            hasValue: false,
+          },
+        ],
+        controls: [{ id: 'submit', label: 'Submit Application', kind: 'submit' }],
+      });
+
+    expect(snapshotResponse.status).toBe(200);
+    expect(snapshotResponse.body.status).toBe('ready_to_submit');
+    expect(snapshotResponse.body.reviewItems).toEqual([]);
+    expect(snapshotResponse.body.actions).toEqual([
+      expect.objectContaining({
+        fieldId: 'onsite',
+        type: 'fill',
+        semanticType: 'unknown',
+        value: 'Yes',
+      }),
+    ]);
+  });
+
+  it('learns corrected review fields from a managed-browser snapshot into saved memory', async () => {
+    const applyApp = createTestApp();
+    const tailoringResponse = await request(applyApp)
+      .post('/api/tailor-resume')
+      .attach('resume', sampleResumePath())
+      .field('jdText', await readFile(fixturePath('jd-valid.txt'), 'utf8'))
+      .field('preferences', JSON.stringify({ targetRole: 'Senior Frontend Engineer' }));
+
+    const createResponse = await request(applyApp)
+      .post('/api/apply/sessions')
+      .send({
+        applyUrl: 'https://jobs.smartrecruiters.com/Acme/987',
+        tailoredResume: tailoringResponse.body.tailoredResume,
+        templateProfile: tailoringResponse.body.templateProfile,
+        validation: tailoringResponse.body.validation,
+        executorMode: 'local_agent',
+      });
+
+    const initialSnapshot = {
+      url: 'https://jobs.smartrecruiters.com/Acme/987',
+      title: 'Apply to Senior Frontend Engineer',
+      portalType: 'smartrecruiters',
+      stepKind: 'questionnaire',
+      stepSignature: 'questionnaire:learn-before',
+      fields: [
+        {
+          id: 'gender',
+          name: 'gender',
+          label: 'Gender',
+          placeholder: '',
+          inputType: 'text',
+          tagName: 'input',
+          widgetKind: 'text',
+          required: true,
+          visible: true,
+          value: '',
+          hasValue: false,
+        },
+        {
+          id: 'relocation',
+          name: 'relocationQuestion',
+          label: 'Do you have experience supporting SAP Ariba procurement workflows?',
+          placeholder: '',
+          inputType: 'text',
+          tagName: 'input',
+          widgetKind: 'text',
+          required: true,
+          visible: true,
+          value: '',
+          hasValue: false,
+        },
+      ],
+      controls: [{ id: 'next', label: 'Next', kind: 'next' }],
+    };
+
+    const initialPlanResponse = await request(applyApp)
+      .post(`/api/apply/sessions/${createResponse.body.session.id}/snapshot`)
+      .set('Authorization', `Bearer ${createResponse.body.executorToken}`)
+      .send(initialSnapshot);
+
+    expect(initialPlanResponse.status).toBe(200);
+    expect(initialPlanResponse.body.status).toBe('review_required');
+
+    const learnResponse = await request(applyApp)
+      .post(`/api/apply/sessions/${createResponse.body.session.id}/learn`)
+      .send({
+        ...initialSnapshot,
+        stepSignature: 'questionnaire:learn-after',
+        fields: [
+          {
+            ...initialSnapshot.fields[0],
+            value: 'Male',
+            hasValue: true,
+          },
+          {
+            ...initialSnapshot.fields[1],
+            value: 'Yes',
+            hasValue: true,
+          },
+        ],
+      });
+
+    expect(learnResponse.status).toBe(200);
+    expect(learnResponse.body.learnedCount).toBe(2);
+    expect(learnResponse.body.profile.gender).toBe('Male');
+    expect(learnResponse.body.answerBank).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        question: 'Do you have experience supporting SAP Ariba procurement workflows?',
+        answer: 'Yes',
+        portalType: 'smartrecruiters',
+      }),
+    ]));
+
+    const storedMemory = await request(applyApp).get('/api/application-profile');
+    expect(storedMemory.status).toBe(200);
+    expect(storedMemory.body.profile.gender).toBe('Male');
+    expect(storedMemory.body.answerBank).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        question: 'Do you have experience supporting SAP Ariba procurement workflows?',
+        answer: 'Yes',
+      }),
+    ]));
+  });
+
+  it('keeps custom widgets in review for extension apply sessions', async () => {
+    const applyApp = createTestApp();
+    const tailoringResponse = await request(applyApp)
+      .post('/api/tailor-resume')
+      .attach('resume', sampleResumePath())
+      .field('jdText', await readFile(fixturePath('jd-valid.txt'), 'utf8'))
+      .field('preferences', JSON.stringify({ targetRole: 'Senior Frontend Engineer' }));
+
+    const createResponse = await request(applyApp)
+      .post('/api/apply/sessions')
+      .send({
+        applyUrl: 'https://jobs.smartrecruiters.com/Acme/123',
+        tailoredResume: tailoringResponse.body.tailoredResume,
+        templateProfile: tailoringResponse.body.templateProfile,
+        validation: tailoringResponse.body.validation,
+        executorMode: 'extension',
+        applicationProfile: {
+          yearsOfExperience: '6',
+        },
+      });
+
+    const snapshotResponse = await request(applyApp)
+      .post(`/api/apply/sessions/${createResponse.body.session.id}/snapshot`)
+      .set('Authorization', `Bearer ${createResponse.body.executorToken}`)
+      .send({
+        url: 'https://jobs.smartrecruiters.com/Acme/123',
+        title: 'Apply to Senior Frontend Engineer',
+        portalType: 'smartrecruiters',
+        stepKind: 'questionnaire',
+        stepSignature: 'questionnaire:custom-extension',
+        fields: [
+          {
+            id: 'experience',
+            name: 'yearsExperience',
+            label: 'Total Experience (Years)',
+            placeholder: '',
+            inputType: 'custom',
+            tagName: 'div',
+            widgetKind: 'custom_number',
+            required: true,
+            visible: true,
+            value: '',
+            hasValue: false,
+          },
+        ],
+        controls: [{ id: 'submit', label: 'Submit Application', kind: 'submit' }],
+      });
+
+    expect(snapshotResponse.status).toBe(200);
+    expect(snapshotResponse.body.status).toBe('review_required');
+    expect(snapshotResponse.body.pauseReason).toBe('unsupported_widget');
+    expect(snapshotResponse.body.reviewItems).toEqual(expect.arrayContaining([
+      expect.objectContaining({ fieldId: 'experience', required: true }),
+    ]));
+  });
+
+  it('returns the dashboard applications response shape', async () => {
+    const app = createTestApp();
+
+    const response = await request(app)
+      .get('/api/applications');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ applications: [] });
+  });
+
+  it('accepts manual_required status updates for dashboard controls', async () => {
+    const app = createTestApp();
+
+    const response = await request(app)
+      .patch('/api/applications/app-123')
+      .send({ status: 'manual_required' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ success: true });
+  });
+
+  it('returns apply-session trace entries and aggregate apply metrics', async () => {
+    const applyApp = createTestApp();
+    const tailoringResponse = await request(applyApp)
+      .post('/api/tailor-resume')
+      .attach('resume', sampleResumePath())
+      .field('jdText', await readFile(fixturePath('jd-valid.txt'), 'utf8'))
+      .field('preferences', JSON.stringify({ targetRole: 'Senior Frontend Engineer' }));
+
+    const createResponse = await request(applyApp)
+      .post('/api/apply/sessions')
+      .send({
+        applyUrl: 'https://boards.greenhouse.io/acme/jobs/trace-metrics',
+        tailoredResume: tailoringResponse.body.tailoredResume,
+        templateProfile: tailoringResponse.body.templateProfile,
+        validation: tailoringResponse.body.validation,
+      });
+
+    const sessionId = createResponse.body.session.id;
+    const executorToken = createResponse.body.executorToken;
+
+    await request(applyApp)
+      .post(`/api/apply/sessions/${sessionId}/snapshot`)
+      .set('Authorization', `Bearer ${executorToken}`)
+      .send({
+        url: 'https://boards.greenhouse.io/acme/jobs/trace-metrics',
+        title: 'Apply for Senior Frontend Engineer',
+        portalType: 'greenhouse',
+        stepKind: 'profile',
+        stepSignature: 'profile:trace-metrics',
+        fields: [
+          { id: 'first', name: 'first_name', label: 'First Name', placeholder: '', inputType: 'text', tagName: 'input', widgetKind: 'text', required: true, visible: true, value: '', hasValue: false },
+        ],
+        controls: [{ id: 'submit', label: 'Submit Application', kind: 'submit' }],
+      });
+
+    await request(applyApp)
+      .post(`/api/apply/sessions/${sessionId}/events`)
+      .set('Authorization', `Bearer ${executorToken}`)
+      .send({
+        status: 'ready_to_submit',
+        message: 'Ready for confirmation',
+        pauseReason: 'none',
+        stepKind: 'submit',
+        stepSignature: 'submit:trace-metrics',
+      });
+
+    const traceResponse = await request(applyApp).get(`/api/apply/sessions/${sessionId}/trace`);
+    expect(traceResponse.status).toBe(200);
+    expect(traceResponse.body.trace).toEqual(expect.arrayContaining([
+      expect.objectContaining({ event: 'created', source: 'system' }),
+      expect.objectContaining({ event: 'plan_generated', source: 'planner' }),
+      expect.objectContaining({ event: 'executor_event', source: 'executor' }),
+    ]));
+
+    const metricsResponse = await request(applyApp).get('/api/apply/metrics');
+    expect(metricsResponse.status).toBe(200);
+    expect(metricsResponse.body.totalSessions).toBeGreaterThan(0);
+    expect(metricsResponse.body.byPortalType.greenhouse).toBeGreaterThan(0);
+    expect(metricsResponse.body.byStatus.ready_to_submit).toBeGreaterThan(0);
+  });
+
   it('classifies portal types from major ATS URLs during session creation', async () => {
     const applyApp = createTestApp();
     const tailoringResponse = await request(applyApp)
@@ -707,8 +1362,11 @@ describe('api integration', () => {
       .field('preferences', JSON.stringify({ targetRole: 'Senior Frontend Engineer' }));
 
     const urls = [
+      ['https://www.linkedin.com/jobs/view/1234567890/', 'linkedin'],
+      ['https://www.naukri.com/job-listings-senior-frontend-engineer-acme-123456', 'naukri'],
       ['https://jobs.lever.co/acme/123', 'lever'],
       ['https://boards.greenhouse.io/acme/jobs/123', 'greenhouse'],
+      ['https://jobs.ashbyhq.com/acme/12345678-90ab-cdef-1234-567890abcdef', 'ashby'],
       ['https://acme.wd5.myworkdayjobs.com/en-US/careers/job/Senior-Engineer', 'workday'],
       ['https://acme.icims.com/jobs/123/job', 'icims'],
       ['https://jobs.smartrecruiters.com/Acme/123', 'smartrecruiters'],

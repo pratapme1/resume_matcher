@@ -2,6 +2,12 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 let _client: SupabaseClient | null = null;
 
+export function isSupabaseConfigured() {
+  const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  return Boolean(supabaseUrl && serviceRoleKey);
+}
+
 // Service-role client — never expose to browser. Server-side only.
 // Lazy so tests without Supabase env vars don't fail on import.
 export function getSupabaseClient(): SupabaseClient {

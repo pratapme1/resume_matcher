@@ -1,6 +1,20 @@
-import type { ApplicantProfile, CandidateProfile, TailoredResumeDocument } from '../src/shared/types.ts';
+import type {
+  AnswerBankConfidence,
+  AnswerBankEntry,
+  AnswerBankPortalScope,
+  AnswerBankSource,
+  ApplicantProfile,
+  CandidateProfile,
+  FieldSemanticType,
+  TailoredResumeDocument,
+} from '../src/shared/types.ts';
 
-const inMemoryProfiles = new Map<string, ApplicantProfile>();
+type ApplicationMemory = {
+  profile: ApplicantProfile;
+  answerBank: AnswerBankEntry[];
+};
+
+const inMemoryProfiles = new Map<string, ApplicationMemory>();
 
 function asTrimmedString(value: unknown): string | undefined {
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
@@ -22,6 +36,37 @@ function assignIfPresent(target: ApplicantProfile, key: keyof ApplicantProfile, 
   if (normalized !== undefined) {
     target[key] = normalized;
   }
+}
+
+export function normalizeAnswerBankQuestion(value?: string | null) {
+  return (value ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizeAnswerBankPortal(value?: string | null): AnswerBankPortalScope {
+  const normalized = asTrimmedString(value);
+  return (normalized ?? 'any') as AnswerBankPortalScope;
+}
+
+function normalizeAnswerBankSemanticType(value?: string | null): FieldSemanticType | undefined {
+  const normalized = asTrimmedString(value);
+  return normalized as FieldSemanticType | undefined;
+}
+
+function normalizeAnswerBankSource(value?: string | null): AnswerBankSource {
+  const normalized = asTrimmedString(value);
+  if (normalized === 'managed_browser' || normalized === 'resume_derived' || normalized === 'imported') {
+    return normalized;
+  }
+  return 'user_saved';
+}
+
+function normalizeAnswerBankConfidence(value?: string | null): AnswerBankConfidence {
+  const normalized = asTrimmedString(value);
+  return normalized === 'learned' ? 'learned' : 'confirmed';
 }
 
 function inferYearsOfExperience(tailoredResume: TailoredResumeDocument): string | undefined {
@@ -82,6 +127,48 @@ export function sanitizeApplicantProfile(input?: Partial<ApplicantProfile> | nul
   return sanitized;
 }
 
+export function sanitizeAnswerBank(entries?: AnswerBankEntry[] | null): AnswerBankEntry[] {
+  const next: AnswerBankEntry[] = [];
+  for (const entry of entries ?? []) {
+    const question = asTrimmedString(entry?.question);
+    const answer = asTrimmedString(entry?.answer);
+    if (!question || !answer) continue;
+    const normalizedQuestion = normalizeAnswerBankQuestion(question);
+    if (!normalizedQuestion) continue;
+    next.push({
+      id: asTrimmedString(entry.id) ?? crypto.randomUUID(),
+      question,
+      normalizedQuestion,
+      answer,
+      portalType: normalizeAnswerBankPortal(entry.portalType),
+      semanticType: normalizeAnswerBankSemanticType(entry.semanticType),
+      source: normalizeAnswerBankSource(entry.source),
+      confidence: normalizeAnswerBankConfidence(entry.confidence),
+      usageCount: typeof entry.usageCount === 'number' && Number.isFinite(entry.usageCount)
+        ? Math.max(0, Math.trunc(entry.usageCount))
+        : 0,
+      lastUsedAt: asTrimmedString(entry.lastUsedAt) ?? undefined,
+      updatedAt: asTrimmedString(entry.updatedAt) ?? new Date().toISOString(),
+    });
+  }
+  return next;
+}
+
+export function mergeAnswerBankEntries(...entrySets: Array<AnswerBankEntry[] | null | undefined>): AnswerBankEntry[] {
+  const merged = new Map<string, AnswerBankEntry>();
+  for (const entries of entrySets) {
+    for (const entry of sanitizeAnswerBank(entries)) {
+      const key = [
+        entry.portalType ?? 'any',
+        entry.semanticType ?? 'unknown',
+        entry.normalizedQuestion,
+      ].join('::');
+      merged.set(key, entry);
+    }
+  }
+  return Array.from(merged.values()).sort((left, right) => left.question.localeCompare(right.question));
+}
+
 export function mergeApplicantProfiles(...profiles: Array<Partial<ApplicantProfile> | null | undefined>): ApplicantProfile {
   return profiles.reduce<ApplicantProfile>((acc, profile) => {
     const next = sanitizeApplicantProfile(profile);
@@ -121,11 +208,35 @@ export function deriveApplicantProfile(params: {
 }
 
 export function getMemoryApplicationProfile(userId: string): ApplicantProfile | null {
-  return inMemoryProfiles.get(userId) ?? null;
+  return inMemoryProfiles.get(userId)?.profile ?? null;
 }
 
 export function setMemoryApplicationProfile(userId: string, profile: Partial<ApplicantProfile>): ApplicantProfile {
   const sanitized = sanitizeApplicantProfile(profile);
-  inMemoryProfiles.set(userId, sanitized);
+  const existing = inMemoryProfiles.get(userId);
+  inMemoryProfiles.set(userId, {
+    profile: sanitized,
+    answerBank: existing?.answerBank ?? [],
+  });
   return sanitized;
+}
+
+export function getMemoryApplicationMemory(userId: string): ApplicationMemory {
+  return inMemoryProfiles.get(userId) ?? { profile: {}, answerBank: [] };
+}
+
+export function setMemoryApplicationMemory(
+  userId: string,
+  input: {
+    profile?: Partial<ApplicantProfile> | null;
+    answerBank?: AnswerBankEntry[] | null;
+  },
+): ApplicationMemory {
+  const existing = getMemoryApplicationMemory(userId);
+  const next: ApplicationMemory = {
+    profile: sanitizeApplicantProfile(input.profile ?? existing.profile),
+    answerBank: input.answerBank ? sanitizeAnswerBank(input.answerBank) : existing.answerBank,
+  };
+  inMemoryProfiles.set(userId, next);
+  return next;
 }

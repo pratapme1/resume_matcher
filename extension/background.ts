@@ -1,11 +1,23 @@
 type ActiveApplyRun = {
   sessionId: string;
-  targetTabId: number;
+  executorMode: 'extension' | 'local_agent';
+  targetTabId?: number;
   windowId?: number;
   applyUrl: string;
   apiBaseUrl: string;
   executorToken: string;
   pendingSubmit?: boolean;
+};
+
+type LocalAgentHealth = {
+  service: 'resume-tailor-local-agent';
+  version: string;
+  executionMode: 'local_agent';
+  playwrightAvailable: boolean;
+  browserReady: boolean;
+  headless: boolean;
+  sessions: number;
+  userDataDir: string;
 };
 
 type RuntimeMessage =
@@ -16,6 +28,7 @@ type RuntimeMessage =
         applyUrl: string;
         apiBaseUrl: string;
         executorToken: string;
+        executorMode: 'extension' | 'local_agent';
       };
     }
   | {
@@ -26,6 +39,12 @@ type RuntimeMessage =
     }
   | {
       type: 'SUBMIT_APPLY_SESSION';
+      data: {
+        sessionId: string;
+      };
+    }
+  | {
+      type: 'FOCUS_APPLY_SESSION';
       data: {
         sessionId: string;
       };
@@ -62,9 +81,13 @@ type RuntimeMessage =
         outcome: 'submitted' | 'protected' | 'unsupported' | 'manual_required' | 'failed';
         message?: string;
       };
+    }
+  | {
+      type: 'GET_LOCAL_AGENT_STATUS';
     };
 
 const APPLY_RUNS_KEY = 'rtp_apply_runs';
+const LOCAL_AGENT_BASE_URL = 'http://127.0.0.1:43111';
 
 async function getApplyRuns(): Promise<Record<string, ActiveApplyRun>> {
   const result = await chrome.storage.session.get(APPLY_RUNS_KEY);
@@ -106,6 +129,19 @@ async function fetchJson(url: string, init: RequestInit, executorToken: string) 
     throw new Error(body?.error || `Request failed (${response.status})`);
   }
   return response.json();
+}
+
+async function getLocalAgentStatus(): Promise<{ status: 'connected' | 'offline'; health?: LocalAgentHealth }> {
+  try {
+    const response = await fetch(`${LOCAL_AGENT_BASE_URL}/health`);
+    if (!response.ok) {
+      return { status: 'offline' };
+    }
+    const health = await response.json() as LocalAgentHealth;
+    return { status: 'connected', health };
+  } catch {
+    return { status: 'offline' };
+  }
 }
 
 async function sendMessageWithRetry(tabId: number, message: unknown, attempts = 20): Promise<unknown> {
@@ -221,25 +257,35 @@ async function postEvent(run: ActiveApplyRun, event: RuntimeMessage['data']['eve
   );
 }
 
-async function startApplySession(payload: RuntimeMessage & { type: 'START_APPLY_SESSION' }) {
-  const tab = await chrome.tabs.create({ url: payload.data.applyUrl, active: true });
+async function switchExecutorMode(run: ActiveApplyRun, executorMode: 'extension' | 'local_agent', message?: string) {
+  run.executorMode = executorMode;
+  await saveApplyRun(run);
+  await fetchJson(
+    `${run.apiBaseUrl}/api/apply/sessions/${run.sessionId}/executor-mode`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        executorMode,
+        message,
+      }),
+    },
+    run.executorToken,
+  );
+}
+
+async function startExtensionSession(run: ActiveApplyRun) {
+  const tab = await chrome.tabs.create({ url: run.applyUrl, active: true });
   if (!tab.id) {
     throw new Error('Could not open the application tab.');
   }
 
-  const run: ActiveApplyRun = {
-    sessionId: payload.data.sessionId,
-    targetTabId: tab.id,
-    windowId: tab.windowId,
-    applyUrl: payload.data.applyUrl,
-    apiBaseUrl: payload.data.apiBaseUrl,
-    executorToken: payload.data.executorToken,
-  };
+  run.targetTabId = tab.id;
+  run.windowId = tab.windowId;
   await saveApplyRun(run);
   await postEvent(run, {
     status: 'starting',
     message: 'Extension opened the application page.',
-    pageUrl: payload.data.applyUrl,
+    pageUrl: run.applyUrl,
   });
   await sendMessageWithRetry(tab.id, {
     type: 'RTP_EXECUTE_APPLY_SESSION',
@@ -250,11 +296,99 @@ async function startApplySession(payload: RuntimeMessage & { type: 'START_APPLY_
   return { ok: true };
 }
 
+async function startApplySession(payload: RuntimeMessage & { type: 'START_APPLY_SESSION' }) {
+  if (payload.data.executorMode === 'local_agent') {
+    const run: ActiveApplyRun = {
+      sessionId: payload.data.sessionId,
+      executorMode: 'local_agent',
+      applyUrl: payload.data.applyUrl,
+      apiBaseUrl: payload.data.apiBaseUrl,
+      executorToken: payload.data.executorToken,
+    };
+    await saveApplyRun(run);
+    try {
+      const localAgent = await getLocalAgentStatus();
+      if (localAgent.status !== 'connected') {
+        throw new Error('Local agent is offline.');
+      }
+      const response = await fetch(`${LOCAL_AGENT_BASE_URL}/sessions/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: payload.data.sessionId,
+          applyUrl: payload.data.applyUrl,
+          apiBaseUrl: payload.data.apiBaseUrl,
+          executorToken: payload.data.executorToken,
+        }),
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(body?.error || 'Failed to start the local agent session.');
+      }
+      return { ok: true, session: body?.session };
+    } catch (error) {
+      await switchExecutorMode(
+        run,
+        'extension',
+        'Managed browser was unavailable, so the extension executor took over.',
+      );
+      return startExtensionSession(run);
+    }
+  }
+
+  const run: ActiveApplyRun = {
+    sessionId: payload.data.sessionId,
+    executorMode: 'extension',
+    applyUrl: payload.data.applyUrl,
+    apiBaseUrl: payload.data.apiBaseUrl,
+    executorToken: payload.data.executorToken,
+  };
+  await saveApplyRun(run);
+  return startExtensionSession(run);
+}
+
 async function resumeApplySession(payload: RuntimeMessage & { type: 'RESUME_APPLY_SESSION' }) {
   const run = await getApplyRun(payload.data.sessionId);
   if (!run) {
     throw new Error('Apply session is no longer active in the extension.');
   }
+
+  if (run.executorMode === 'local_agent') {
+    const response = await fetch(`${LOCAL_AGENT_BASE_URL}/sessions/${run.sessionId}/resume`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const body = await response.json().catch(() => null);
+    if (response.ok) {
+      return { ok: true, session: body?.session };
+    }
+
+    const sessionResponse = await fetchJson(
+      `${run.apiBaseUrl}/api/apply/sessions/${run.sessionId}/executor-state`,
+      { method: 'GET' },
+      run.executorToken,
+    ) as {
+      latestPageUrl?: string;
+    };
+
+    const restartUrl = sessionResponse.latestPageUrl || run.applyUrl;
+    const restartResponse = await fetch(`${LOCAL_AGENT_BASE_URL}/sessions/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: run.sessionId,
+        applyUrl: restartUrl,
+        apiBaseUrl: run.apiBaseUrl,
+        executorToken: run.executorToken,
+      }),
+    });
+    const restartBody = await restartResponse.json().catch(() => null);
+    if (!restartResponse.ok) {
+      throw new Error(restartBody?.error || body?.error || 'Failed to resume the local agent session.');
+    }
+    return { ok: true, session: restartBody?.session, restarted: true };
+  }
+
   await postEvent(run, {
     status: 'starting',
     message: 'Re-checking the application form.',
@@ -268,10 +402,48 @@ async function resumeApplySession(payload: RuntimeMessage & { type: 'RESUME_APPL
   return { ok: true };
 }
 
+async function focusApplySession(payload: RuntimeMessage & { type: 'FOCUS_APPLY_SESSION' }) {
+  const run = await getApplyRun(payload.data.sessionId);
+  if (!run) {
+    throw new Error('Apply session is no longer active in the extension.');
+  }
+
+  if (run.executorMode === 'local_agent') {
+    const response = await fetch(`${LOCAL_AGENT_BASE_URL}/sessions/${run.sessionId}/focus`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const body = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error(body?.error || 'Failed to focus the managed-browser session.');
+    }
+    return { ok: true, session: body?.session };
+  }
+
+  if (typeof run.windowId === 'number') {
+    await chrome.windows.update(run.windowId, { focused: true });
+  }
+  if (typeof run.targetTabId === 'number') {
+    await chrome.tabs.update(run.targetTabId, { active: true });
+  }
+  return { ok: true };
+}
+
 async function submitApplySession(payload: RuntimeMessage & { type: 'SUBMIT_APPLY_SESSION' }) {
   const run = await getApplyRun(payload.data.sessionId);
   if (!run) {
     throw new Error('Apply session is no longer active in the extension.');
+  }
+  if (run.executorMode === 'local_agent') {
+    const response = await fetch(`${LOCAL_AGENT_BASE_URL}/sessions/${run.sessionId}/submit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const body = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error(body?.error || 'Failed to submit through the local agent.');
+    }
+    return { ok: true, session: body?.session };
   }
   run.pendingSubmit = true;
   await saveApplyRun(run);
@@ -301,7 +473,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
   void (async () => {
     const runs = await getApplyRuns();
-    const run = Object.values(runs).find((candidate) => candidate.targetTabId === tabId && candidate.pendingSubmit);
+    const run = Object.values(runs).find((candidate) => candidate.executorMode === 'extension' && candidate.targetTabId === tabId && candidate.pendingSubmit);
     if (!run) {
       return;
     }
@@ -346,6 +518,8 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         return await startApplySession(message);
       case 'RESUME_APPLY_SESSION':
         return await resumeApplySession(message);
+      case 'FOCUS_APPLY_SESSION':
+        return await focusApplySession(message);
       case 'SUBMIT_APPLY_SESSION':
         return await submitApplySession(message);
       case 'APPLY_GET_PLAN': {
@@ -386,6 +560,8 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
           run.executorToken,
         );
       }
+      case 'GET_LOCAL_AGENT_STATUS':
+        return await getLocalAgentStatus();
       default:
         throw new Error('Unsupported message.');
     }

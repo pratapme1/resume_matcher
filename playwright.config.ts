@@ -35,5 +35,9 @@ export default defineConfig({
       name: 'extension-hybrid',
       testMatch: /hybrid-extension\.spec\.ts/,
     },
+    {
+      name: 'local-agent-hybrid',
+      testMatch: /local-agent-hybrid\.spec\.ts/,
+    },
   ],
 });

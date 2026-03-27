@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 
 type BackendStatus = 'checking' | 'connected' | 'offline';
+type LocalAgentStatus = 'checking' | 'connected' | 'offline';
 type ActionStatus = 'idle' | 'busy' | 'done' | 'error';
 
 export default function Popup() {
   const [backendOrigin, setBackendOrigin] = useState('');
   const [backend, setBackend] = useState<BackendStatus>('checking');
+  const [localAgent, setLocalAgent] = useState<LocalAgentStatus>('checking');
   const [prefillReady, setPrefillReady] = useState(false);
   const [tailorStatus, setTailorStatus] = useState<ActionStatus>('idle');
   const [fillStatus, setFillStatus] = useState<ActionStatus>('idle');
@@ -15,6 +17,9 @@ export default function Popup() {
   useEffect(() => {
     chrome.storage.local.get(['rtp_prefill', 'rtp_app_origin']).then(({ rtp_prefill, rtp_app_origin }) => {
       setPrefillReady(!!rtp_prefill);
+      chrome.runtime.sendMessage({ type: 'GET_LOCAL_AGENT_STATUS' }).then((result) => {
+        setLocalAgent(result?.status === 'connected' ? 'connected' : 'offline');
+      }).catch(() => setLocalAgent('offline'));
       if (typeof rtp_app_origin === 'string' && rtp_app_origin) {
         setBackendOrigin(rtp_app_origin);
         fetch(`${rtp_app_origin}/api/health`, { signal: AbortSignal.timeout(3000) })
@@ -99,6 +104,13 @@ export default function Popup() {
         <span style={{ fontWeight: 700, fontSize: 14, color: '#a78bfa' }}>Resume Tailor Pro</span>
         <span style={{ marginLeft: 'auto', fontSize: 11, color: '#71717a' }}>
           {backend === 'checking' ? 'Connecting…' : backend === 'connected' ? 'Connected' : 'Backend offline'}
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        {dot(localAgent === 'connected' ? '#60a5fa' : localAgent === 'offline' ? '#71717a' : '#fbbf24')}
+        <span style={{ fontSize: 12, color: '#a1a1aa' }}>
+          {localAgent === 'checking' ? 'Checking local agent…' : localAgent === 'connected' ? 'Local agent ready' : 'Local agent offline'}
         </span>
       </div>
 
