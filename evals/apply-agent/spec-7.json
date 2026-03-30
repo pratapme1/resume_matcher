@@ -1,0 +1,164 @@
+{
+  "config": {
+    "configFile": "/home/vi/Documents/resume-tailor-pro/playwright.config.ts",
+    "rootDir": "/home/vi/Documents/resume-tailor-pro/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/vi/Documents/resume-tailor-pro/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chrome",
+        "name": "chrome",
+        "testDir": "/home/vi/Documents/resume-tailor-pro/tests/e2e",
+        "testIgnore": [
+          "/hybrid-extension\\.spec\\.ts/"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/home/vi/Documents/resume-tailor-pro/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "extension-hybrid",
+        "name": "extension-hybrid",
+        "testDir": "/home/vi/Documents/resume-tailor-pro/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "/hybrid-extension\\.spec\\.ts/"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/home/vi/Documents/resume-tailor-pro/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "local-agent-hybrid",
+        "name": "local-agent-hybrid",
+        "testDir": "/home/vi/Documents/resume-tailor-pro/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "/local-agent-hybrid\\.spec\\.ts/"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.2",
+    "workers": 4,
+    "webServer": {
+      "command": "npm run build:ext && VITE_SKIP_AUTH=true tsx tests/e2e/server.ts",
+      "port": 3100,
+      "reuseExistingServer": true,
+      "env": {
+        "VITE_SKIP_AUTH": "true"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "local-agent-hybrid.spec.ts",
+      "file": "local-agent-hybrid.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "local-agent resume restarts from the latest backend page URL after agent loss",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "local-agent-hybrid",
+              "projectName": "local-agent-hybrid",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "timedOut",
+                  "duration": 60216,
+                  "error": {
+                    "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m",
+                    "stack": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
+                  },
+                  "errors": [
+                    {
+                      "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
+                    },
+                    {
+                      "location": {
+                        "file": "/home/vi/Documents/resume-tailor-pro/tests/e2e/local-agent-hybrid.spec.ts",
+                        "column": 61,
+                        "line": 629
+                      },
+                      "message": "Error: locator.click: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /Resume Agent/i })\u001b[22m\n\n\n  627 |   expect(closeResponse.ok()).toBeTruthy();\n  628 |\n> 629 |   await page.getByRole('button', { name: /Resume Agent/i }).click();\n      |                                                             ^\n  630 |   const resumed = await waitForSessionStatus(request, session.id, ['review_required'], 25_000);\n  631 |   expect(resumed.latestPageUrl || '').toContain('step=2');\n  632 |\n    at /home/vi/Documents/resume-tailor-pro/tests/e2e/local-agent-hybrid.spec.ts:629:61"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-27T04:59:36.597Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "79efcabf3edb393cdf79-3fcf0944a928a68c9781",
+          "file": "local-agent-hybrid.spec.ts",
+          "line": 618,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-03-27T04:59:34.163Z",
+    "duration": 62780.648,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

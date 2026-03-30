@@ -126,6 +126,12 @@ async function main() {
     }
   } finally {
     await stopChildProcess(appServer);
+    // Ensure local agent port is freed after the eval run completes — the Playwright
+    // fixture sends SIGTERM but the chromium subprocess it launches may outlive the parent.
+    spawnSync('bash', ['-lc', 'fuser -k 43111/tcp >/dev/null 2>&1 || true'], {
+      cwd: process.cwd(),
+      stdio: 'ignore',
+    });
   }
 
   const summary = {

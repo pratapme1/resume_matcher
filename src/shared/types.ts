@@ -312,6 +312,7 @@ export interface CandidateProfile {
   location: string;
   educationLevel: string;
   domainExpertise: string[];
+  formerEmployers?: string[];
 }
 
 export interface JobMatchBreakdown {
@@ -342,6 +343,9 @@ export interface JobSearchResult {
   matchBreakdown: JobMatchBreakdown;
   postedDate?: string;
   companyStage?: string;
+  ghostRisk?: 'real' | 'verify' | 'ghost';
+  matchReason?: string;
+  tags?: string[];
 }
 
 export interface JobSearchPreferences {

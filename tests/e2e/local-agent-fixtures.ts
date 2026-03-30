@@ -62,7 +62,13 @@ export const test = base.extend<LocalAgentFixtures>({
     } finally {
       if (child) {
         child.kill('SIGTERM');
+        await new Promise((resolve) => setTimeout(resolve, 1500));
       }
+      // Force-release the port regardless of whether the process tree exited cleanly
+      spawnSync('bash', ['-lc', `fuser -k ${LOCAL_AGENT_PORT}/tcp >/dev/null 2>&1 || true`], {
+        cwd: process.cwd(),
+        stdio: 'ignore',
+      });
       if (userDataDir) {
         await fs.rm(userDataDir, { recursive: true, force: true }).catch(() => undefined);
       }

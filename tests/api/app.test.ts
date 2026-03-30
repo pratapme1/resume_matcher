@@ -231,6 +231,7 @@ describe('api integration', () => {
           estimatedSalary: null,
           postedDate: null,
           companyStage: 'growth',
+          score: 75,
         },
         {
           title: 'Frontend Engineer',
@@ -244,6 +245,7 @@ describe('api integration', () => {
           estimatedSalary: null,
           postedDate: null,
           companyStage: 'unknown',
+          score: 75,
         },
       ],
     };
@@ -288,6 +290,7 @@ describe('api integration', () => {
           estimatedSalary: null,
           postedDate: null,
           companyStage: 'growth',
+          score: 75,
         },
         {
           title: 'Senior Frontend Engineer',
@@ -301,6 +304,7 @@ describe('api integration', () => {
           estimatedSalary: null,
           postedDate: null,
           companyStage: 'growth',
+          score: 75,
         },
       ],
     };

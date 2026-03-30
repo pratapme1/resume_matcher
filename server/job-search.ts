@@ -264,6 +264,20 @@ export function buildCandidateProfile(resume: SourceResumeDocument): CandidatePr
   else if (/m\.?s\.?|m\.?sc|master|mba|m\.?eng/i.test(highestDegree)) educationLevel = 'master';
   else if (/b\.?s\.?|b\.?sc|bachelor|b\.?eng|b\.?a\./i.test(highestDegree)) educationLevel = 'bachelor';
 
+  // Former employers (deduplicated, most recent first, max 10)
+  const seenCompanies = new Set<string>();
+  const formerEmployers: string[] = [];
+  for (const exp of resume.experience) {
+    if (exp.company) {
+      const key = exp.company.toLowerCase().trim();
+      if (key && !seenCompanies.has(key)) {
+        seenCompanies.add(key);
+        formerEmployers.push(exp.company.trim());
+      }
+    }
+    if (formerEmployers.length >= 10) break;
+  }
+
   return {
     primaryTitles,
     topSkills,
@@ -278,6 +292,7 @@ export function buildCandidateProfile(resume: SourceResumeDocument): CandidatePr
       .trim(),
     educationLevel,
     domainExpertise,
+    formerEmployers,
   };
 }
 
@@ -285,85 +300,167 @@ export function buildCandidateProfile(resume: SourceResumeDocument): CandidatePr
 // Build search prompt
 // ─────────────────────────────────────────
 
-function buildSearchPrompt(profile: CandidateProfile, prefs?: JobSearchPreferences): string {
-  const locationParts = [prefs?.location, prefs?.country].filter(Boolean).join(', ');
+const ROLE_VARIANTS: Record<string, string[]> = {
+  // Product
+  'product manager':     ['Product Manager', 'Senior Product Manager', 'Product Owner', 'Group Product Manager', 'Principal PM', 'Staff PM', 'Lead PM', 'Platform PM', 'Technical PM'],
+  'product owner':       ['Product Owner', 'Product Manager', 'Senior Product Manager', 'Scrum Product Owner'],
+  'program manager':     ['Program Manager', 'Technical Program Manager', 'Senior Program Manager', 'PMO Manager'],
+  'project manager':     ['Project Manager', 'Senior Project Manager', 'Program Manager', 'Delivery Manager'],
+  // Engineering – general
+  'software engineer':   ['Software Engineer', 'Senior Software Engineer', 'Backend Engineer', 'Senior Backend Engineer', 'Full Stack Engineer', 'Staff Software Engineer'],
+  'software developer':  ['Software Developer', 'Software Engineer', 'Senior Software Engineer', 'Application Developer'],
+  'backend engineer':    ['Backend Engineer', 'Senior Backend Engineer', 'Software Engineer', 'Senior Software Engineer', 'Backend Developer'],
+  'backend developer':   ['Backend Developer', 'Backend Engineer', 'Senior Software Engineer', 'API Engineer'],
+  'frontend engineer':   ['Frontend Engineer', 'Senior Frontend Engineer', 'UI Engineer', 'Frontend Developer', 'React Developer'],
+  'frontend developer':  ['Frontend Developer', 'Frontend Engineer', 'Senior Frontend Engineer', 'UI Developer'],
+  'full stack':          ['Full Stack Engineer', 'Full Stack Developer', 'Software Engineer', 'Senior Software Engineer'],
+  'fullstack':           ['Full Stack Engineer', 'Full Stack Developer', 'Software Engineer'],
+  // Engineering – senior/staff/principal
+  'staff engineer':      ['Staff Engineer', 'Principal Engineer', 'Senior Staff Engineer', 'Distinguished Engineer'],
+  'principal engineer':  ['Principal Engineer', 'Staff Engineer', 'Distinguished Engineer', 'Senior Principal Engineer'],
+  'tech lead':           ['Tech Lead', 'Engineering Lead', 'Staff Engineer', 'Senior Software Engineer'],
+  // Engineering – management
+  'engineering manager': ['Engineering Manager', 'Software Development Manager', 'Director of Engineering', 'VP Engineering'],
+  'engineering lead':    ['Tech Lead', 'Staff Engineer', 'Principal Engineer', 'Engineering Manager'],
+  // Infrastructure / DevOps / Platform
+  'devops':              ['DevOps Engineer', 'Platform Engineer', 'SRE', 'Infrastructure Engineer', 'Cloud Engineer'],
+  'sre':                 ['Site Reliability Engineer', 'SRE', 'Platform Engineer', 'DevOps Engineer'],
+  'platform engineer':   ['Platform Engineer', 'Infrastructure Engineer', 'DevOps Engineer', 'Cloud Infrastructure Engineer'],
+  'cloud engineer':      ['Cloud Engineer', 'AWS Engineer', 'Platform Engineer', 'Infrastructure Engineer'],
+  // Mobile
+  'mobile engineer':     ['Mobile Engineer', 'iOS Engineer', 'Android Engineer', 'React Native Developer'],
+  'ios':                 ['iOS Engineer', 'iOS Developer', 'Mobile Engineer', 'Swift Developer'],
+  'android':             ['Android Engineer', 'Android Developer', 'Mobile Engineer', 'Kotlin Developer'],
+  // Data / ML
+  'data scientist':      ['Data Scientist', 'Senior Data Scientist', 'ML Engineer', 'Applied Scientist'],
+  'data engineer':       ['Data Engineer', 'Senior Data Engineer', 'Analytics Engineer', 'Data Platform Engineer'],
+  'ml engineer':         ['ML Engineer', 'Machine Learning Engineer', 'AI Engineer', 'Applied ML Engineer'],
+  'machine learning':    ['ML Engineer', 'Machine Learning Engineer', 'AI Engineer', 'Data Scientist'],
+  // Design
+  'ux designer':         ['UX Designer', 'Product Designer', 'UI/UX Designer', 'Senior UX Designer'],
+  'designer':            ['Product Designer', 'UX Designer', 'UI/UX Designer', 'Interaction Designer'],
+  // Security
+  'security engineer':   ['Security Engineer', 'Application Security Engineer', 'Cloud Security Engineer', 'InfoSec Engineer'],
+};
 
-  // Expand primary titles with close role variants so the search stays broad with a small prompt.
-  const ROLE_VARIANTS: Record<string, string[]> = {
-    // Product
-    'product manager':     ['Product Manager', 'Senior Product Manager', 'Product Owner', 'Group Product Manager', 'Principal PM'],
-    'product owner':       ['Product Owner', 'Product Manager', 'Senior Product Manager', 'Scrum Product Owner'],
-    'program manager':     ['Program Manager', 'Technical Program Manager', 'Senior Program Manager', 'PMO Manager'],
-    'project manager':     ['Project Manager', 'Senior Project Manager', 'Program Manager', 'Delivery Manager'],
-    // Engineering – general
-    'software engineer':   ['Software Engineer', 'Senior Software Engineer', 'Backend Engineer', 'Senior Backend Engineer', 'Full Stack Engineer', 'Staff Software Engineer'],
-    'software developer':  ['Software Developer', 'Software Engineer', 'Senior Software Engineer', 'Application Developer'],
-    'backend engineer':    ['Backend Engineer', 'Senior Backend Engineer', 'Software Engineer', 'Senior Software Engineer', 'Backend Developer'],
-    'backend developer':   ['Backend Developer', 'Backend Engineer', 'Senior Software Engineer', 'API Engineer'],
-    'frontend engineer':   ['Frontend Engineer', 'Senior Frontend Engineer', 'UI Engineer', 'Frontend Developer', 'React Developer'],
-    'frontend developer':  ['Frontend Developer', 'Frontend Engineer', 'Senior Frontend Engineer', 'UI Developer'],
-    'full stack':          ['Full Stack Engineer', 'Full Stack Developer', 'Software Engineer', 'Senior Software Engineer'],
-    'fullstack':           ['Full Stack Engineer', 'Full Stack Developer', 'Software Engineer'],
-    // Engineering – senior/staff/principal
-    'staff engineer':      ['Staff Engineer', 'Principal Engineer', 'Senior Staff Engineer', 'Distinguished Engineer'],
-    'principal engineer':  ['Principal Engineer', 'Staff Engineer', 'Distinguished Engineer', 'Senior Principal Engineer'],
-    'tech lead':           ['Tech Lead', 'Engineering Lead', 'Staff Engineer', 'Senior Software Engineer'],
-    // Engineering – management
-    'engineering manager': ['Engineering Manager', 'Software Development Manager', 'Director of Engineering', 'VP Engineering'],
-    'engineering lead':    ['Tech Lead', 'Staff Engineer', 'Principal Engineer', 'Engineering Manager'],
-    // Infrastructure / DevOps / Platform
-    'devops':              ['DevOps Engineer', 'Platform Engineer', 'SRE', 'Infrastructure Engineer', 'Cloud Engineer'],
-    'sre':                 ['Site Reliability Engineer', 'SRE', 'Platform Engineer', 'DevOps Engineer'],
-    'platform engineer':   ['Platform Engineer', 'Infrastructure Engineer', 'DevOps Engineer', 'Cloud Infrastructure Engineer'],
-    'cloud engineer':      ['Cloud Engineer', 'AWS Engineer', 'Platform Engineer', 'Infrastructure Engineer'],
-    // Mobile
-    'mobile engineer':     ['Mobile Engineer', 'iOS Engineer', 'Android Engineer', 'React Native Developer'],
-    'ios':                 ['iOS Engineer', 'iOS Developer', 'Mobile Engineer', 'Swift Developer'],
-    'android':             ['Android Engineer', 'Android Developer', 'Mobile Engineer', 'Kotlin Developer'],
-    // Data / ML
-    'data scientist':      ['Data Scientist', 'Senior Data Scientist', 'ML Engineer', 'Applied Scientist'],
-    'data engineer':       ['Data Engineer', 'Senior Data Engineer', 'Analytics Engineer', 'Data Platform Engineer'],
-    'ml engineer':         ['ML Engineer', 'Machine Learning Engineer', 'AI Engineer', 'Applied ML Engineer'],
-    'machine learning':    ['ML Engineer', 'Machine Learning Engineer', 'AI Engineer', 'Data Scientist'],
-    // Design
-    'ux designer':         ['UX Designer', 'Product Designer', 'UI/UX Designer', 'Senior UX Designer'],
-    'designer':            ['Product Designer', 'UX Designer', 'UI/UX Designer', 'Interaction Designer'],
-    // Security
-    'security engineer':   ['Security Engineer', 'Application Security Engineer', 'Cloud Security Engineer', 'InfoSec Engineer'],
-  };
-
-  const expandedTitles = profile.primaryTitles.flatMap(t => {
+function expandTitles(profile: CandidateProfile): string[] {
+  const expanded = profile.primaryTitles.flatMap(t => {
     const key = t.toLowerCase().replace(/\s+/g, ' ').trim();
     for (const [pattern, variants] of Object.entries(ROLE_VARIANTS)) {
       if (key.includes(pattern) || pattern.includes(key)) return variants;
     }
-    return [t]; // no expansion found, use as-is
+    return [t];
   });
-  const uniqueTitles = [...new Set(expandedTitles)].slice(0, 5);
-  const candidateContext = {
-    titles: uniqueTitles,
-    roleType: prefs?.roleType || null,
-    seniority: profile.seniorityLevel,
-    years: profile.yearsOfExperience,
-    location: locationParts || profile.location || null,
-    remotePreference: prefs?.remotePreference && prefs.remotePreference !== 'any' ? prefs.remotePreference : 'any',
-    skills: profile.topSkills.slice(0, 8),
-    industries: profile.industries.slice(0, 3),
-    domainExpertise: profile.domainExpertise.slice(0, 3),
-  };
+  return [...new Set(expanded)].slice(0, 8);
+}
 
-  return [
-    'Find up to 10 currently open jobs for this candidate.',
-    'Prefer direct company career pages and trusted ATS pages: Greenhouse, Lever, Ashby, Workday, iCIMS, SmartRecruiters, Taleo, SuccessFactors, LinkedIn Jobs, Wellfound.',
-    'Do not return generic aggregator pages like Indeed, Glassdoor, Jooble, Naukri, Monster, or Talent.',
-    'Only keep jobs where company name is explicit on the source posting page.',
-    'Prioritize strong fit and recent listings. Skip expired, duplicate, or clearly mismatched jobs.',
-    `Candidate: ${JSON.stringify(candidateContext)}`,
-    'Return raw JSON only. No markdown.',
-    'Schema:',
-    '{"jobs":[{"title":"","company":"","location":"","remoteType":"remote|hybrid|onsite|unknown","url":"","description":"one short sentence","requiredSkills":[""],"niceToHaveSkills":[""],"estimatedSalary":null,"postedDate":null,"companyStage":"startup|growth|enterprise|unknown"}]}',
-    'Rules: description max 220 chars, requiredSkills max 6, niceToHaveSkills max 3, URL must be the actual posting URL, company is required.',
-  ].join('\n');
+function buildSearchPrompt(profile: CandidateProfile, prefs?: JobSearchPreferences): string {
+  const today = new Date().toISOString().split('T')[0];
+  const locationParts = [prefs?.location, prefs?.country].filter(Boolean).join(', ');
+  const targetLocation = locationParts || profile.location || 'Bangalore, India';
+  const cityName = targetLocation.split(',')[0].trim();
+
+  const uniqueTitles = expandTitles(profile);
+  const titleList = uniqueTitles.join(', ');
+  const titleQueries = uniqueTitles.slice(0, 4).map(t =>
+    `"${t}" ("${cityName}" OR "Bengaluru" OR "India" OR "remote India")`
+  ).join('\n  ');
+
+  const domainTerms = [...profile.industries, ...profile.domainExpertise].slice(0, 5);
+  const domainList = domainTerms.join(', ') || 'technology';
+
+  const skillList = profile.topSkills.slice(0, 8).join(', ');
+
+  const formerEmployerLines = (profile.formerEmployers ?? []).slice(0, 6).map(c =>
+    `  - "${c} careers" ${uniqueTitles[0] ?? ''} (warm connection — former employer)`
+  ).join('\n');
+
+  const remoteNote = prefs?.remotePreference === 'remote'
+    ? 'Candidate strongly prefers remote. Prioritize remote-first listings.'
+    : prefs?.remotePreference === 'hybrid'
+    ? 'Candidate prefers hybrid. Include hybrid and remote listings.'
+    : 'Include onsite Bangalore, hybrid, and remote India listings.';
+
+  return `You are a deep job research agent. Today's date: ${today}.
+Target market: India (${targetLocation} preferred, remote acceptable).
+${remoteNote}
+
+CANDIDATE PROFILE:
+- Target titles: ${titleList}
+- Years of experience: ${profile.yearsOfExperience}
+- Seniority: ${profile.seniorityLevel}
+- Key skills: ${skillList}
+- Domains: ${domainList}
+
+TASK: Run at least 15 distinct searches across ALL of the following sources. Do not skip any category.
+
+PRIMARY JOB BOARDS — search each with specific queries:
+  ${titleQueries}
+  - site:naukri.com ${uniqueTitles[0] ?? ''} ${cityName}
+  - site:in.indeed.com OR site:indeed.com/jobs ${uniqueTitles[0] ?? ''} india
+  - site:glassdoor.co.in/Job ${uniqueTitles[0] ?? ''}
+  - site:wellfound.com/jobs ${uniqueTitles[0] ?? ''} india
+  - site:instahyre.com ${uniqueTitles[0] ?? ''}
+  - site:cutshort.io/jobs ${uniqueTitles[0] ?? ''}
+  - site:iimjobs.com ${uniqueTitles[0] ?? ''}
+  - site:shine.com ${uniqueTitles[0] ?? ''} ${cityName}
+
+COMPANY CAREER PAGES (search directly, not via aggregators):
+  - Freshworks, Zoho, BrowserStack, Postman, Razorpay, Zepto, Meesho, PhonePe, Swiggy, Flipkart, Groww, CRED, Lenskart — search "[company] careers ${uniqueTitles[0] ?? ''}"
+  - Salesforce, ServiceNow, SAP, Adobe, Oracle, Atlassian, MoEngage, CleverTap, Sprinklr, Darwinbox, Leadsquared, Chargebee — search "[company] careers ${uniqueTitles[0] ?? ''}"
+  - Y Combinator: site:ycombinator.com/jobs ${uniqueTitles[0] ?? ''}
+${formerEmployerLines ? `FORMER EMPLOYER CAREER PAGES (warm connections):\n${formerEmployerLines}` : ''}
+
+HIDDEN/NICHE SOURCES:
+  - ATS direct pages: site:boards.greenhouse.io ${uniqueTitles[0] ?? ''} india
+  - ATS direct pages: site:jobs.lever.co ${uniqueTitles[0] ?? ''} india
+  - ATS direct pages: site:ashbyhq.com ${uniqueTitles[0] ?? ''} india
+  - Workday: "${uniqueTitles[0] ?? ''}" site:myworkdayjobs.com india
+  - Remote boards: site:remotive.com ${uniqueTitles[0] ?? ''} (if remote-friendly)
+  - LinkedIn posts (not just listings): "hiring ${uniqueTitles[0] ?? ''}" bangalore 2026
+
+QUERY CONSTRUCTION — use ALL of these variants across your searches:
+  Title variants: ${uniqueTitles.map(t => `"${t}"`).join(', ')}
+  Domain combinations: ${domainTerms.slice(0, 3).map(d => `"${uniqueTitles[0] ?? ''}" "${d}"`).join(', ')}
+  Location variants: "${cityName}" OR "Bengaluru" OR "India" OR "remote India" OR "hybrid Bangalore"
+  Recency signals: "2026" OR "hiring now"
+  Seniority variants: "Senior" OR "Principal" OR "Staff" OR "Lead" OR "Group"
+
+GHOST JOB DETECTION — classify each result:
+  - "real": Posted within 7 days, direct company career page, apply button live
+  - "verify": Posted 8–30 days ago, aggregator link only, no visible date
+  - "ghost": Posted 30+ days ago, company had recent layoffs, redirects to generic careers page
+
+SCORING RUBRIC (0–100) — score each job:
+  - Role title match (${uniqueTitles.slice(0, 2).join(' / ')}): 25 pts
+  - Seniority/experience match (${profile.yearsOfExperience} yrs, ${profile.seniorityLevel}): 20 pts
+  - AI / automation domain overlap: 20 pts
+  - IoT / hardware / connected devices domain overlap: 15 pts
+  - Enterprise B2B / platform product type: 15 pts
+  - Location fit (${cityName} / remote / hybrid): 5 pts
+
+MINIMUM BAR: Only include jobs scoring 65+. Drop everything below. Return MINIMUM 15 jobs — search harder with alternate queries before giving up.
+
+Return raw JSON only. No markdown. No explanation. Schema:
+{"jobs":[{
+  "title":"",
+  "company":"",
+  "location":"",
+  "remoteType":"remote|hybrid|onsite|unknown",
+  "url":"",
+  "description":"one sentence, max 220 chars",
+  "requiredSkills":["max 6 items"],
+  "niceToHaveSkills":["max 3 items"],
+  "estimatedSalary":null,
+  "postedDate":null,
+  "companyStage":"startup|growth|enterprise|unknown",
+  "score":75,
+  "ghostRisk":"real|verify|ghost",
+  "matchReason":"one sentence explaining specifically why this matches the candidate",
+  "tags":["AI","IoT","Enterprise","Former client","Startup","Remote","Hidden job"]
+}]}
+
+Rules: description max 220 chars, requiredSkills max 6, niceToHaveSkills max 3, URL must be direct posting URL (prefer company career page or ATS over aggregator), company name is required, score must be 65–100.`;
 }
 
 // ─────────────────────────────────────────
@@ -382,6 +479,10 @@ interface RawJob {
   estimatedSalary?: string | null;
   postedDate?: string | null;
   companyStage?: string;
+  score?: number;
+  ghostRisk?: string;
+  matchReason?: string;
+  tags?: string[];
 }
 
 type SearchFetchImpl = typeof fetch;
@@ -401,14 +502,21 @@ const ATS_HOST_PATTERNS = [
 const JOB_BOARD_HOST_PATTERNS = [
   'linkedin.com',
   'wellfound.com',
+  // Indian job boards — primary sources, not generic aggregators
+  'naukri.com',
+  'instahyre.com',
+  'cutshort.io',
+  'iimjobs.com',
+  'shine.com',
+  'monsterindia.com',
+  'glassdoor.co.in',
+  'in.indeed.com',
 ];
 
 const AGGREGATOR_HOST_PATTERNS = [
   'indeed.com',
   'glassdoor.com',
   'ziprecruiter.com',
-  'monster.com',
-  'naukri.com',
   'foundit.in',
   'foundit.com',
   'jooble.org',
@@ -528,11 +636,24 @@ function normalizeRawJob(job: RawJob): RawJob & {
   sourceHost?: string;
   sourceType: JobSearchResult['sourceType'];
   verifiedSource: boolean;
+  ghostRisk?: JobSearchResult['ghostRisk'];
+  matchReason?: string;
+  tags?: string[];
 } {
   const url = normalizeUrl(job.url);
   const sourceHost = getHostname(url);
   const sourceType = classifySourceType(url);
   const company = cleanCompanyName(job.company) ?? inferCompanyFromUrl(url);
+
+  const rawGhostRisk = (job.ghostRisk ?? '').toLowerCase();
+  const ghostRisk: JobSearchResult['ghostRisk'] =
+    rawGhostRisk === 'real' ? 'real'
+    : rawGhostRisk === 'ghost' ? 'ghost'
+    : rawGhostRisk === 'verify' ? 'verify'
+    : undefined;
+
+  const rawTags = Array.isArray(job.tags) ? job.tags.filter((t): t is string => typeof t === 'string') : undefined;
+
   return {
     ...job,
     title: job.title?.trim(),
@@ -548,6 +669,10 @@ function normalizeRawJob(job: RawJob): RawJob & {
     estimatedSalary: job.estimatedSalary?.trim() || null,
     postedDate: job.postedDate?.trim() || null,
     companyStage: job.companyStage?.trim(),
+    score: typeof job.score === 'number' ? job.score : undefined,
+    ghostRisk,
+    matchReason: job.matchReason?.trim() || undefined,
+    tags: rawTags,
   };
 }
 
@@ -733,7 +858,7 @@ async function searchJobsWithProvider(prompt: string, ai: AIClient): Promise<Raw
           contents: prompt,
           config: {
             temperature: 0,
-            maxOutputTokens: 1800,
+            maxOutputTokens: 4000,
           },
         })
       : await (ai.models as any).generateContent({
@@ -742,7 +867,7 @@ async function searchJobsWithProvider(prompt: string, ai: AIClient): Promise<Raw
           config: {
             tools: [{ googleSearch: {} }],
             temperature: 0,
-            maxOutputTokens: 1800,
+            maxOutputTokens: 4000,
           },
         });
 
@@ -831,6 +956,29 @@ function calcDomainMatch(job: RawJob, profile: CandidateProfile): number {
   return Math.round(Math.min(1, matched / Math.max(1, profileDomains.length)) * 100);
 }
 
+const AI_DOMAIN_TERMS = ['ai', 'machine learning', 'ml', 'llm', 'nlp', 'natural language', 'artificial intelligence', 'automation', 'generative', 'deep learning', 'data science', 'intelligent', 'predictive', 'recommendation'];
+const IOT_DOMAIN_TERMS = ['iot', 'internet of things', 'connected device', 'embedded', 'sensor', 'hardware', 'firmware', 'telemetry', 'edge computing', 'industrial', 'scada', 'smart device', 'm2m'];
+const ENTERPRISE_DOMAIN_TERMS = ['enterprise', 'b2b', 'saas', 'platform', 'it management', 'itam', 'itsm', 'asset management', 'service management', 'salesforce', 'servicenow', 'sap', 'oracle', 'atlassian', 'erp', 'crm'];
+
+function calcSpecificDomainScore(job: RawJob, terms: string[]): number {
+  const corpus = `${job.title ?? ''} ${job.description ?? ''} ${(job.requiredSkills ?? []).join(' ')}`.toLowerCase();
+  const matched = terms.filter(t => corpus.includes(t)).length;
+  if (matched >= 2) return 100;
+  if (matched === 1) return 55;
+  return 0;
+}
+
+function calcLocationFitScore(job: RawJob): number {
+  const loc = (job.location ?? '').toLowerCase();
+  const remoteType = (job.remoteType ?? '').toLowerCase();
+  if (remoteType === 'remote') return 100;
+  if (/bangalore|bengaluru/.test(loc)) return 100;
+  if (remoteType === 'hybrid') return 80;
+  if (/india/.test(loc)) return 70;
+  if (!loc) return 50; // unknown — neutral
+  return 30;
+}
+
 function scoreJobAgainstProfile(raw: RawJob, profile: CandidateProfile, idx: number): JobSearchResult {
   const title = raw.title ?? 'Unknown Role';
   const allProfileSkills = [...profile.topSkills, ...profile.technologiesAndTools];
@@ -842,19 +990,41 @@ function scoreJobAgainstProfile(raw: RawJob, profile: CandidateProfile, idx: num
   const seniorityFit = calcSeniorityFit(title, profile);
   const domainMatch = calcDomainMatch(raw, profile);
 
+  // Rubric from search_prompt.md:
+  //   role title match:       25 pts
+  //   seniority/experience:   20 pts
+  //   AI/automation domain:   20 pts
+  //   IoT/hardware domain:    15 pts
+  //   enterprise B2B/platform: 15 pts
+  //   location fit:            5 pts
+  const aiScore       = calcSpecificDomainScore(raw, AI_DOMAIN_TERMS);
+  const iotScore      = calcSpecificDomainScore(raw, IOT_DOMAIN_TERMS);
+  const enterpriseScore = calcSpecificDomainScore(raw, ENTERPRISE_DOMAIN_TERMS);
+  const locationScore = calcLocationFitScore(raw);
+
   const matchScore = Math.round(
-    skillsOverlap * 0.40 +
-    titleSimilarity * 0.25 +
+    titleSimilarity      * 0.25 +
     seniorityScore(seniorityFit) * 0.20 +
-    domainMatch * 0.15
+    aiScore              * 0.20 +
+    iotScore             * 0.15 +
+    enterpriseScore      * 0.15 +
+    locationScore        * 0.05
   );
+
+  // Use AI-provided score when available (Gemini evaluated against the full job details),
+  // otherwise fall back to our local rubric score.
+  const aiProvidedScore = typeof raw.score === 'number' && raw.score >= 0 && raw.score <= 100
+    ? raw.score
+    : undefined;
+  const baseScore = aiProvidedScore ?? matchScore;
+
   const sourceType = classifySourceType(raw.url);
   const sourceBonus =
-    sourceType === 'direct' ? 6
-    : sourceType === 'ats' ? 5
-    : sourceType === 'board' ? 2
+    sourceType === 'direct' ? 4
+    : sourceType === 'ats' ? 3
+    : sourceType === 'board' ? 1
     : 0;
-  const boostedMatchScore = Math.min(100, matchScore + sourceBonus);
+  const boostedMatchScore = Math.min(100, baseScore + sourceBonus);
 
   const topMatchingSkills = skillsIntersection(required, allProfileSkills).slice(0, 5);
   const keyGaps = required
@@ -862,9 +1032,9 @@ function scoreJobAgainstProfile(raw: RawJob, profile: CandidateProfile, idx: num
     .slice(0, 3);
 
   let overallFit: JobMatchBreakdown['overallFit'];
-  if (matchScore >= 80) overallFit = 'strong';
-  else if (matchScore >= 60) overallFit = 'good';
-  else if (matchScore >= 40) overallFit = 'moderate';
+  if (boostedMatchScore >= 80) overallFit = 'strong';
+  else if (boostedMatchScore >= 65) overallFit = 'good';
+  else if (boostedMatchScore >= 50) overallFit = 'moderate';
   else overallFit = 'stretch';
 
   const remoteTypeRaw = raw.remoteType?.toLowerCase() ?? 'unknown';
@@ -900,6 +1070,9 @@ function scoreJobAgainstProfile(raw: RawJob, profile: CandidateProfile, idx: num
     },
     postedDate: raw.postedDate ?? undefined,
     companyStage: raw.companyStage ?? undefined,
+    ghostRisk: (raw as ReturnType<typeof normalizeRawJob>).ghostRisk,
+    matchReason: (raw as ReturnType<typeof normalizeRawJob>).matchReason,
+    tags: (raw as ReturnType<typeof normalizeRawJob>).tags,
   };
 }
 
@@ -957,12 +1130,15 @@ export async function searchJobs(
     fetchImpl,
   );
 
+  const MIN_SCORE = 65;
+
   const scored = normalizedJobs
     .filter(j => j.title && j.company)
-    .map((j, i) => scoreJobAgainstProfile(j, candidateProfile, i));
+    .map((j, i) => scoreJobAgainstProfile(j, candidateProfile, i))
+    .filter(j => j.matchScore >= MIN_SCORE);
   scored.sort((a, b) => b.matchScore - a.matchScore);
   return {
-    results: scored.slice(0, 15),
+    results: scored.slice(0, 20),
     candidateProfile,
     totalFound: scored.length,
   };

@@ -1,91 +1,91 @@
 {
-  "generatedAt": "2026-03-27T05:02:27.088Z",
+  "generatedAt": "2026-03-27T19:02:45.414Z",
   "command": "isolated playwright runs for tests/e2e/local-agent-hybrid.spec.ts --project=local-agent-hybrid",
   "exitCode": 0,
   "passed": 11,
   "failed": 0,
   "skipped": 0,
   "flaky": 0,
-  "durationMs": 127665,
+  "durationMs": 167580,
   "specs": [
     {
       "title": "local-agent path fills supported custom widgets and reaches submit readiness",
       "status": "passed",
-      "durationMs": 18042,
+      "durationMs": 27283,
       "exitCode": 0
     },
     {
       "title": "local-agent advanced widgets capture trace and metrics for harder flows",
       "status": "passed",
-      "durationMs": 16069,
+      "durationMs": 20428,
       "exitCode": 0
     },
     {
       "title": "local-agent expands and fills repeated work-history rows from session context",
       "status": "passed",
-      "durationMs": 9505,
+      "durationMs": 12809,
       "exitCode": 0
     },
     {
       "title": "local-agent expands and fills repeated education rows from session context",
       "status": "passed",
-      "durationMs": 9597,
+      "durationMs": 12552,
       "exitCode": 0
     },
     {
       "title": "local-agent expands and fills repeated project rows from session context",
       "status": "passed",
-      "durationMs": 10518,
+      "durationMs": 12341,
       "exitCode": 0
     },
     {
       "title": "local-agent expands and fills repeated certification rows from session context",
       "status": "passed",
-      "durationMs": 9650,
+      "durationMs": 12639,
       "exitCode": 0
     },
     {
       "title": "local-agent resume restarts from the latest backend page URL after agent loss",
       "status": "passed",
-      "durationMs": 18417,
+      "durationMs": 23345,
       "exitCode": 0
     },
     {
       "title": "local-agent pauses cleanly on login-required gates",
       "status": "passed",
-      "durationMs": 9015,
+      "durationMs": 11740,
       "exitCode": 0
     },
     {
       "title": "local-agent pauses cleanly on protected portals",
       "status": "passed",
-      "durationMs": 8973,
+      "durationMs": 11656,
       "exitCode": 0
     },
     {
       "title": "local-agent pauses cleanly on legal self-id gates",
       "status": "passed",
-      "durationMs": 9035,
+      "durationMs": 11456,
       "exitCode": 0
     },
     {
       "title": "local-agent pauses cleanly on assessment handoff gates",
       "status": "passed",
-      "durationMs": 8844,
+      "durationMs": 11331,
       "exitCode": 0
     }
   ],
   "reports": [
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-1.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-2.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-3.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-4.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-5.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-6.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-7.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-8.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-9.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-10.json",
-    "/tmp/rtp-apply-agent-evals-XbYaio/spec-11.json"
+    "/tmp/rtp-apply-agent-evals-pnY8dE/spec-1.json",
+    "/tmp/rtp-apply-agent-evals-pnY8dE/spec-2.json",
+    "/tmp/rtp-apply-agent-evals-pnY8dE/spec-3.json",
+    "/tmp/rtp-apply-agent-evals-pnY8dE/spec-4.json",
+    "/tmp/rtp-apply-agent-evals-pnY8dE/spec-5.json",
+    "/tmp/rtp-apply-agent-evals-pnY8dE/spec-6.json",
+    "/tmp/rtp-apply-agent-evals-pnY8dE/spec-7.json",
+    "/tmp/rtp-apply-agent-evals-pnY8dE/spec-8.json",
+    "/tmp/rtp-apply-agent-evals-pnY8dE/spec-9.json",
+    "/tmp/rtp-apply-agent-evals-pnY8dE/spec-10.json",
+    "/tmp/rtp-apply-agent-evals-pnY8dE/spec-11.json"
   ]
 }

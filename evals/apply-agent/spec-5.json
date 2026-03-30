@@ -1,0 +1,172 @@
+{
+  "config": {
+    "configFile": "/home/vi/Documents/resume-tailor-pro/playwright.config.ts",
+    "rootDir": "/home/vi/Documents/resume-tailor-pro/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/vi/Documents/resume-tailor-pro/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chrome",
+        "name": "chrome",
+        "testDir": "/home/vi/Documents/resume-tailor-pro/tests/e2e",
+        "testIgnore": [
+          "/hybrid-extension\\.spec\\.ts/"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/home/vi/Documents/resume-tailor-pro/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "extension-hybrid",
+        "name": "extension-hybrid",
+        "testDir": "/home/vi/Documents/resume-tailor-pro/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "/hybrid-extension\\.spec\\.ts/"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/home/vi/Documents/resume-tailor-pro/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "local-agent-hybrid",
+        "name": "local-agent-hybrid",
+        "testDir": "/home/vi/Documents/resume-tailor-pro/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "/local-agent-hybrid\\.spec\\.ts/"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.2",
+    "workers": 4,
+    "webServer": {
+      "command": "npm run build:ext && VITE_SKIP_AUTH=true tsx tests/e2e/server.ts",
+      "port": 3100,
+      "reuseExistingServer": true,
+      "env": {
+        "VITE_SKIP_AUTH": "true"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "local-agent-hybrid.spec.ts",
+      "file": "local-agent-hybrid.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "local-agent expands and fills repeated project rows from session context",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "local-agent-hybrid",
+              "projectName": "local-agent-hybrid",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 4258,
+                  "error": {
+                    "message": "Error: apiRequestContext.post: socket hang up\nCall log:\n\u001b[2m  - → POST http://127.0.0.1:43111/sessions/start\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.58.2 (x64; ubuntu 24.04) node/24.14\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 228\u001b[22m\n",
+                    "stack": "Error: apiRequestContext.post: socket hang up\nCall log:\n\u001b[2m  - → POST http://127.0.0.1:43111/sessions/start\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.58.2 (x64; ubuntu 24.04) node/24.14\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 228\u001b[22m\n\n    at /home/vi/Documents/resume-tailor-pro/tests/e2e/local-agent-hybrid.spec.ts:527:36",
+                    "location": {
+                      "file": "/home/vi/Documents/resume-tailor-pro/tests/e2e/local-agent-hybrid.spec.ts",
+                      "column": 36,
+                      "line": 527
+                    },
+                    "snippet": "  525 |   expect(contextBody.projectEntries).toHaveLength(2);\n  526 |\n> 527 |   const agentStart = await request.post(`${localAgentBaseUrl}/sessions/start`, {\n      |                                    ^\n  528 |     data: {\n  529 |       sessionId: createBody.session.id,\n  530 |       applyUrl: `${portalBaseUrl}/__fixtures__/apply/local-agent-repeated-projects`,"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/vi/Documents/resume-tailor-pro/tests/e2e/local-agent-hybrid.spec.ts",
+                        "column": 36,
+                        "line": 527
+                      },
+                      "message": "Error: apiRequestContext.post: socket hang up\nCall log:\n\u001b[2m  - → POST http://127.0.0.1:43111/sessions/start\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.58.2 (x64; ubuntu 24.04) node/24.14\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 228\u001b[22m\n\n\n  525 |   expect(contextBody.projectEntries).toHaveLength(2);\n  526 |\n> 527 |   const agentStart = await request.post(`${localAgentBaseUrl}/sessions/start`, {\n      |                                    ^\n  528 |     data: {\n  529 |       sessionId: createBody.session.id,\n  530 |       applyUrl: `${portalBaseUrl}/__fixtures__/apply/local-agent-repeated-projects`,\n    at /home/vi/Documents/resume-tailor-pro/tests/e2e/local-agent-hybrid.spec.ts:527:36"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-27T04:59:15.436Z",
+                  "annotations": [],
+                  "attachments": [],
+                  "errorLocation": {
+                    "file": "/home/vi/Documents/resume-tailor-pro/tests/e2e/local-agent-hybrid.spec.ts",
+                    "column": 36,
+                    "line": 527
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "79efcabf3edb393cdf79-d3b108c09748243344a7",
+          "file": "local-agent-hybrid.spec.ts",
+          "line": 443,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-03-27T04:59:10.551Z",
+    "duration": 9268.462,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

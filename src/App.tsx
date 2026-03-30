@@ -581,6 +581,7 @@ export default function App() {
   const [localAgentHealth, setLocalAgentHealth] = useState<LocalAgentHealth | null>(null);
   const [applyUrl, setApplyUrl] = useState('');
   const [applySession, setApplySession] = useState<ApplySessionSummary | null>(null);
+  const [applyExecutorToken, setApplyExecutorToken] = useState<string | null>(null);
   const [applyStarting, setApplyStarting] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
   const [savedApplicationProfile, setSavedApplicationProfile] = useState<ApplicantProfile>({});
@@ -884,6 +885,10 @@ export default function App() {
     setApplicationProfile(mergeApplicantProfileDrafts(derived, savedApplicationProfile));
   }, [result, candidateProfile, profilePreview, savedApplicationProfile]);
 
+  // Ref to track whether we already auto-triggered the extension for a given session
+  // (avoid re-firing on every re-render after the handoff)
+  const autoHandoffFiredRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!applySession) return;
     if (!['created', 'queued', 'starting', 'filling', 'submitting'].includes(applySession.status)) return;
@@ -899,6 +904,27 @@ export default function App() {
         if (!cancelled) {
           setApplySession(next);
           setApplyError(null);
+
+          // Auto-handoff: local agent detected bot protection and switched executor to extension.
+          // Fire the extension automatically so the user doesn't have to click anything.
+          if (
+            next.status === 'protected' &&
+            next.executorMode === 'extension' &&
+            applyExecutorToken &&
+            autoHandoffFiredRef.current !== next.id
+          ) {
+            autoHandoffFiredRef.current = next.id;
+            window.postMessage({
+              type: 'RTP_START_APPLY_SESSION',
+              data: {
+                sessionId: next.id,
+                applyUrl,
+                apiBaseUrl: window.location.origin,
+                executorToken: applyExecutorToken,
+                executorMode: 'extension',
+              },
+            }, window.location.origin);
+          }
         }
       } catch (err: any) {
         if (!cancelled) setApplyError(err.message);
@@ -1249,7 +1275,7 @@ export default function App() {
     setApplyError(null);
     try {
       const availability = await resolveLocalAgentAvailability();
-      const shouldUseLocalAgent = true;
+      const shouldUseLocalAgent = availability.connected;
       setLocalAgentStatus(availability.connected ? 'connected' : localAgentStatus === 'connected' ? 'connected' : 'offline');
       setLocalAgentHealth(availability.health ?? localAgentHealth);
       const executorMode = shouldUseLocalAgent ? 'local_agent' : 'extension';
@@ -1283,6 +1309,7 @@ export default function App() {
       if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || 'Failed to create apply session');
       const data = await r.json() as CreateApplySessionResponse;
       setApplySession(data.session);
+      setApplyExecutorToken(data.executorToken);
       window.postMessage({
         type: 'RTP_START_APPLY_SESSION',
         data: {
@@ -1522,6 +1549,8 @@ export default function App() {
     setHasDownloaded(false);
     setApplyUrl('');
     setApplySession(null);
+    setApplyExecutorToken(null);
+    autoHandoffFiredRef.current = null;
     setApplyStarting(false);
     setApplyError(null);
     setSearchResumeFile(null);
@@ -3405,7 +3434,7 @@ export default function App() {
                                 <span>
                                   {applySession.executorMode === 'local_agent'
                                     ? describeManagedBrowserGate(applySession)
-                                    : <>Bot protection detected (Cloudflare / CAPTCHA). <button onClick={() => applyUrl.trim() && window.open(applyUrl.trim(), '_blank')} className="underline font-semibold">Open manually ↗</button></>}
+                                    : <>Bot protection detected — automatically retrying via your browser extension. If it doesn&apos;t start, <button onClick={() => applyUrl.trim() && window.open(applyUrl.trim(), '_blank')} className="underline font-semibold">open manually ↗</button></>}
                                 </span>
                               </div>
                               {applySession.executorMode === 'local_agent' && (

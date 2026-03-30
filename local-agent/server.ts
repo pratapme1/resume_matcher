@@ -122,10 +122,21 @@ async function ensureContext() {
   if (!contextPromise) {
     contextPromise = (async () => {
       await ensureUserDataDir();
-      return chromium.launchPersistentContext(userDataDir, {
+      const ctx = await chromium.launchPersistentContext(userDataDir, {
         headless,
         viewport: { width: 1440, height: 960 },
+        args: ['--disable-blink-features=AutomationControlled'],
+        ignoreDefaultArgs: ['--enable-automation'],
       });
+      // Patch automation fingerprints on every new page
+      await ctx.addInitScript(() => {
+        Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+        // Restore window.chrome so Cloudflare fingerprinting doesn't flag an absent runtime
+        if (!(window as any).chrome) {
+          (window as any).chrome = { runtime: {} };
+        }
+      });
+      return ctx;
     })();
   }
   return contextPromise;
@@ -1297,6 +1308,9 @@ async function waitForProgression(record: SessionRecord, previousSignature: stri
 
 async function runApplyLoop(record: SessionRecord) {
   updateSummary(record, { status: 'running' });
+  // Wait for JS frameworks (React, Vue, Angular) to hydrate after initial load.
+  // domcontentloaded fires too early for SPAs; this short pause lets the first render settle.
+  await record.page.waitForTimeout(1500);
   const initialSnapshot = await inspectPage(record);
 
   await emitApplyEvent(record, {
@@ -1311,9 +1325,21 @@ async function runApplyLoop(record: SessionRecord) {
   if (await detectBotProtection(record.page)) {
     updateSummary(record, { status: 'paused' });
     const screenshot = await capturePageScreenshotDataUrl(record.page);
+    // Automatically switch executor to extension so the user's real Chrome can
+    // bypass the bot gate without Playwright's automation fingerprints.
+    if (record.request.apiBaseUrl && record.request.executorToken) {
+      await fetch(
+        `${record.request.apiBaseUrl}/api/apply/sessions/${record.summary.sessionId}/executor-mode`,
+        {
+          method: 'POST',
+          headers: getRequestHeaders(record.request),
+          body: JSON.stringify({ executorMode: 'extension', message: 'Bot protection detected — handing off to your browser extension.' }),
+        },
+      ).catch(() => undefined);
+    }
     await emitApplyEvent(record, {
       status: 'protected',
-      message: 'Bot protection detected in the managed browser profile.',
+      message: 'Bot protection detected — handing off to your browser extension.',
       screenshot,
       pageUrl: initialSnapshot.url,
       portalType: initialSnapshot.portalType,
@@ -1321,7 +1347,7 @@ async function runApplyLoop(record: SessionRecord) {
       stepKind: initialSnapshot.stepKind,
       stepSignature: initialSnapshot.stepSignature,
     });
-    await completeApply(record, 'protected', 'Bot protection detected in the local agent.');
+    await completeApply(record, 'protected', 'Bot protection detected — switched to extension.');
     return;
   }
 
@@ -1608,7 +1634,7 @@ async function startSession(input: LocalAgentSessionRequest): Promise<LocalAgent
 
   const context = await ensureContext();
   const page = await context.newPage();
-  await page.goto(input.applyUrl, { waitUntil: 'domcontentloaded' });
+  await page.goto(input.applyUrl, { waitUntil: 'load' });
 
   const startedAt = nowIso();
   const record: SessionRecord = {

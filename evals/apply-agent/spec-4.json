@@ -1,0 +1,172 @@
+{
+  "config": {
+    "configFile": "/home/vi/Documents/resume-tailor-pro/playwright.config.ts",
+    "rootDir": "/home/vi/Documents/resume-tailor-pro/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/vi/Documents/resume-tailor-pro/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chrome",
+        "name": "chrome",
+        "testDir": "/home/vi/Documents/resume-tailor-pro/tests/e2e",
+        "testIgnore": [
+          "/hybrid-extension\\.spec\\.ts/"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/home/vi/Documents/resume-tailor-pro/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "extension-hybrid",
+        "name": "extension-hybrid",
+        "testDir": "/home/vi/Documents/resume-tailor-pro/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "/hybrid-extension\\.spec\\.ts/"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/home/vi/Documents/resume-tailor-pro/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "local-agent-hybrid",
+        "name": "local-agent-hybrid",
+        "testDir": "/home/vi/Documents/resume-tailor-pro/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "/local-agent-hybrid\\.spec\\.ts/"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.2",
+    "workers": 4,
+    "webServer": {
+      "command": "npm run build:ext && VITE_SKIP_AUTH=true tsx tests/e2e/server.ts",
+      "port": 3100,
+      "reuseExistingServer": true,
+      "env": {
+        "VITE_SKIP_AUTH": "true"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "local-agent-hybrid.spec.ts",
+      "file": "local-agent-hybrid.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "local-agent expands and fills repeated education rows from session context",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "local-agent-hybrid",
+              "projectName": "local-agent-hybrid",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 2853,
+                  "error": {
+                    "message": "Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:3100\nCall log:\n\u001b[2m  - → POST http://127.0.0.1:3100/api/tailor-resume\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.58.2 (x64; ubuntu 24.04) node/24.14\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: multipart/form-data; boundary=----WebKitFormBoundaryhXxWujWE5FYaXVri\u001b[22m\n\u001b[2m    - content-length: 11905\u001b[22m\n",
+                    "stack": "Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:3100\nCall log:\n\u001b[2m  - → POST http://127.0.0.1:3100/api/tailor-resume\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.58.2 (x64; ubuntu 24.04) node/24.14\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: multipart/form-data; boundary=----WebKitFormBoundaryhXxWujWE5FYaXVri\u001b[22m\n\u001b[2m    - content-length: 11905\u001b[22m\n\n    at /home/vi/Documents/resume-tailor-pro/tests/e2e/local-agent-hybrid.spec.ts:349:40",
+                    "location": {
+                      "file": "/home/vi/Documents/resume-tailor-pro/tests/e2e/local-agent-hybrid.spec.ts",
+                      "column": 40,
+                      "line": 349
+                    },
+                    "snippet": "  347 | test('local-agent expands and fills repeated education rows from session context', async ({ request, localAgentBaseUrl }) => {\n  348 |   const resumeBuffer = await readFile(resumePath);\n> 349 |   const tailorResponse = await request.post('/api/tailor-resume', {\n      |                                        ^\n  350 |     multipart: {\n  351 |       resume: {\n  352 |         name: 'resume.docx',"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/vi/Documents/resume-tailor-pro/tests/e2e/local-agent-hybrid.spec.ts",
+                        "column": 40,
+                        "line": 349
+                      },
+                      "message": "Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:3100\nCall log:\n\u001b[2m  - → POST http://127.0.0.1:3100/api/tailor-resume\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.58.2 (x64; ubuntu 24.04) node/24.14\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: multipart/form-data; boundary=----WebKitFormBoundaryhXxWujWE5FYaXVri\u001b[22m\n\u001b[2m    - content-length: 11905\u001b[22m\n\n\n  347 | test('local-agent expands and fills repeated education rows from session context', async ({ request, localAgentBaseUrl }) => {\n  348 |   const resumeBuffer = await readFile(resumePath);\n> 349 |   const tailorResponse = await request.post('/api/tailor-resume', {\n      |                                        ^\n  350 |     multipart: {\n  351 |       resume: {\n  352 |         name: 'resume.docx',\n    at /home/vi/Documents/resume-tailor-pro/tests/e2e/local-agent-hybrid.spec.ts:349:40"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-27T05:00:05.763Z",
+                  "annotations": [],
+                  "attachments": [],
+                  "errorLocation": {
+                    "file": "/home/vi/Documents/resume-tailor-pro/tests/e2e/local-agent-hybrid.spec.ts",
+                    "column": 40,
+                    "line": 349
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "79efcabf3edb393cdf79-e919c29af216af059bb9",
+          "file": "local-agent-hybrid.spec.ts",
+          "line": 347,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-03-27T05:00:03.296Z",
+    "duration": 5450.1939999999995,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}
