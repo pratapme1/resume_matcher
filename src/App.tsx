@@ -622,6 +622,7 @@ export default function App() {
   const [searchResumeFile, setSearchResumeFile] = useState<File | null>(null);
   const [isDraggingSearch, setIsDraggingSearch] = useState(false);
   const [searchPreferences, setSearchPreferences] = useState<JobSearchPreferences>({});
+  const [prefsSeededFromResume, setPrefsSeededFromResume] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [jobSearchResults, setJobSearchResults] = useState<JobSearchResult[]>([]);
   const [candidateProfile, setCandidateProfile] = useState<CandidateProfile | null>(null);
@@ -1011,6 +1012,7 @@ export default function App() {
       if (body.resume?.candidateProfile) {
         setProfilePreview(body.resume.candidateProfile);
         setShowProfilePreview(true);
+        seedPreferencesFromProfile(body.resume.candidateProfile);
       }
       setDefaultResumeSavedNotice('Saved as your default resume.');
       if (opts.clearSearchOverride) setSearchResumeFile(null);
@@ -1022,12 +1024,39 @@ export default function App() {
     }
   };
 
+  const seedPreferencesFromProfile = (profile: CandidateProfile) => {
+    setPrefsSeededFromResume(true);
+    setSearchPreferences(prev => {
+      // Only fill empty fields — don't overwrite what the user has already typed
+      const next = { ...prev };
+      if (!next.location && profile.location) {
+        // Extract city from location string (e.g. "Bengaluru, Karnataka, India" → "Bengaluru")
+        next.location = profile.location.split(/[,|·]/)[0].trim();
+      }
+      if (!next.country) {
+        const loc = profile.location?.toLowerCase() ?? '';
+        if (loc.includes('india') || loc.includes('bengaluru') || loc.includes('bangalore') ||
+            loc.includes('mumbai') || loc.includes('delhi') || loc.includes('hyderabad') ||
+            loc.includes('pune') || loc.includes('chennai')) {
+          next.country = 'India';
+        }
+      }
+      if (!next.roleType && profile.primaryTitles[0]) {
+        next.roleType = profile.primaryTitles[0];
+      }
+      return next;
+    });
+  };
+
   const handleSearchResumeChange = async (file: File | null) => {
     setSearchResumeFile(file);
     setDefaultResumeSavedNotice(null);
     if (!file) {
       setProfilePreview(defaultResume?.candidateProfile ?? null);
       setShowProfilePreview(Boolean(defaultResume?.candidateProfile));
+      if (defaultResume?.candidateProfile && !prefsSeededFromResume) {
+        seedPreferencesFromProfile(defaultResume.candidateProfile);
+      }
       return;
     }
     setProfilePreview(null);
@@ -1040,6 +1069,7 @@ export default function App() {
         const profile = await r.json();
         setProfilePreview(profile);
         setShowProfilePreview(true);
+        seedPreferencesFromProfile(profile);
       }
     } catch { /* silently ignore */ }
     finally { setProfilePreviewLoading(false); }
@@ -1558,6 +1588,7 @@ export default function App() {
     setCandidateProfile(null);
     setSelectedJob(null);
     setSearchPreferences({});
+    setPrefsSeededFromResume(false);
     setShowSearchPrefs(false);
     setProfilePreview(defaultResume?.candidateProfile ?? null);
     setShowProfilePreview(Boolean(defaultResume?.candidateProfile));

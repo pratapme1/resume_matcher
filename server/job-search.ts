@@ -996,33 +996,40 @@ function scoreJobAgainstProfile(raw: RawJob, profile: CandidateProfile, idx: num
   const seniorityFit = calcSeniorityFit(title, profile);
   const domainMatch = calcDomainMatch(raw, profile);
 
-  // Rubric from search_prompt.md:
-  //   role title match:       25 pts
-  //   seniority/experience:   20 pts
-  //   AI/automation domain:   20 pts
-  //   IoT/hardware domain:    15 pts
-  //   enterprise B2B/platform: 15 pts
-  //   location fit:            5 pts
-  const aiScore       = calcSpecificDomainScore(raw, AI_DOMAIN_TERMS);
-  const iotScore      = calcSpecificDomainScore(raw, IOT_DOMAIN_TERMS);
-  const enterpriseScore = calcSpecificDomainScore(raw, ENTERPRISE_DOMAIN_TERMS);
+  // Generic rubric — works for any profile, not biased toward specific domains:
+  //   role title match:        35 pts
+  //   seniority/experience:    25 pts
+  //   skills overlap:          25 pts
+  //   location fit:            15 pts
+  // Domain scores (AI/IoT/enterprise) are ONLY used as a tiebreaker bonus
+  // when the job and candidate share those domains — not as primary weights.
   const locationScore = calcLocationFitScore(raw);
+  const skillsScore = Math.min(100, skillsOverlap * 100);
 
   const matchScore = Math.round(
-    titleSimilarity      * 0.25 +
-    seniorityScore(seniorityFit) * 0.20 +
-    aiScore              * 0.20 +
-    iotScore             * 0.15 +
-    enterpriseScore      * 0.15 +
-    locationScore        * 0.05
+    titleSimilarity             * 0.35 +
+    seniorityScore(seniorityFit) * 0.25 +
+    skillsScore                 * 0.25 +
+    locationScore               * 0.15
+  );
+
+  // Domain bonus: up to +8 pts when job and candidate share AI/IoT/enterprise domains
+  const aiScore         = calcSpecificDomainScore(raw, AI_DOMAIN_TERMS);
+  const iotScore        = calcSpecificDomainScore(raw, IOT_DOMAIN_TERMS);
+  const enterpriseScore = calcSpecificDomainScore(raw, ENTERPRISE_DOMAIN_TERMS);
+  const profileDomains  = profile.industries ?? [];
+  const domainBonus = Math.round(
+    (profileDomains.includes('ai')         ? aiScore         * 0.04 : 0) +
+    (profileDomains.includes('iot')        ? iotScore        * 0.04 : 0) +
+    (profileDomains.includes('enterprise') ? enterpriseScore * 0.04 : 0)
   );
 
   // Use AI-provided score when available (Gemini evaluated against the full job details),
-  // otherwise fall back to our local rubric score.
+  // otherwise fall back to our local rubric score + domain bonus.
   const aiProvidedScore = typeof raw.score === 'number' && raw.score >= 0 && raw.score <= 100
     ? raw.score
     : undefined;
-  const baseScore = aiProvidedScore ?? matchScore;
+  const baseScore = aiProvidedScore ?? Math.min(100, matchScore + domainBonus);
 
   const sourceType = classifySourceType(raw.url);
   const sourceBonus =
@@ -1169,7 +1176,7 @@ export async function searchJobs(
     fetchImpl,
   );
 
-  const MIN_SCORE = 65;
+  const MIN_SCORE = 50;
   const scored = normalizedJobs
     .filter(j => j.title && j.company)
     .map((j, i) => scoreJobAgainstProfile(j, candidateProfile, i))
