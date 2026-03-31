@@ -183,6 +183,10 @@ async function emitApplyEvent(record: SessionRecord, event: ApplySessionEvent) {
     method: 'POST',
     headers: getRequestHeaders(record.request),
     body: JSON.stringify(event),
+    signal: AbortSignal.timeout(15_000),
+  }).catch(err => {
+    // eslint-disable-next-line no-console
+    console.warn('[local-agent] emitApplyEvent failed (non-fatal):', err.message);
   });
 }
 
@@ -192,6 +196,10 @@ async function completeApply(record: SessionRecord, outcome: 'submitted' | 'prot
     method: 'POST',
     headers: getRequestHeaders(record.request),
     body: JSON.stringify({ outcome, message }),
+    signal: AbortSignal.timeout(15_000),
+  }).catch(err => {
+    // eslint-disable-next-line no-console
+    console.warn('[local-agent] completeApply failed (non-fatal):', err.message);
   });
 }
 
@@ -1831,6 +1839,17 @@ app.post('/sessions/:id/cancel', async (req, res) => {
     return;
   }
   res.json({ session: summary });
+});
+
+// Prevent a single failed fetch (e.g. Vercel temporarily unreachable) from
+// crashing the entire agent process.
+process.on('unhandledRejection', (reason) => {
+  // eslint-disable-next-line no-console
+  console.error('[local-agent] unhandled rejection (session continues):', reason instanceof Error ? reason.message : reason);
+});
+process.on('uncaughtException', (err) => {
+  // eslint-disable-next-line no-console
+  console.error('[local-agent] uncaught exception (process continues):', err.message);
 });
 
 const port = Number(process.env.LOCAL_AGENT_PORT || DEFAULT_PORT);
