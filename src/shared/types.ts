@@ -346,6 +346,7 @@ export interface JobSearchResult {
   ghostRisk?: 'real' | 'verify' | 'ghost';
   matchReason?: string;
   tags?: string[];
+  isNew?: boolean;
 }
 
 export interface JobSearchPreferences {

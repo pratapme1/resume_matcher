@@ -133,6 +133,16 @@ export async function updateJobLifecycle(
   return Boolean(data?.id);
 }
 
+export async function getSeenJobUrlsForUser(userId: string): Promise<Set<string>> {
+  const { data, error } = await supabase
+    .from('jobs')
+    .select('url')
+    .eq('user_id', userId)
+    .not('url', 'is', null);
+  if (error) throw error;
+  return new Set((data ?? []).map(r => r.url as string).filter(Boolean));
+}
+
 export async function getJobsForUser(userId: string): Promise<JobRecord[]> {
   const { data, error } = await supabase
     .from('jobs')

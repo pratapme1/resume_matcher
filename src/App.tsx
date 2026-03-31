@@ -623,6 +623,7 @@ export default function App() {
   const [isDraggingSearch, setIsDraggingSearch] = useState(false);
   const [searchPreferences, setSearchPreferences] = useState<JobSearchPreferences>({});
   const [prefsSeededFromResume, setPrefsSeededFromResume] = useState(false);
+  const [seenSectionCollapsed, setSeenSectionCollapsed] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   const [jobSearchResults, setJobSearchResults] = useState<JobSearchResult[]>([]);
   const [candidateProfile, setCandidateProfile] = useState<CandidateProfile | null>(null);
@@ -1078,7 +1079,7 @@ export default function App() {
 
   const handleSearchJobs = async () => {
     if (!searchResumeFile && !defaultResume) { setError('Please upload or save your resume first'); return; }
-    setSearchLoading(true); setError(null); setJobSearchResults([]); setSelectedJob(null);
+    setSearchLoading(true); setError(null); setJobSearchResults([]); setSelectedJob(null); setSeenSectionCollapsed(true);
     try {
       const fd = new FormData();
       if (searchResumeFile) {
@@ -2404,118 +2405,153 @@ export default function App() {
                     </div>
 
                     {/* Results */}
-                    {jobSearchResults.length > 0 && (
-                      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <h3 className="text-base font-semibold tracking-tight">
-                              {jobSearchResults.length} Opportunities Found
-                            </h3>
-                            {candidateProfile && (
-                              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                                Matched for {candidateProfile.seniorityLevel} {candidateProfile.primaryTitles[0] ?? 'professional'} · {candidateProfile.yearsOfExperience} yrs exp
-                              </p>
+                    {jobSearchResults.length > 0 && (() => {
+                      const newJobs  = jobSearchResults.filter(j => j.isNew !== false);
+                      const seenJobs = jobSearchResults.filter(j => j.isNew === false);
+
+                      const renderJobCard = (job: JobSearchResult) => {
+                        const fitColors = {
+                          strong:   'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
+                          good:     'bg-accent-soft text-accent border-accent-soft',
+                          moderate: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20',
+                          stretch:  'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20',
+                        };
+                        const remoteLabel = job.remoteType !== 'unknown' ? job.remoteType : null;
+                        return (
+                          <div key={job.id} className={`${card} p-5 flex flex-col gap-3 hover:border-accent-soft transition-colors relative`}>
+                            {/* NEW badge */}
+                            {job.isNew === true && (
+                              <span className="absolute top-3 right-3 px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500 text-white uppercase tracking-wide">
+                                New
+                              </span>
                             )}
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Ranked by fit</span>
-                            <button onClick={() => { setJobSearchResults([]); setCandidateProfile(null); setSelectedJob(null); }}
-                              className="text-xs font-semibold text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors">
-                              ← Search Again
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {jobSearchResults.map(job => {
-                            const fitColors = {
-                              strong:   'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
-                              good:     'bg-accent-soft text-accent border-accent-soft',
-                              moderate: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20',
-                              stretch:  'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20',
-                            };
-                            const remoteLabel = job.remoteType !== 'unknown' ? job.remoteType : null;
-                            return (
-                              <div key={job.id} className={`${card} p-5 flex flex-col gap-3 hover:border-accent-soft transition-colors`}>
-                                {/* Header row */}
-                                <div className="flex items-start gap-3">
-                                  <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
-                                    <Building2 className="w-4 h-4 text-zinc-400" />
-                                  </div>
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">{job.title}</p>
-                                    <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{job.company}</p>
-                                  </div>
-                                  <ScoreRing score={job.matchScore} active size={56} />
-                                </div>
-
-                                {/* Location + remote */}
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  {job.location && (
-                                    <span className="flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-                                      <MapPin className="w-3 h-3" />{job.location}
-                                    </span>
-                                  )}
-                                  {job.sourceHost && (
-                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 uppercase">
-                                      {job.sourceType === 'ats' ? 'ATS' : job.sourceType === 'direct' ? 'Direct' : job.sourceType === 'board' ? 'Board' : 'Source'} · {job.sourceHost.replace(/^www\./, '')}
-                                    </span>
-                                  )}
-                                  {remoteLabel && (
-                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 uppercase">{remoteLabel}</span>
-                                  )}
-                                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border capitalize ${fitColors[job.matchBreakdown.overallFit]}`}>
-                                    {job.matchBreakdown.overallFit} fit
-                                  </span>
-                                </div>
-
-                                {/* Matching skills */}
-                                {job.matchBreakdown.topMatchingSkills.length > 0 && (
-                                  <div className="flex flex-wrap gap-1">
-                                    {job.matchBreakdown.topMatchingSkills.slice(0, 4).map(s => (
-                                      <span key={s} className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-accent-soft text-accent">
-                                        {s}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-
-                                {/* Gaps */}
-                                {job.matchBreakdown.keyGaps.length > 0 && (
-                                  <div className="flex flex-wrap gap-1">
-                                    {job.matchBreakdown.keyGaps.slice(0, 2).map(g => (
-                                      <span key={g} className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500">
-                                        gap: {g}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-
-                                {/* Description snippet */}
-                                {job.description && (
-                                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed line-clamp-2">{job.description}</p>
-                                )}
-
-                                {/* Actions */}
-                                <div className="mt-auto pt-2 flex items-center gap-2">
-                                  <button onClick={() => { void handleSelectJob(job); }}
-                                    disabled={selectingJobId === job.id}
-                                    className="flex-1 py-2 rounded-xl text-xs font-semibold text-white btn-primary active:scale-[0.98] transition-all shadow-sm">
-                                    {selectingJobId === job.id ? <span className="inline-flex items-center gap-1"><Loader2 className="w-3.5 h-3.5 animate-spin" />Loading full JD…</span> : 'Use This Job →'}
-                                  </button>
-                                  {job.url && (
-                                    <a href={job.url} target="_blank" rel="noopener noreferrer"
-                                      className="w-8 h-8 rounded-lg flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
-                                      <LinkIcon className="w-3.5 h-3.5" />
-                                    </a>
-                                  )}
-                                </div>
+                            {/* Header row */}
+                            <div className="flex items-start gap-3">
+                              <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                                <Building2 className="w-4 h-4 text-zinc-400" />
                               </div>
-                            );
-                          })}
-                        </div>
-                      </motion.div>
-                    )}
+                              <div className="min-w-0 flex-1 pr-8">
+                                <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">{job.title}</p>
+                                <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{job.company}</p>
+                              </div>
+                              <ScoreRing score={job.matchScore} active size={56} />
+                            </div>
+
+                            {/* Location + remote */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {job.location && (
+                                <span className="flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                                  <MapPin className="w-3 h-3" />{job.location}
+                                </span>
+                              )}
+                              {job.sourceHost && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 uppercase">
+                                  {job.sourceType === 'ats' ? 'ATS' : job.sourceType === 'direct' ? 'Direct' : job.sourceType === 'board' ? 'Board' : 'Source'} · {job.sourceHost.replace(/^www\./, '')}
+                                </span>
+                              )}
+                              {remoteLabel && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 uppercase">{remoteLabel}</span>
+                              )}
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border capitalize ${fitColors[job.matchBreakdown.overallFit]}`}>
+                                {job.matchBreakdown.overallFit} fit
+                              </span>
+                            </div>
+
+                            {/* Matching skills */}
+                            {job.matchBreakdown.topMatchingSkills.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {job.matchBreakdown.topMatchingSkills.slice(0, 4).map(s => (
+                                  <span key={s} className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-accent-soft text-accent">
+                                    {s}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Gaps */}
+                            {job.matchBreakdown.keyGaps.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {job.matchBreakdown.keyGaps.slice(0, 2).map(g => (
+                                  <span key={g} className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500">
+                                    gap: {g}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Description snippet */}
+                            {job.description && (
+                              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed line-clamp-2">{job.description}</p>
+                            )}
+
+                            {/* Actions */}
+                            <div className="mt-auto pt-2 flex items-center gap-2">
+                              <button onClick={() => { void handleSelectJob(job); }}
+                                disabled={selectingJobId === job.id}
+                                className="flex-1 py-2 rounded-xl text-xs font-semibold text-white btn-primary active:scale-[0.98] transition-all shadow-sm">
+                                {selectingJobId === job.id ? <span className="inline-flex items-center gap-1"><Loader2 className="w-3.5 h-3.5 animate-spin" />Loading full JD…</span> : 'Use This Job →'}
+                              </button>
+                              {job.url && (
+                                <a href={job.url} target="_blank" rel="noopener noreferrer"
+                                  className="w-8 h-8 rounded-lg flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
+                                  <LinkIcon className="w-3.5 h-3.5" />
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      };
+
+                      return (
+                        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+                          <div className="flex items-center justify-between mb-4">
+                            <div>
+                              <h3 className="text-base font-semibold tracking-tight">
+                                {newJobs.length > 0 ? `${newJobs.length} New` : `${jobSearchResults.length}`} Opportunities Found
+                              </h3>
+                              {candidateProfile && (
+                                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                                  Matched for {candidateProfile.seniorityLevel} {candidateProfile.primaryTitles[0] ?? 'professional'} · {candidateProfile.yearsOfExperience} yrs exp
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Ranked by fit</span>
+                              <button onClick={() => { setJobSearchResults([]); setCandidateProfile(null); setSelectedJob(null); }}
+                                className="text-xs font-semibold text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors">
+                                ← Search Again
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* New jobs grid */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {newJobs.map(renderJobCard)}
+                          </div>
+
+                          {/* Previously seen section */}
+                          {seenJobs.length > 0 && (
+                            <div className="mt-8">
+                              <button
+                                onClick={() => setSeenSectionCollapsed(v => !v)}
+                                className="flex items-center gap-2 w-full text-left mb-3 group"
+                              >
+                                <div className="flex-1 border-t border-dashed border-zinc-200 dark:border-zinc-700" />
+                                <span className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 whitespace-nowrap transition-colors px-2">
+                                  Previously seen ({seenJobs.length}) {seenSectionCollapsed ? '▾' : '▴'}
+                                </span>
+                                <div className="flex-1 border-t border-dashed border-zinc-200 dark:border-zinc-700" />
+                              </button>
+                              {!seenSectionCollapsed && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 opacity-70">
+                                  {seenJobs.map(renderJobCard)}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </motion.div>
+                      );
+                    })()}
 
                     {/* Empty state after search with no results */}
                     {!searchLoading && jobSearchResults.length === 0 && searchResumeFile && candidateProfile && (

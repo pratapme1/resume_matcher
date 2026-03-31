@@ -12,6 +12,7 @@ const { mockJobs, mockApplications, mockUsage, mockSessions } = vi.hoisted(() =>
     upsertJobFromSearch: vi.fn(async () => 'job-1'),
     getJobsForUser: vi.fn(async () => []),
     updateJobLifecycle: vi.fn(async () => true),
+    getSeenJobUrlsForUser: vi.fn(async () => new Set<string>()),
   },
   mockApplications: {
     getApplicationMetricsForUser: vi.fn(async () => ({

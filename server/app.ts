@@ -77,7 +77,7 @@ import {
   updateApplicationStatus,
   type ApplicationStatus,
 } from './db/queries/applications.ts';
-import { getJobsForUser, upsertJobFromSearch, updateJobLifecycle } from './db/queries/jobs.ts';
+import { getJobsForUser, upsertJobFromSearch, updateJobLifecycle, getSeenJobUrlsForUser } from './db/queries/jobs.ts';
 import { isSupabaseConfigured, supabase } from './db/client.ts';
 import { readSanitizedEnv } from './env.ts';
 import { logger } from './logger.ts';
@@ -847,7 +847,11 @@ export function createApp(deps: AppDependencies): Express {
       const ai = deps.getSearchAI ? deps.getSearchAI(req) : deps.getAI(req);
       const fallbackAI = deps.getSearchFallbackAI ? deps.getSearchFallbackAI(req) : undefined;
       const t0 = Date.now();
-      const response = await searchJobs(resolvedResume.resume, preferences, ai, fallbackAI, deps.fetchImpl ?? fetch);
+      const effectiveUserIdForSeen = !deps.skipAuth && req.userId ? (req.internalUserId ?? req.userId) : null;
+      const seenUrls = effectiveUserIdForSeen && isSupabaseConfigured()
+        ? await getSeenJobUrlsForUser(effectiveUserIdForSeen).catch(() => new Set<string>())
+        : new Set<string>();
+      const response = await searchJobs(resolvedResume.resume, preferences, ai, fallbackAI, deps.fetchImpl ?? fetch, seenUrls);
       response.resumeSource = resolvedResume.resumeSource;
       response.resumeId = resolvedResume.resumeId;
 

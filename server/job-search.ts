@@ -1102,6 +1102,7 @@ export async function searchJobs(
   ai: AIClient,
   fallbackAI?: AIClient,
   fetchImpl?: SearchFetchImpl,
+  seenUrls?: Set<string>,
 ): Promise<JobSearchResponse> {
   const candidateProfile = buildCandidateProfile(resume);
   let rawJobs: RawJob[] = [];
@@ -1182,6 +1183,12 @@ export async function searchJobs(
     .map((j, i) => scoreJobAgainstProfile(j, candidateProfile, i))
     .filter(j => j.matchScore >= MIN_SCORE);
   scored.sort((a, b) => b.matchScore - a.matchScore);
+
+  if (seenUrls) {
+    for (const j of scored) {
+      j.isNew = !seenUrls.has(j.url ?? '');
+    }
+  }
 
   return {
     results: scored.slice(0, 20),
