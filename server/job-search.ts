@@ -360,7 +360,12 @@ function buildSearchPrompt(profile: CandidateProfile, prefs?: JobSearchPreferenc
   const targetLocation = locationParts || profile.location || 'Bangalore, India';
   const cityName = targetLocation.split(',')[0].trim();
 
-  const uniqueTitles = expandTitles(profile);
+  // If user explicitly specified a role type preference, inject it at the front of the title list
+  const prefRoleType = prefs?.roleType?.trim();
+  const baseTitles = expandTitles(profile);
+  const uniqueTitles = prefRoleType && !baseTitles.some(t => t.toLowerCase().includes(prefRoleType.toLowerCase()))
+    ? [prefRoleType, ...baseTitles].slice(0, 8)
+    : baseTitles;
   const titleList = uniqueTitles.join(', ');
   const titleQueries = uniqueTitles.slice(0, 4).map(t =>
     `"${t}" ("${cityName}" OR "Bengaluru" OR "India" OR "remote India")`
