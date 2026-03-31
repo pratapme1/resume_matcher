@@ -2,6 +2,7 @@ import type { AIClient } from './app.ts';
 import type { AIProviderName } from './ai.ts';
 import { badGateway } from './errors.ts';
 import { readSanitizedEnv } from './env.ts';
+import { isJSearchConfigured, searchWithJSearch } from './jsearch.ts';
 import type {
   CandidateProfile,
   JobMatchBreakdown,
@@ -472,7 +473,7 @@ Rules: description max 220 chars, requiredSkills max 6, niceToHaveSkills max 3, 
 // Gemini search with Google grounding
 // ─────────────────────────────────────────
 
-interface RawJob {
+export interface RawJob {
   title?: string;
   company?: string;
   location?: string;
@@ -1085,6 +1086,9 @@ function scoreJobAgainstProfile(raw: RawJob, profile: CandidateProfile, idx: num
 // Main export
 // ─────────────────────────────────────────
 
+// Minimum JSearch results before we supplement with AI search
+const JSEARCH_SUPPLEMENT_THRESHOLD = 8;
+
 export async function searchJobs(
   resume: SourceResumeDocument,
   prefs: JobSearchPreferences | undefined,
@@ -1093,55 +1097,85 @@ export async function searchJobs(
   fetchImpl?: SearchFetchImpl,
 ): Promise<JobSearchResponse> {
   const candidateProfile = buildCandidateProfile(resume);
-  const prompt = buildSearchPrompt(candidateProfile, prefs);
-  const hasDistinctFallback =
-    Boolean(fallbackAI) && getProviderName(fallbackAI as AIClient) !== getProviderName(ai);
   let rawJobs: RawJob[] = [];
 
-  try {
-    rawJobs = await searchJobsWithProvider(prompt, ai);
-  } catch (error) {
-    if (!(error instanceof SearchProviderError)) {
-      throw error;
+  // ── Path A: JSearch (real job board API) ──────────────────────────────
+  if (isJSearchConfigured() && fetchImpl) {
+    try {
+      rawJobs = await searchWithJSearch(candidateProfile, prefs, fetchImpl);
+      console.log(`[job-search] JSearch returned ${rawJobs.length} jobs`);
+    } catch (err) {
+      console.warn('[job-search] JSearch failed, falling back to AI search:', (err as Error).message);
+      rawJobs = [];
     }
-    if (!fallbackAI || !hasDistinctFallback) {
-      buildSearchProviderError(error);
+  }
+
+  // ── Path B: AI search (Gemini / Perplexity) ───────────────────────────
+  // Used when: JSearch not configured, JSearch failed, or JSearch returned
+  // too few results (supplement mode).
+  const needAiSearch = rawJobs.length < JSEARCH_SUPPLEMENT_THRESHOLD;
+  if (needAiSearch) {
+    const mode = rawJobs.length > 0 ? 'supplement' : 'primary';
+    console.log(`[job-search] AI search in ${mode} mode (JSearch returned ${rawJobs.length})`);
+
+    const prompt = buildSearchPrompt(candidateProfile, prefs);
+    const hasDistinctFallback =
+      Boolean(fallbackAI) && getProviderName(fallbackAI as AIClient) !== getProviderName(ai);
+    let aiJobs: RawJob[] = [];
+
+    try {
+      aiJobs = await searchJobsWithProvider(prompt, ai);
+    } catch (error) {
+      if (!(error instanceof SearchProviderError)) throw error;
+      if (!fallbackAI || !hasDistinctFallback) {
+        // Only hard-fail if JSearch also gave nothing
+        if (rawJobs.length === 0) buildSearchProviderError(error);
+      } else {
+        console.warn(`[job-search] Primary AI provider failed, trying fallback:`, error.message);
+        try {
+          aiJobs = await searchJobsWithProvider(prompt, fallbackAI);
+        } catch (fallbackError) {
+          if (rawJobs.length === 0) {
+            if (fallbackError instanceof SearchProviderError) buildSearchProviderError(fallbackError);
+            throw fallbackError;
+          }
+        }
+      }
     }
-    console.warn(
-      `[job-search] Primary search provider ${error.providerName}:${error.modelName} failed, trying fallback.`,
+
+    if (aiJobs.length === 0 && rawJobs.length === 0 && fallbackAI && hasDistinctFallback) {
+      try {
+        aiJobs = await searchJobsWithProvider(buildSearchPrompt(candidateProfile, prefs), fallbackAI);
+      } catch { /* best-effort */ }
+    }
+
+    // Merge: deduplicate AI jobs against JSearch by normalised URL
+    const existingUrls = new Set(
+      rawJobs.map(j => j.url?.trim().toLowerCase()).filter(Boolean),
     );
-    try {
-      rawJobs = await searchJobsWithProvider(prompt, fallbackAI);
-    } catch (fallbackError) {
-      if (fallbackError instanceof SearchProviderError) buildSearchProviderError(fallbackError);
-      throw fallbackError;
+    for (const job of aiJobs) {
+      const url = job.url?.trim().toLowerCase();
+      if (!url || !existingUrls.has(url)) {
+        existingUrls.add(url ?? '');
+        rawJobs.push(job);
+      }
     }
+    console.log(`[job-search] After merge: ${rawJobs.length} total jobs`);
   }
 
-  if (rawJobs.length === 0 && fallbackAI && hasDistinctFallback) {
-    console.warn('[job-search] Primary search provider returned no parseable jobs, trying fallback provider.');
-    try {
-      rawJobs = await searchJobsWithProvider(prompt, fallbackAI);
-    } catch (fallbackError) {
-      if (fallbackError instanceof SearchProviderError) buildSearchProviderError(fallbackError);
-      throw fallbackError;
-    }
-  }
-
+  // ── Normalize → filter dead URLs → score ─────────────────────────────
   const normalizedJobs = await filterDeadJobUrls(
-    rawJobs
-    .map((job) => normalizeRawJob(job))
-    .filter(shouldKeepJob),
+    rawJobs.map(job => normalizeRawJob(job)).filter(shouldKeepJob),
     fetchImpl,
   );
 
   const MIN_SCORE = 65;
-
   const scored = normalizedJobs
     .filter(j => j.title && j.company)
     .map((j, i) => scoreJobAgainstProfile(j, candidateProfile, i))
     .filter(j => j.matchScore >= MIN_SCORE);
   scored.sort((a, b) => b.matchScore - a.matchScore);
+
   return {
     results: scored.slice(0, 20),
     candidateProfile,
