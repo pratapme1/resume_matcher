@@ -908,14 +908,13 @@ export default function App() {
           setApplySession(next);
           setApplyError(null);
 
-          // Auto-handoff: local agent detected bot protection and switched executor to extension.
-          // Fire the extension automatically so the user doesn't have to click anything.
-          if (
-            next.status === 'protected' &&
-            next.executorMode === 'extension' &&
-            applyExecutorToken &&
-            autoHandoffFiredRef.current !== next.id
-          ) {
+          // Auto-handoff: local agent hit a gate (bot protection or login wall) —
+          // automatically re-route to the extension so the user's real Chrome handles it.
+          const needsHandoff = applyExecutorToken && autoHandoffFiredRef.current !== next.id && (
+            (next.status === 'protected' && next.executorMode === 'extension') ||
+            (next.status === 'manual_required' && next.latestPauseReason === 'login_required')
+          );
+          if (needsHandoff) {
             autoHandoffFiredRef.current = next.id;
             window.postMessage({
               type: 'RTP_START_APPLY_SESSION',
@@ -1315,7 +1314,17 @@ export default function App() {
     setApplyError(null);
     try {
       const availability = await resolveLocalAgentAvailability();
-      const shouldUseLocalAgent = availability.connected;
+      // Portals that require account login — Playwright won't have the user's session.
+      // Skip local agent and go straight to extension (user's real Chrome) for these.
+      const needsAccountLogin = (() => {
+        try {
+          const host = new URL(applyUrl).hostname.toLowerCase();
+          return ['linkedin.com', 'naukri.com', 'phenompeople.com',
+            'myworkdayjobs.com', 'workdayjobs.com', 'icims.com',
+            'successfactors.com', 'taleo.net'].some(d => host.includes(d));
+        } catch { return false; }
+      })();
+      const shouldUseLocalAgent = availability.connected && !needsAccountLogin;
       setLocalAgentStatus(availability.connected ? 'connected' : localAgentStatus === 'connected' ? 'connected' : 'offline');
       setLocalAgentHealth(availability.health ?? localAgentHealth);
       const executorMode = shouldUseLocalAgent ? 'local_agent' : 'extension';
@@ -3589,9 +3598,12 @@ export default function App() {
                             <>
                               <div className="w-full flex items-center gap-2.5 px-4 py-3.5 rounded-xl text-sm text-zinc-600 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700">
                                 <AlertCircle className="w-4 h-4 shrink-0" />
-                                <span>{applySession.executorMode === 'local_agent'
-                                  ? describeManagedBrowserGate(applySession)
-                                  : (applySession.latestMessage || 'The portal needs manual completion from this point.')}
+                                <span>
+                                  {applySession.executorMode === 'local_agent' && applySession.latestPauseReason === 'login_required'
+                                    ? 'Login required — handing off to your browser. Log in to the portal, then the extension will auto-fill the form.'
+                                    : applySession.executorMode === 'local_agent'
+                                    ? describeManagedBrowserGate(applySession)
+                                    : (applySession.latestMessage || 'The portal needs manual completion from this point.')}
                                 </span>
                               </div>
                               {applySession.executorMode === 'local_agent' && (
