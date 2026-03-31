@@ -820,6 +820,7 @@ export default function App() {
           if (body.resume?.candidateProfile) {
             setProfilePreview(body.resume.candidateProfile);
             setShowProfilePreview(true);
+            seedPreferencesFromProfile(body.resume.candidateProfile);
           }
         }
       } catch (err: any) {
