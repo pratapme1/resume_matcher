@@ -884,13 +884,11 @@ export function planApplySnapshot(sessionId: string, executorToken: string, snap
       || field.widgetKind === 'custom_card_group'
     ) {
       if (
-        session.executorMode === 'local_agent'
-        && (
-          field.widgetKind === 'custom_multiselect'
-          || field.widgetKind === 'custom_combobox'
-          || field.widgetKind === 'custom_card_group'
-        )
+        field.widgetKind === 'custom_multiselect'
+        || field.widgetKind === 'custom_combobox'
+        || field.widgetKind === 'custom_card_group'
       ) {
+        // Both local_agent and extension can handle these (capabilities already gated above)
         actions.push({ type: 'select', fieldId: field.id, value, semanticType });
         continue;
       }

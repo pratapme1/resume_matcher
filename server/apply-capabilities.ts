@@ -34,6 +34,14 @@ const LOCAL_AGENT_SUPPORTED_WIDGETS: WidgetKind[] = [
   'custom_number',
 ];
 
+// Extension can handle common custom widgets via DOM click/option-pick
+const EXTENSION_SUPPORTED_WIDGETS: WidgetKind[] = [
+  ...NATIVE_WIDGETS,
+  'custom_combobox',
+  'custom_multiselect',
+  'custom_card_group',
+];
+
 const PORTAL_CAPABILITIES: Record<PortalType, PortalCapabilities> = {
   linkedin: {
     supportedWidgets: NATIVE_WIDGETS,
@@ -119,8 +127,9 @@ export function getPortalCapabilities(portalType: PortalType): PortalCapabilitie
 }
 
 export function isWidgetSupported(portalType: PortalType, widgetKind: WidgetKind, executorMode: ExecutorMode = 'extension'): boolean {
-  if (executorMode === 'local_agent' && portalType !== 'protected') {
+  if (portalType === 'protected') return false;
+  if (executorMode === 'local_agent') {
     return LOCAL_AGENT_SUPPORTED_WIDGETS.includes(widgetKind);
   }
-  return getPortalCapabilities(portalType).supportedWidgets.includes(widgetKind);
+  return EXTENSION_SUPPORTED_WIDGETS.includes(widgetKind);
 }

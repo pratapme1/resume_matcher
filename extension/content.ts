@@ -367,6 +367,50 @@ function getFieldLabel(el: Element): string {
   return el.getAttribute('aria-label') || el.getAttribute('placeholder') || el.getAttribute('name') || (el instanceof HTMLElement ? el.id : '') || '';
 }
 
+// Click a custom widget (div-based dropdown/combobox/card-group), type to filter if possible,
+// then click the best-matching visible option. Returns true if an option was selected.
+async function applyCustomWidgetDom(el: HTMLElement, value: string): Promise<boolean> {
+  try {
+    el.click();
+    await waitForSettle(400);
+
+    // Some comboboxes have a search input inside the opened panel
+    const panelSelectors = '[role="listbox"], .p-dropdown-panel, .p-multiselect-panel, .p-dropdown-items-wrapper, [data-pc-section="panel"]';
+    const panel = document.querySelector<HTMLElement>(panelSelectors);
+    const searchInput = (panel ?? el).querySelector<HTMLInputElement>(
+      'input[type="text"], input[role="searchbox"], .p-dropdown-filter, [data-pc-section="filterinput"]',
+    );
+    if (searchInput) {
+      setNativeValue(searchInput, value);
+      await waitForSettle(350);
+    }
+
+    // Find all visible option elements
+    const optionPool = (panel ?? document).querySelectorAll<HTMLElement>(
+      '[role="option"], .p-dropdown-item, .p-multiselect-item, li[role="option"], [data-value], [data-pc-section="item"]',
+    );
+    const needle = value.toLowerCase().trim();
+    for (const opt of Array.from(optionPool)) {
+      const s = window.getComputedStyle(opt);
+      const r = opt.getBoundingClientRect();
+      if (s.display === 'none' || s.visibility === 'hidden' || r.width === 0 || r.height === 0) continue;
+      const text = (opt.getAttribute('data-value') ?? opt.textContent ?? '').toLowerCase().trim();
+      if (text === needle || text.includes(needle) || needle.includes(text)) {
+        opt.click();
+        highlight(el, '#34d399');
+        return true;
+      }
+    }
+
+    // No match — close the dropdown
+    document.body.click();
+    return false;
+  } catch (err) {
+    console.warn('[RTP] custom widget DOM fill failed', err);
+    return false;
+  }
+}
+
 function setNativeValue(el: HTMLInputElement | HTMLTextAreaElement, value: string) {
   const proto = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
   const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
@@ -802,6 +846,9 @@ async function applyActions(actions: PlannedAction[]) {
         handle.el.dispatchEvent(new Event('change', { bubbles: true }));
         highlight(handle.el, '#34d399');
         filled++;
+      } else if (action.type === 'select' && handle.kind === 'custom') {
+        const ok = await applyCustomWidgetDom(handle.el, action.value);
+        if (ok) filled++;
       }
     } catch (error) {
       console.warn('[RTP] apply action failed', action, error);

@@ -1303,6 +1303,14 @@ export default function App() {
       setApplyError('Install the Resume Tailor Pro extension to run auto-apply.');
       return;
     }
+    const missingFields: string[] = [];
+    if (!applicationProfile.firstName && !applicationProfile.fullName) missingFields.push('Name');
+    if (!applicationProfile.email) missingFields.push('Email');
+    if (!applicationProfile.phone) missingFields.push('Phone');
+    if (missingFields.length > 0) {
+      setApplyError(`Complete your Application Profile first — missing: ${missingFields.join(', ')}. Fill these in the "Application Profile" section below.`);
+      return;
+    }
     setApplyStarting(true);
     setApplyError(null);
     try {

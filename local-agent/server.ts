@@ -1629,6 +1629,69 @@ async function submitApplication(record: SessionRecord) {
   return record.summary;
 }
 
+// If the URL is a job listing page (not yet the application form), find and click the apply button.
+// Returns true if a button was found and clicked.
+async function findAndClickApplyButton(page: Page): Promise<boolean> {
+  // If visible form inputs already exist we're already on the form — nothing to do.
+  const hasFormFields = await page.evaluate(() => {
+    const inputs = Array.from(document.querySelectorAll<HTMLElement>(
+      'input:not([type="hidden"]):not([type="submit"]):not([type="button"]), textarea, select',
+    ));
+    return inputs.some((el) => {
+      const s = window.getComputedStyle(el);
+      const r = el.getBoundingClientRect();
+      return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 0 && r.height > 0;
+    });
+  }).catch(() => false);
+  if (hasFormFields) return false;
+
+  // Portal-specific selectors first (faster and more reliable)
+  const specificSelectors = [
+    '.jobs-apply-button button',                    // LinkedIn top card
+    '[data-job-id] button[aria-label*="Apply"]',    // LinkedIn alt
+    '.job-details-jobs-unified-top-card__container--two-pane .jobs-apply-button button',
+    '#apply-button',                                 // Naukri
+    'button[id*="apply"]',
+    'a[data-qa="apply-btn"]',
+    '[data-testid="apply-button"]',
+    '[data-testid="jobs-apply-button"]',
+    '.apply-btn',
+    '#applyButton',
+  ];
+  for (const sel of specificSelectors) {
+    const el = page.locator(sel).first();
+    if (await el.isVisible({ timeout: 400 }).catch(() => false)) {
+      await el.click({ force: true });
+      await page.waitForTimeout(2000);
+      console.log(`[local-agent] clicked apply button via selector: ${sel}`);
+      return true;
+    }
+  }
+
+  // Text-based fallback — try exact match first, then partial
+  const applyPhrases = [
+    'Easy Apply', 'Apply Now', 'Apply for this Job', 'Apply for this Role',
+    'Apply for this Position', 'Quick Apply', 'Apply Online', 'Apply',
+  ];
+  for (const phrase of applyPhrases) {
+    for (const role of ['button', 'link'] as const) {
+      const els = page.getByRole(role, { name: new RegExp(`^${phrase}$`, 'i') });
+      const count = await els.count().catch(() => 0);
+      for (let i = 0; i < count; i++) {
+        const el = els.nth(i);
+        if (await el.isVisible({ timeout: 300 }).catch(() => false)) {
+          await el.click({ force: true });
+          await page.waitForTimeout(2000);
+          console.log(`[local-agent] clicked apply button via text: "${phrase}"`);
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 async function startSession(input: LocalAgentSessionRequest): Promise<LocalAgentSessionSummary> {
   const existing = sessions.get(input.sessionId);
   if (existing) {
@@ -1643,6 +1706,7 @@ async function startSession(input: LocalAgentSessionRequest): Promise<LocalAgent
   const context = await ensureContext();
   const page = await context.newPage();
   await page.goto(input.applyUrl, { waitUntil: 'load' });
+  await findAndClickApplyButton(page);
 
   const startedAt = nowIso();
   const record: SessionRecord = {
