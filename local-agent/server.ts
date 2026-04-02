@@ -645,7 +645,13 @@ async function inspectPage(record: SessionRecord): Promise<PageSnapshot> {
   }
 
   const customHandles = await page
-    .locator('[role="combobox"], .p-dropdown, .p-multiselect, [role="spinbutton"], [role="listbox"], [role="radiogroup"], [data-card-group], .rtp-card-group')
+    .locator(
+      '[role="combobox"], .p-dropdown, .p-multiselect, [role="spinbutton"], [role="listbox"], [role="radiogroup"], [data-card-group], .rtp-card-group, ' +
+      '.MuiSelect-root, .MuiAutocomplete-root, ' +
+      '.ant-select, ' +
+      '.react-select__control, [class*="react-select__control"], ' +
+      '.choices__inner, .select2-selection',
+    )
     .elementHandles();
   for (const handle of customHandles) {
     const include = await handle.evaluate((el) => {
@@ -921,6 +927,10 @@ async function applyActions(record: SessionRecord, actions: ApplyPlanResponse['a
     try {
       if (action.type === 'fill' && binding.kind === 'single') {
         await binding.handle.fill(action.value);
+        // Dispatch blur so Angular Reactive Forms commit the value and React validation runs
+        await binding.handle.evaluate((el) => {
+          el.dispatchEvent(new Event('blur', { bubbles: true }));
+        });
         if (await verifyBindingApplied(binding, action)) {
           filled++;
         }
@@ -1021,7 +1031,13 @@ function splitSelectionValues(value: string) {
 }
 
 async function clickCustomOption(page: Page, value: string) {
-  const options = await page.$$(' [role="option"], .p-dropdown-item, .p-multiselect-item, li, [data-value]'.trim());
+  const options = await page.$$(
+    '[role="option"], .p-dropdown-item, .p-multiselect-item, [data-value], ' +
+    '.MuiMenuItem-root, .MuiAutocomplete-option, ' +
+    '.ant-select-item-option, ' +
+    '[class*="react-select__option"], ' +
+    '.choices__item--choice, li[role="option"]',
+  );
   const normalizedTarget = normalizedValue(value);
 
   for (const option of options) {

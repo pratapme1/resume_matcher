@@ -148,6 +148,8 @@ export interface AppDependencies {
   disablePlaywrightJdFallback?: boolean;
   /** Skip auth + DB writes — for unit/integration tests */
   skipAuth?: boolean;
+  /** Apply rate limiting even when skipAuth is true — for rate-limit tests */
+  enforceRateLimit?: boolean;
 }
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -317,14 +319,15 @@ const applicantProfileSchema = z.object({
 export function createApp(deps: AppDependencies): Express {
   const app = express();
   const bypassRateLimit = ((_req, _res, next) => next()) as express.RequestHandler;
-  const limitExtract = deps.skipAuth ? bypassRateLimit : rateLimitExtract;
-  const limitTailor = deps.skipAuth ? bypassRateLimit : rateLimitTailor;
-  const limitDocx = deps.skipAuth ? bypassRateLimit : rateLimitDocx;
-  const limitProfile = deps.skipAuth ? bypassRateLimit : rateLimitProfile;
-  const limitSearch = deps.skipAuth ? bypassRateLimit : rateLimitSearch;
-  const limitSmartFill = deps.skipAuth ? bypassRateLimit : rateLimitSmartFill;
-  const limitAutoApply = deps.skipAuth ? bypassRateLimit : rateLimitAutoApply;
-  const limitApplySession = deps.skipAuth ? bypassRateLimit : rateLimitApplySession;
+  const applyLimits = !deps.skipAuth || deps.enforceRateLimit;
+  const limitExtract = applyLimits ? rateLimitExtract : bypassRateLimit;
+  const limitTailor = applyLimits ? rateLimitTailor : bypassRateLimit;
+  const limitDocx = applyLimits ? rateLimitDocx : bypassRateLimit;
+  const limitProfile = applyLimits ? rateLimitProfile : bypassRateLimit;
+  const limitSearch = applyLimits ? rateLimitSearch : bypassRateLimit;
+  const limitSmartFill = applyLimits ? rateLimitSmartFill : bypassRateLimit;
+  const limitAutoApply = applyLimits ? rateLimitAutoApply : bypassRateLimit;
+  const limitApplySession = applyLimits ? rateLimitApplySession : bypassRateLimit;
   const upload = multer({
     limits: { fileSize: MAX_UPLOAD_BYTES },
     storage: multer.memoryStorage(),

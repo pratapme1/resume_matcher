@@ -24,11 +24,28 @@
       "sourceProvenanceIds": ["section-2-p0", "section-2-p1", "section-2-p2"]
     }
   ],
-  "education": [],
+  "education": [
+    {
+      "id": "edu-0",
+      "institution": "Bachelor of Technology, Electrical & Electronics Engineering · Pondicherry University, India · 2013",
+      "degree": "",
+      "dates": "2013",
+      "location": "",
+      "provenanceIds": ["section-4-p0"]
+    },
+    {
+      "id": "edu-1",
+      "institution": "Graduate Coursework, Electrical Engineering · Monash University, Australia · 2017",
+      "degree": "",
+      "dates": "2017",
+      "location": "",
+      "provenanceIds": ["section-4-p1"]
+    }
+  ],
   "skills": [],
   "skillSourceProvenanceIds": [],
   "projects": [],
   "certifications": [],
   "certificationSourceProvenanceIds": [],
-  "sectionOrder": ["summary", "experience", "skills"]
+  "sectionOrder": ["professional summary", "experience", "technical skills", "education"]
 }

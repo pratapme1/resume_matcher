@@ -21,6 +21,7 @@ describe('rate limiting', () => {
     const resumeBuffer = await readFile(sampleResumePath());
     const app = createTestApp({
       getAI: () => new MockAIClient(['mock-ai-job-search.json']),
+      enforceRateLimit: true,
     });
 
     // Fire SEARCH_LIMIT requests — these should NOT be 429
@@ -43,6 +44,7 @@ describe('rate limiting', () => {
     const resumeBuffer = await readFile(sampleResumePath());
     const app = createTestApp({
       getAI: () => new MockAIClient(['mock-ai-job-search.json']),
+      enforceRateLimit: true,
     });
 
     // Exhaust the limit (cumulative from previous test in this file — already at 6)
@@ -68,7 +70,7 @@ describe('rate limiting', () => {
   it('returns 429 on /api/tailor-resume after 10 requests (separate rate limiter)', async () => {
     // tailor has its own rate limiter (10/hr) — independent of search limiter
     const resumeBuffer = await readFile(sampleResumePath());
-    const app = createTestApp();
+    const app = createTestApp({ enforceRateLimit: true });
     const TAILOR_LIMIT = 10;
 
     for (let i = 0; i < TAILOR_LIMIT; i++) {

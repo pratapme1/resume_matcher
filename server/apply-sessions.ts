@@ -192,20 +192,137 @@ function normalizePhone(phone?: string) {
   return digits || undefined;
 }
 
-function optionMatchesValue(field: DetectedField, candidate: string): string | undefined {
-  const options = field.options ?? [];
-  const normalizedCandidate = candidate.trim().toLowerCase();
-  const exact = options.find((option) =>
-    option.value.trim().toLowerCase() === normalizedCandidate ||
-    option.label.trim().toLowerCase() === normalizedCandidate,
-  );
-  if (exact) return exact.value;
+function normStr(s: string): string {
+  return s.trim().toLowerCase().replace(/[^a-z0-9\s\-+]/g, '');
+}
 
-  const fuzzy = options.find((option) =>
-    normalizedCandidate.includes(option.label.trim().toLowerCase()) ||
-    option.label.trim().toLowerCase().includes(normalizedCandidate),
-  );
-  return fuzzy?.value;
+function extractNums(s: string): number[] {
+  return (s.match(/\d+(\.\d+)?/g) ?? []).map(Number);
+}
+
+function rangesOverlap(a: number[], b: number[]): boolean {
+  const minA = Math.min(...a), maxA = Math.max(...a);
+  const minB = Math.min(...b), maxB = Math.max(...b);
+  return minA <= maxB && minB <= maxA;
+}
+
+function jaccardWords(a: string, b: string): number {
+  const wa = new Set(a.split(/\s+/).filter(Boolean));
+  const wb = new Set(b.split(/\s+/).filter(Boolean));
+  const inter = [...wa].filter((w) => wb.has(w)).length;
+  const union = new Set([...wa, ...wb]).size;
+  return union === 0 ? 0 : inter / union;
+}
+
+function scoreOptionMatch(field: DetectedField, candidate: string): string | undefined {
+  const options = field.options ?? [];
+  if (!options.length) return undefined;
+  const a = normStr(candidate);
+
+  let bestValue: string | undefined;
+  let bestScore = 0;
+
+  for (const opt of options) {
+    const b = normStr(opt.label);
+    const bv = normStr(opt.value);
+    let score = 0;
+
+    if (a === b || a === bv) {
+      score = 1.0;
+    } else {
+      const numsA = extractNums(a), numsB = extractNums(b);
+      // Range overlap: "5 years" vs "5-8 yrs" both contain 5 → overlap
+      if (numsA.length && numsB.length && rangesOverlap(numsA, numsB)) {
+        score = 0.85;
+      } else if (a.includes(b) || b.includes(a) || a.includes(bv) || bv.includes(a)) {
+        score = 0.75;
+      } else if (jaccardWords(a, b) > 0.5) {
+        score = 0.6;
+      }
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestValue = opt.value;
+    }
+  }
+
+  return bestScore >= 0.6 ? bestValue : undefined;
+}
+
+/** Generate normalized candidate values for semantic types where profile strings don't match portal option text */
+function normalizeCandidates(semanticType: FieldSemanticType, rawValue: string): string[] {
+  const candidates: string[] = [rawValue];
+
+  if (semanticType === 'years_of_experience') {
+    const nums = extractNums(rawValue);
+    if (nums.length) {
+      const n = Math.round(nums[0]);
+      candidates.push(`${n}`, `${n} years`, `${n} year`, `${n}+`);
+      // Add common bracket labels the LLM-or-profile might match
+      if (n <= 1) candidates.push('0-1', '0-1 years', 'less than 1', 'fresher');
+      else if (n <= 3) candidates.push('1-3', '1-3 years', '2-3 years');
+      else if (n <= 5) candidates.push('3-5', '3-5 years', '4-5 years');
+      else if (n <= 8) candidates.push('5-8', '5-8 years', '5-7 years', '6-8 years');
+      else if (n <= 10) candidates.push('8-10', '8-10 years', '8+ years');
+      else candidates.push('10+', '10+ years', 'more than 10 years');
+    }
+  } else if (semanticType === 'notice_period') {
+    const nums = extractNums(rawValue);
+    if (nums.length) {
+      const days = Math.round(nums[0]);
+      if (days === 0) candidates.push('immediate', 'immediately', '0 days', 'ready to join', 'no notice');
+      else if (days <= 15) candidates.push('15 days', '15 days or less', 'within 15 days', '2 weeks', '15');
+      else if (days <= 30) candidates.push('30 days', '1 month', 'one month', '4 weeks', '30', 'one month or less');
+      else if (days <= 60) candidates.push('60 days', '2 months', 'two months', '60');
+      else if (days <= 90) candidates.push('90 days', '3 months', 'three months', '90');
+    }
+  } else if (semanticType === 'requires_sponsorship') {
+    const v = rawValue.toLowerCase().trim();
+    if (v === 'no' || v === 'false' || v === '0') {
+      candidates.push('no', 'n', 'false', 'no sponsorship required', 'i do not require sponsorship');
+    } else {
+      candidates.push('yes', 'y', 'true', 'yes sponsorship required');
+    }
+  } else if (semanticType === 'work_authorization') {
+    const v = rawValue.toLowerCase();
+    if (v.includes('citizen') || v.includes('authorized') || v.includes('permanent') || v.includes('greencard') || v.includes('green card')) {
+      candidates.push('yes', 'authorized', 'i am authorized', 'authorized to work');
+    } else if (v.includes('visa') || v.includes('h1') || v.includes('opt') || v.includes('student')) {
+      candidates.push('no', 'not authorized', 'require sponsorship');
+    }
+  } else if (semanticType === 'current_ctc' || semanticType === 'expected_ctc') {
+    // Strip common suffixes: "12 LPA" → "12", "12.5 LPA" → "12.5"
+    const nums = extractNums(rawValue);
+    if (nums.length) candidates.push(String(nums[0]), String(Math.round(nums[0])));
+  }
+
+  return [...new Set(candidates)]; // deduplicate
+}
+
+/** Try answer bank first for select/radio fields, then fall back to option scoring with all candidate values */
+function findBestOptionValue(
+  field: DetectedField,
+  rawValue: string,
+  semanticType: FieldSemanticType,
+  answerBank: AnswerBankEntry[],
+  portalType: PortalType,
+): string | undefined {
+  // 1. Answer bank may store the exact option string from a previous application
+  const banked = findAnswerBankValue(field, answerBank, portalType, semanticType);
+  if (banked) {
+    const exactBanked = scoreOptionMatch(field, banked);
+    if (exactBanked) return exactBanked;
+  }
+
+  // 2. Try raw value + semantic-aware candidates
+  const candidates = normalizeCandidates(semanticType, rawValue);
+  for (const c of candidates) {
+    const match = scoreOptionMatch(field, c);
+    if (match) return match;
+  }
+
+  return undefined;
 }
 
 function normalizeAnswerPrompt(value?: string) {
@@ -892,7 +1009,7 @@ export function planApplySnapshot(sessionId: string, executorToken: string, snap
         actions.push({ type: 'select', fieldId: field.id, value, semanticType });
         continue;
       }
-      const optionValue = optionMatchesValue(field, value);
+      const optionValue = findBestOptionValue(field, value, semanticType, session.answerBank, effectivePortalType);
       if (optionValue) {
         actions.push({ type: 'select', fieldId: field.id, value: optionValue, semanticType });
       } else if (field.required) {
@@ -907,7 +1024,7 @@ export function planApplySnapshot(sessionId: string, executorToken: string, snap
     }
 
     if (field.inputType === 'radio') {
-      const optionValue = optionMatchesValue(field, value);
+      const optionValue = findBestOptionValue(field, value, semanticType, session.answerBank, effectivePortalType);
       if (optionValue) {
         actions.push({ type: 'select', fieldId: field.id, value: optionValue, semanticType });
       } else if (field.required) {

@@ -9,6 +9,7 @@ type TestAppOverrides = {
   getTailorFallbackAI?: (req?: Request) => AIClient;
   getSearchAI?: (req?: Request) => AIClient;
   getSearchFallbackAI?: (req?: Request) => AIClient;
+  enforceRateLimit?: boolean;
 };
 
 function defaultGetAI(req?: Request) {
@@ -39,5 +40,6 @@ export function createTestApp(overrides: TestAppOverrides = {}) {
       })),
     disablePlaywrightJdFallback: true,
     skipAuth: true,
+    enforceRateLimit: overrides.enforceRateLimit,
   });
 }

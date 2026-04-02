@@ -70,23 +70,76 @@ function normalizeAnswerBankConfidence(value?: string | null): AnswerBankConfide
 }
 
 function inferYearsOfExperience(tailoredResume: TailoredResumeDocument): string | undefined {
-  let earliestStart = Infinity;
   const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1; // 1-12
+
+  type Range = { startY: number; startM: number; endY: number; endM: number };
+  const ranges: Range[] = [];
 
   for (const exp of tailoredResume.experience ?? []) {
-    const years = (exp.dates.match(/\b(19|20)\d{2}\b/g) ?? []).map(Number);
+    const dates = exp.dates ?? '';
+    // Extract year-month pairs: "Jan 2020", "2020", "Present", "Current"
+    const isPresentEnd = /present|current|now|till date/i.test(dates);
+    const years = (dates.match(/\b(19|20)\d{2}\b/g) ?? []).map(Number);
     if (years.length === 0) continue;
-    const start = Math.min(...years);
-    if (start < earliestStart) earliestStart = start;
+
+    const startY = Math.min(...years);
+    const endY = isPresentEnd ? currentYear : Math.max(...years);
+
+    // Try to parse month for start
+    const monthNames: Record<string, number> = {
+      jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+      jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+    };
+    const monthMatches = dates.toLowerCase().match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/g) ?? [];
+    const startM = monthMatches.length > 0 ? (monthNames[monthMatches[0]] ?? 1) : 1;
+    const endM = isPresentEnd ? currentMonth : (monthMatches.length > 1 ? (monthNames[monthMatches[1]] ?? 12) : 12);
+
+    ranges.push({ startY, startM, endY, endM });
   }
 
-  if (earliestStart < Infinity) {
-    return String(Math.max(0, Math.min(40, currentYear - earliestStart)));
+  if (ranges.length === 0) {
+    // Fallback: parse from summary text
+    const match = (tailoredResume.summary ?? '').match(/(\d+)\+?\s+years?/i);
+    return match?.[1];
   }
 
-  const summary = tailoredResume.summary ?? '';
-  const match = summary.match(/(\d+)\+?\s+years?/i);
-  return match?.[1];
+  // Sort by start date and merge overlapping ranges to get total months
+  ranges.sort((a, b) => a.startY * 12 + a.startM - (b.startY * 12 + b.startM));
+
+  let totalMonths = 0;
+  let mergedEndY = ranges[0].startY, mergedEndM = ranges[0].startM;
+
+  for (const r of ranges) {
+    const rStartAbs = r.startY * 12 + r.startM;
+    const rEndAbs = r.endY * 12 + r.endM;
+    const mergedEndAbs = mergedEndY * 12 + mergedEndM;
+
+    if (rStartAbs > mergedEndAbs) {
+      // Gap — add previous stretch
+      totalMonths += mergedEndAbs - (mergedEndY * 12 + mergedEndM - totalMonths > 0 ? ranges[0].startY * 12 + ranges[0].startM : rStartAbs);
+    }
+    if (rEndAbs > mergedEndAbs) {
+      mergedEndY = r.endY;
+      mergedEndM = r.endM;
+    }
+  }
+
+  // Simpler approach: just sum months of each range, then subtract overlaps
+  let totalMs = 0;
+  let coverEnd = 0;
+  for (const r of ranges) {
+    const s = r.startY * 12 + r.startM;
+    const e = r.endY * 12 + r.endM;
+    const effectiveStart = Math.max(s, coverEnd);
+    if (e > effectiveStart) {
+      totalMs += e - effectiveStart;
+      coverEnd = Math.max(coverEnd, e);
+    }
+  }
+
+  const years = Math.round(totalMs / 12);
+  return String(Math.max(0, Math.min(40, years)));
 }
 
 export function sanitizeApplicantProfile(input?: Partial<ApplicantProfile> | null): ApplicantProfile {

@@ -301,7 +301,7 @@ function applyMapping(
   for (const f of fields) {
     const value = mapping[f.name];
     if (value) {
-      setNativeValue(f.el, value);
+      dispatchControlledInput(f.el, value);
       highlight(f.el, '#34d399');
       filled++;
     } else if (f.label) {
@@ -375,19 +375,33 @@ async function applyCustomWidgetDom(el: HTMLElement, value: string): Promise<boo
     await waitForSettle(400);
 
     // Some comboboxes have a search input inside the opened panel
-    const panelSelectors = '[role="listbox"], .p-dropdown-panel, .p-multiselect-panel, .p-dropdown-items-wrapper, [data-pc-section="panel"]';
+    const panelSelectors = [
+      '[role="listbox"]',
+      '.p-dropdown-panel', '.p-multiselect-panel', '.p-dropdown-items-wrapper', '[data-pc-section="panel"]',
+      '.MuiPopover-root', '.MuiMenu-root', '.MuiAutocomplete-popper',
+      '.ant-select-dropdown',
+      '[class*="-menu"]', '[class*="-dropdown"]', '[class*="react-select__menu"]',
+      '.choices__list--dropdown',
+      '[data-popper-placement]',
+    ].join(', ');
     const panel = document.querySelector<HTMLElement>(panelSelectors);
     const searchInput = (panel ?? el).querySelector<HTMLInputElement>(
       'input[type="text"], input[role="searchbox"], .p-dropdown-filter, [data-pc-section="filterinput"]',
     );
     if (searchInput) {
-      setNativeValue(searchInput, value);
+      dispatchControlledInput(searchInput, value, { blur: false });
       await waitForSettle(350);
     }
 
-    // Find all visible option elements
+    // Find all visible option elements — covers PrimeNG, MUI, Ant Design, React Select, generic ARIA
     const optionPool = (panel ?? document).querySelectorAll<HTMLElement>(
-      '[role="option"], .p-dropdown-item, .p-multiselect-item, li[role="option"], [data-value], [data-pc-section="item"]',
+      '[role="option"], ' +
+      '.p-dropdown-item, .p-multiselect-item, [data-pc-section="item"], ' +
+      '.MuiMenuItem-root, .MuiAutocomplete-option, ' +
+      '.ant-select-item-option, ' +
+      '[class*="react-select__option"], ' +
+      '.choices__item--choice, ' +
+      'li[role="option"], [data-value]',
     );
     const needle = value.toLowerCase().trim();
     for (const opt of Array.from(optionPool)) {
@@ -411,16 +425,39 @@ async function applyCustomWidgetDom(el: HTMLElement, value: string): Promise<boo
   }
 }
 
-function setNativeValue(el: HTMLInputElement | HTMLTextAreaElement, value: string) {
+/**
+ * Dispatch the full input event sequence required by React, Vue, and Angular controlled inputs.
+ * - React needs the native prototype value setter + input event
+ * - Angular Reactive Forms needs blur to commit
+ * - Vue 3 reactive proxies need change
+ * Set blur:false when filling a filter input inside an open dropdown to avoid closing the panel.
+ */
+function dispatchControlledInput(el: HTMLInputElement | HTMLTextAreaElement, value: string, { blur = true }: { blur?: boolean } = {}): void {
   const proto = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
-  const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
-  if (setter) {
-    setter.call(el, value);
+
+  // Focus first so framework "touched" state is set
+  el.focus();
+  el.dispatchEvent(new FocusEvent('focus', { bubbles: true }));
+
+  // Call the native prototype setter — this is what React's onChange infrastructure watches
+  const nativeSetter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+  if (nativeSetter) {
+    nativeSetter.call(el, value);
   } else {
     el.value = value;
   }
-  el.dispatchEvent(new Event('input', { bubbles: true }));
+
+  // Keyboard + input events so React/Vue synthetic event handlers fire
+  el.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'a' }));
+  el.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true, inputType: 'insertText', data: value }));
+  el.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, cancelable: true, key: 'a' }));
   el.dispatchEvent(new Event('change', { bubbles: true }));
+
+  // Blur commits the value in Angular Reactive Forms and triggers validation in most frameworks
+  if (blur) {
+    el.blur();
+    el.dispatchEvent(new FocusEvent('blur', { bubbles: true }));
+  }
 }
 
 function hasVisibleUploadAffordance(el: HTMLInputElement): boolean {
@@ -479,7 +516,16 @@ function classifyCustomWidgetKind(el: HTMLElement): WidgetKind {
   if (el.matches('.p-multiselect, [aria-multiselectable="true"]')) return 'custom_multiselect';
   if (el.matches('.p-calendar, [data-widget-kind="date"]')) return 'custom_date';
   if (el.matches('.p-inputnumber, [data-widget-kind="number"]')) return 'custom_number';
-  if (el.matches('.p-dropdown, [role="combobox"], [aria-haspopup="listbox"]')) return 'custom_combobox';
+  // Expanded: PrimeNG + MUI + Ant Design + React Select + Choices.js + generic ARIA combobox
+  if (el.matches(
+    '.p-dropdown, [role="combobox"], [aria-haspopup="listbox"], ' +
+    '.MuiSelect-root, .MuiAutocomplete-root, ' +
+    '.ant-select, ' +
+    '.react-select__control, [class*="react-select__control"], ' +
+    '.choices__inner, ' +
+    '.select2-selection, ' +
+    '[data-component="select"]',
+  )) return 'custom_combobox';
   return 'unknown';
 }
 
@@ -707,10 +753,19 @@ function collectApplySnapshot(sessionId: string) {
     });
   });
 
-  const customCandidates = Array.from(document.querySelectorAll<HTMLElement>('[role="combobox"], .p-dropdown, .p-multiselect'))
+  const customCandidates = Array.from(document.querySelectorAll<HTMLElement>(
+    '[role="combobox"], .p-dropdown, .p-multiselect, ' +
+    '.MuiSelect-root, .MuiAutocomplete-root, ' +
+    '.ant-select, ' +
+    '.react-select__control, [class*="react-select__control"], ' +
+    '.choices__inner, ' +
+    '.select2-selection, ' +
+    '[data-component="select"]',
+  ))
     .filter((el) => el.offsetParent !== null)
     .filter((el) => !el.matches('input, textarea, select'))
-    .filter((el) => !el.querySelector('input, textarea, select'));
+    // Allow elements with only hidden inputs inside (e.g. MUI Select uses a hidden <input> for a11y)
+    .filter((el) => !el.querySelector('input:not([type="hidden"]), textarea, select'));
 
   for (const el of customCandidates) {
     if (Array.from(fieldMap.values()).some((handle) => handle.kind === 'custom' && handle.el === el)) continue;
@@ -813,20 +868,25 @@ async function applyActions(actions: PlannedAction[]) {
     try {
       if (action.type === 'fill' && handle.kind === 'single') {
         if (handle.el instanceof HTMLInputElement || handle.el instanceof HTMLTextAreaElement) {
-          setNativeValue(handle.el, action.value);
+          dispatchControlledInput(handle.el, action.value);
           highlight(handle.el, '#34d399');
           filled++;
         }
       } else if (action.type === 'toggle' && handle.kind === 'single' && handle.el instanceof HTMLInputElement) {
-        handle.el.checked = action.checked;
-        handle.el.dispatchEvent(new Event('input', { bubbles: true }));
-        handle.el.dispatchEvent(new Event('change', { bubbles: true }));
+        // Use click() for React-controlled checkboxes — direct .checked mutation is ignored by React's synthetic events
+        if (handle.el.checked !== action.checked) {
+          handle.el.click();
+        }
+        // Fallback: if click() didn't change state (e.g. disabled or intercepted), force it
+        if (handle.el.checked !== action.checked) {
+          handle.el.checked = action.checked;
+          handle.el.dispatchEvent(new Event('change', { bubbles: true }));
+        }
         highlight(handle.el, '#34d399');
         filled++;
       } else if (action.type === 'select') {
         if (handle.kind === 'single' && handle.el instanceof HTMLSelectElement) {
           handle.el.value = action.value;
-          handle.el.dispatchEvent(new Event('input', { bubbles: true }));
           handle.el.dispatchEvent(new Event('change', { bubbles: true }));
           highlight(handle.el, '#34d399');
           filled++;
