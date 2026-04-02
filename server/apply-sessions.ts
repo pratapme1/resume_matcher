@@ -74,7 +74,7 @@ type ApplySessionRecord = {
   certificationEntries: ApplySessionContextResponse['certificationEntries'];
 };
 
-const applySessions = new Map<string, ApplySessionRecord>();
+export const applySessions = new Map<string, ApplySessionRecord>();
 
 function nowIso() {
   return new Date().toISOString();
@@ -200,6 +200,22 @@ function extractNums(s: string): number[] {
   return (s.match(/\d+(\.\d+)?/g) ?? []).map(Number);
 }
 
+/**
+ * Extract a numeric range from a string, handling open-ended "+" ranges.
+ * "10+" → [10, Infinity]
+ * "5-8 yrs" → [5, 8]
+ * "5 years" → [5, 5]
+ */
+function extractRange(s: string): [number, number] | null {
+  const plusMatch = s.match(/(\d+(?:\.\d+)?)\s*\+/);
+  if (plusMatch) return [Number(plusMatch[1]), Infinity];
+  const rangeMatch = s.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
+  if (rangeMatch) return [Number(rangeMatch[1]), Number(rangeMatch[2])];
+  const numMatch = s.match(/(\d+(?:\.\d+)?)/);
+  if (numMatch) return [Number(numMatch[1]), Number(numMatch[1])];
+  return null;
+}
+
 function rangesOverlap(a: number[], b: number[]): boolean {
   const minA = Math.min(...a), maxA = Math.max(...a);
   const minB = Math.min(...b), maxB = Math.max(...b);
@@ -218,6 +234,8 @@ function scoreOptionMatch(field: DetectedField, candidate: string): string | und
   const options = field.options ?? [];
   if (!options.length) return undefined;
   const a = normStr(candidate);
+  // Pure-number candidates (e.g., "0", "30") must not substring-match text options like "30 days"
+  const isPureNumber = /^\d+(\.\d+)?$/.test(a);
 
   let bestValue: string | undefined;
   let bestScore = 0;
@@ -230,14 +248,28 @@ function scoreOptionMatch(field: DetectedField, candidate: string): string | und
     if (a === b || a === bv) {
       score = 1.0;
     } else {
-      const numsA = extractNums(a), numsB = extractNums(b);
-      // Range overlap: "5 years" vs "5-8 yrs" both contain 5 → overlap
-      if (numsA.length && numsB.length && rangesOverlap(numsA, numsB)) {
-        score = 0.85;
-      } else if (a.includes(b) || b.includes(a) || a.includes(bv) || bv.includes(a)) {
-        score = 0.75;
-      } else if (jaccardWords(a, b) > 0.5) {
-        score = 0.6;
+      const rangeA = extractRange(a);
+      const rangeB = extractRange(b);
+      if (rangeA && rangeB) {
+        const [loA, hiA] = rangeA;
+        const [loB, hiB] = rangeB;
+        // Check if range A falls within range B (scalar or range candidate vs option range)
+        if (loA >= loB && loA <= hiB) {
+          // loA is at upper boundary of B (and not lower boundary) → slight penalty
+          score = (loA === hiB && loA !== loB) ? 0.80 : 0.85;
+        } else if (hiA >= loB && hiA <= hiB) {
+          score = 0.80;
+        } else if (loA <= hiB && hiA >= loB) {
+          // partial overlap
+          score = 0.80;
+        }
+      }
+      if (score === 0 && !isPureNumber) {
+        if (a.includes(b) || b.includes(a) || a.includes(bv) || bv.includes(a)) {
+          score = 0.75;
+        } else if (jaccardWords(a, b) > 0.5) {
+          score = 0.6;
+        }
       }
     }
 
