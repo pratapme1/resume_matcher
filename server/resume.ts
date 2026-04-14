@@ -226,18 +226,26 @@ function inferExperience(section: ResumeSection | undefined, provenance: SourceP
     !line.startsWith('-') &&
     !line.startsWith('*') &&
     !line.startsWith('•') &&
-    /(?:manager|engineer|lead|director|executive|architect|consultant|developer|specialist)/i.test(line);
+    /\b(?:manager|engineer|lead|director|executive|architect|consultant|developer|specialist)\b/i.test(line);
 
   for (const line of lines) {
     const isBullet = /^[-*•]/.test(line);
     if (isHeaderLine(line)) {
       const parts = line.split('|').map((part) => part.trim()).filter(Boolean);
-      const company = parts[0] ?? line;
-      const dates = parts.slice(1).join(' | ');
+      const ROLE_RE = /\b(?:manager|engineer|lead|director|executive|architect|consultant|developer|specialist|analyst|designer|scientist|coordinator|officer|president|vp|intern|associate|advisor|sre|devops)\b/i;
+      // Detect "Role | Company | Dates" (3+ parts where first part is a title)
+      let title = '';
+      let company = parts[0] ?? line;
+      let dates = parts.slice(1).join(' | ');
+      if (parts.length >= 3 && ROLE_RE.test(parts[0]) && !isDateRange(parts[0])) {
+        title = parts[0];
+        company = parts[1];
+        dates = parts.slice(2).join(' | ');
+      }
       const prov = provenance.find((item) => item.text === line);
       current = {
         id: `exp-${index++}`,
-        title: '',
+        title,
         company,
         dates,
         location: '',

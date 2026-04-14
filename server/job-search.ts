@@ -298,6 +298,89 @@ export function buildCandidateProfile(resume: SourceResumeDocument): CandidatePr
 }
 
 // ─────────────────────────────────────────
+// AI-based profile enrichment (fallback when heuristics fail)
+// ─────────────────────────────────────────
+
+function buildResumeTextForEnrichment(resume: SourceResumeDocument): string {
+  const parts: string[] = [];
+  if (resume.headline) parts.push(`Headline: ${resume.headline}`);
+  if (resume.summary) parts.push(`Summary: ${resume.summary}`);
+  for (const exp of resume.experience.slice(0, 6)) {
+    const titleLine = [exp.title, exp.company, exp.dates].filter(Boolean).join(' | ');
+    if (titleLine) parts.push(titleLine);
+    for (const b of exp.bullets.slice(0, 3)) parts.push(`  - ${b}`);
+  }
+  return parts.join('\n').slice(0, 3000);
+}
+
+interface AIProfileEnrichmentResult {
+  primaryTitles?: string[];
+  industries?: string[];
+  domainExpertise?: string[];
+}
+
+export async function enrichCandidateProfileWithAI(
+  ai: AIClient,
+  resume: SourceResumeDocument,
+  base: CandidateProfile,
+): Promise<CandidateProfile> {
+  if (base.primaryTitles.length > 0) return base;
+
+  try {
+    const model = getSearchModelForProvider(getProviderName(ai));
+    const resumeText = buildResumeTextForEnrichment(resume);
+    const prompt = `You are a resume analyst. Extract structured candidate information from the resume text below.
+
+Output valid JSON only. No markdown. No explanation.
+
+{
+  "primaryTitles": string[],
+  "industries": string[],
+  "domainExpertise": string[]
+}
+
+Rules:
+- primaryTitles: job titles from experience, most recent first. Max 5. Infer from context if not explicit.
+- industries: domain areas e.g. "enterprise", "fintech", "saas", "healthtech", "ai". Max 3.
+- domainExpertise: expertise phrases e.g. "Mobile Development", "CI/CD Automation". Max 5.
+
+RESUME:
+${resumeText}`;
+
+    const response = await ai.models.generateContent({
+      model,
+      contents: prompt,
+      config: { responseMimeType: 'application/json' },
+    });
+
+    const parsed = JSON.parse(response.text || '{}') as unknown;
+    if (typeof parsed !== 'object' || parsed === null) return base;
+
+    const result = parsed as AIProfileEnrichmentResult;
+    const isStringArray = (v: unknown): v is string[] =>
+      Array.isArray(v) && v.every((x) => typeof x === 'string');
+
+    return {
+      ...base,
+      primaryTitles:
+        isStringArray(result.primaryTitles) && result.primaryTitles.length > 0
+          ? result.primaryTitles
+          : base.primaryTitles,
+      industries:
+        base.industries.length === 0 && isStringArray(result.industries)
+          ? result.industries
+          : base.industries,
+      domainExpertise:
+        base.domainExpertise.length === 0 && isStringArray(result.domainExpertise)
+          ? result.domainExpertise
+          : base.domainExpertise,
+    };
+  } catch {
+    return base;
+  }
+}
+
+// ─────────────────────────────────────────
 // Build search prompt
 // ─────────────────────────────────────────
 
@@ -1104,7 +1187,7 @@ export async function searchJobs(
   fetchImpl?: SearchFetchImpl,
   seenUrls?: Set<string>,
 ): Promise<JobSearchResponse> {
-  const candidateProfile = buildCandidateProfile(resume);
+  const candidateProfile = await enrichCandidateProfileWithAI(ai, resume, buildCandidateProfile(resume));
   let rawJobs: RawJob[] = [];
 
   // ── Path A: JSearch (real job board API) ──────────────────────────────

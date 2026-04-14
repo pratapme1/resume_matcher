@@ -54,7 +54,7 @@ import {
 import { TAILOR_PIPELINE_VERSION, TAILOR_PROMPT_VERSION, tailorResumeWithAI } from './tailor.ts';
 import { validateTailoredResume } from './validate.ts';
 import { startAutoApply, submitAutoApply } from './auto-apply.ts';
-import { searchJobs, buildCandidateProfile } from './job-search.ts';
+import { searchJobs, buildCandidateProfile, enrichCandidateProfileWithAI } from './job-search.ts';
 import { requireAuth } from './middleware/auth.ts';
 import { writeUsageEvent, isOverQuota } from './db/queries/usage.ts';
 import { getStoredApplicationMemory, upsertStoredApplicationMemory } from './db/queries/application-profiles.ts';
@@ -510,10 +510,12 @@ export function createApp(deps: AppDependencies): Express {
       });
     }
 
+    const baseProfile = buildCandidateProfile(parsedResume.resume);
+    const enrichAI = deps.getSearchAI ? deps.getSearchAI(req) : deps.getAI(req);
     return {
       resume: parsedResume.resume,
       templateProfile: parsedResume.templateProfile,
-      candidateProfile: buildCandidateProfile(parsedResume.resume),
+      candidateProfile: await enrichCandidateProfileWithAI(enrichAI, parsedResume.resume, baseProfile),
       parseWarnings: parsedResume.resume.parseWarnings,
       resumeSource: 'upload',
       filename: req.file.originalname,
